@@ -1,0 +1,49 @@
+Copyright (C) 2008 Marc Culler and others
+
+This program is distributed under the terms of the 
+GNU General Public License, version 2 or later, as published by
+the Free Software Foundation.  See the file GPL.txt for details.
+The URL for this program is
+  http://www.math.uic.edu/~t3m/plink
+A copy of the license file may be found at:
+  http://www.gnu.org/licenses/gpl-3.0.txt
+
+The development of this program was partially supported by
+the National Science Foundation under grants DMS0608567,
+DMS0504975and DMS0204142.
+
+This program requires a Python interpreter and the Tkinter module.
+It was tested with Python 2.4.
+
+Installation Instructions:
+
+* download plink-1.0.tgz to a temporary location (e.g. /tmp)
+* change to the temporary directory (cd /tmp)
+* unpack the archive. (tar xfvz plink.tgz)
+* change to the new subdirectory named plink-1.0
+
+IF YOU ARE A SUPERUSER and would like to install plink for
+use by all users, type:
+   sudo python setup.py install
+or su as root and type
+   python setup.py install
+
+IF YOU ARE NOT A SUPERUSER and want to install plink in your home
+directory, type:
+   python setup.py install --home ~
+This will install the executable script in the directory ~/bin and
+the other files will be installed in ~/lib/python .
+For this to work conveniently, you will need the directory ~/bin to
+be included in your environment variable PATH, and you will need
+~/lib/python to be included in your environment variable PYTHON_PATH. 
+You can arrange this by typing the two commands below or, to have it
+done automatically, by adding the commands to the appropriate startup
+file (e.g. ~/.profile or ~/.cshrc):
+
+(for the bash shell)
+export PATH=~/bin:$PATH
+export PYTHON_PATH=~/lib/python:$PYTHON_PATH
+
+(for the csh or tcsh shell)
+setenv PATH "~/bin:$PATH"
+setenv PYTHON_PATH "~/lib/python:$PYTHON_PATH"
