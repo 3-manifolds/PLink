@@ -99,7 +99,15 @@ class LinkEditor:
         self.ActiveVertex = None
 
     def done(self):
-        if self.callback:
+        if self.callback is not None:
+            for vertex in self.Vertices:
+                if vertex.is_endpoint():
+                    if not tkMessageBox.askretrycancel('Warning',
+                       'This link has non-closed components!\n'
+                       'Click "retry" to continue editing.\n'
+                       'Click "cancel" to discard this link and quit.'):
+                        self.window.destroy()
+                    return
             self.callback(self.SnapPea_KLPProjection())
         self.window.destroy()
 
