@@ -1,0 +1,89 @@
+<html>
+<head>
+<title>How to use PLink</title>
+<style type="text/css">
+body {
+  font: 16px/18px Helvetica,sans-serif;
+  width:700px;
+  margin-top: .5in;
+  margin-left: 1in;
+}
+h1 {
+  font-size: 18pt;
+  text-align: center;}
+a  {
+  text-decoration: none;
+  color: blue;
+}
+</style> 
+</head>
+<body>
+<h1>How to use PLink</h1>
+
+<p>PLink draws piecewise linear link projections.  Components
+may be points, PL arcs, or PL circles.  Edges are oriented
+consistently in each component.  Different components are different
+colors.</p>
+
+<p>When using the mouse to draw a link with PLink, you should always
+<i>click-and-release</i>.  Do not hold the mouse button down while
+drawing.  PLink uses the left, center and right mouse buttons.  For
+one-button Mac users, the left button means the one and only button.
+To emulate the center button on a Mac, hold down the alt-option key
+while clicking; for the right button, hold down the apple key while
+clicking.
+</p>
+ 
+<p>Click-and-release the left mouse button to place a starting vertex
+and begin drawing.  The vertex will be connected to the pencil cursor
+by a thin red line.  Click-and-release to place a second vertex.  The
+two vertices will then be joined by an edge.  Continue to draw other
+vertices and edges to your heart's content.</p>
+
+<p>To stop drawing, either click twice on the same vertex to create an
+arc, or click on an endpoint vertex.  The latter operation will either
+create a circle component or join together two arc components.</p>
+
+<p>To drag a vertex to a new location click-and-release on the vertex
+with the middle mouse button.  The vertex will now be enclosed in a
+circular cursor.  Move it to where you want it to go and click the
+left (or middle) button to place it.  If you drag one endpoint on top
+of another, they will meld.</p>
+
+<p>To change the orientation of a component, use the right mouse button
+to click on one of the edges or vertices in that component.</p>
+
+<p>The default state of the editor, i.e. neither drawing nor dragging,
+is indicated by the arrow cursor.  In this state, clicking on a
+crossing will toggle the handedness of the crossing.  Clicking on an
+endpoint vertex will restart drawing from that vertex.  Clicking on a
+non-endpoint vertex will break the link at that point and begin
+drawing with the old incoming edge.</p>
+
+<p>You will not be allowed to create edges that pass too close to a
+vertex or a crossing, or to place vertices too close to edges or
+to crossings or to other vertices.  If you attempt to do any of these
+things, <i>you will be beeped at</i>.</p>
+
+<p>The window can be resized to allow for different sizes of link
+projections, and the arrow keys can be used to slide the projection
+around in order to make more room on one side or another.</p>
+
+<p>The "Tools" menu can be used to make the projection alternating
+(provided that all components are circles), or to clear the screen,
+or to reflect the projection in the xy-plane, changing all crossings.</p>
+
+<p>The "File" menu can be used to save the projection as a SnapPea
+link projection file.  (This can be done from the drawing state as
+well, in which case the "hot vertex" is remembered in the file!).  The
+"File->Open File" command will read a SnapPea link projection file,
+and restart drawing if the projection was saved while drawing.  The
+"File->Export" menu allows the projection to be exported in various
+standard formats for describing link projections.</p>
+
+<p>If you are running PLink from inside SnapPeaPython, closing the
+window or exiting the program will pass your projection to SnapPea to
+have its complement triangulated.</p>
+
+</body>
+</html>
