@@ -1165,8 +1165,8 @@ Distributed under the GNU General Public License.
 
 Development supported by the National Science Foundation.
 
-Inspired by SnapPea, by Jeff Weeks, and LinkSmith by
-Jim Hoste and Morwen Thistlethwaite.
+Inspired by SnapPea, written by Jeff Weeks, and LinkSmith,
+written by Jim Hoste and Morwen Thistlethwaite.
 """
 
 if __name__ == '__main__':
