@@ -33,8 +33,8 @@ class LinkEditor:
     A graphical link drawing tool based on the one embedded in Jeff Weeks'
     original SnapPea program.
     """
-    def __init__(self, callback=None):
-        self.callback=callback
+    def __init__(self, no_arcs=False):
+        self.no_arcs = no_arcs
         self.initialize()
         self.cursorx = 0
         self.cursory = 0
@@ -98,17 +98,19 @@ class LinkEditor:
         self.LiveEdge2 = None
         self.ActiveVertex = None
 
+
     def done(self):
-        if self.callback is not None:
+        if self.no_arcs:
             for vertex in self.Vertices:
                 if vertex.is_endpoint():
-                    if not tkMessageBox.askretrycancel('Warning',
-                       'This link has non-closed components!\n'
-                       'Click "retry" to continue editing.\n'
-                       'Click "cancel" to discard this link and quit.'):
-                        self.window.destroy()
-                    return
-            self.callback(self.SnapPea_KLPProjection())
+                    if tkMessageBox.askretrycancel('Warning',
+                         'This link has non-closed components!\n'
+                         'Click "retry" to continue editing.\n'
+                         'Click "cancel" to quit anyway.\n'
+                         '(The link projection may be useless.)'):
+                        return
+                    else:
+                        break
         self.window.destroy()
 
     def onebutton(self, event):
@@ -573,7 +575,10 @@ class LinkEditor:
         The KLPCrossings are modeled by dictionaries.
         Requires that all components be closed.
         """
-        crossing_components = self.crossing_components()
+        try:
+            crossing_components = self.crossing_components()
+        except ValueError:
+            return None
         num_crossings = len(self.Crossings)
         num_free_loops = 0
         num_components = len(crossing_components)
