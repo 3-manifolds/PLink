@@ -16,7 +16,7 @@
 #
 #   $Author$ $Date$ $Revision$
 #
-plink_revision = '$Revision$'
+plink_revision = '$Revision$'.split()[1]
 
 import os
 import sys
@@ -1152,7 +1152,7 @@ class InfoDialog(tkSimpleDialog.Dialog):
         self.app = None
         self.destroy()
 
-About = """PLink version 1.0
+About = """PLink version 1.0 rev%s
 
 PLink draws piecewise linear links.
 
@@ -1167,7 +1167,7 @@ Development supported by the National Science Foundation.
 
 Inspired by SnapPea (written by Jeff Weeks) and
 LinkSmith (written by Jim Hoste and Morwen Thistlethwaite).
-"""
+"""%plink_revision
 
 if __name__ == '__main__':
     LE = LinkEditor()
