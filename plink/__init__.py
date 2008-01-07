@@ -81,9 +81,8 @@ class LinkEditor:
         self.frame.pack(padx=5, pady=5, fill=Tkinter.BOTH, expand=Tkinter.YES)
         self.canvas.pack(padx=5, pady=5, fill=Tkinter.BOTH, expand=Tkinter.YES)
         # Event bindings
-        self.canvas.bind('<Button-1>', self.onebutton)
-        self.canvas.bind('<Button-2>', self.mouse2)
-        self.canvas.bind('<Button-3>', self.mouse3)
+        self.canvas.bind('<Button-1>', self.single_click)
+        self.canvas.bind('<Double-Button-1>', self.double_click)
         self.canvas.bind('<Motion>', self.mouse_moved)
         self.window.bind('<Key>', self.key_press)
         self.window.protocol("WM_DELETE_WINDOW", self.done)
@@ -113,48 +112,41 @@ class LinkEditor:
                         break
         self.window.destroy()
 
-    def onebutton(self, event):
+    def single_click(self, event):
         """
-        Simulates a 3-button mouse for OS X.
-        """
-        if (event.state & 24 == 8):
-            self.mouse3(event)
-        elif (event.state & 24 == 16):
-            self.mouse2(event)
-        else:
-            self.mouse1(event)
-
-    def mouse1(self, event):
-        """
-        Event handler for mouse button 1.
+        Event handler for mouse clicks.
         """
         x = self.canvas.canvasx(event.x)
         y = self.canvas.canvasy(event.y)
+        start_vertex = Vertex(x, y, self.canvas, hidden=True)
         if self.state == 'start_state':
-            start_vertex = Vertex(x, y, self.canvas, hidden=True)
-            if start_vertex in [v for v in self.Vertices if v.is_endpoint()]:
-                #print 'clicked on an endpoint'
-                start_vertex.erase()
-                start_vertex = self.Vertices[self.Vertices.index(start_vertex)]
-                x0, y0 = x1, y1 = start_vertex.point()
-                if start_vertex.out_edge:
-                    self.update_crosspoints()
-                    start_vertex.reverse_path()
-            elif start_vertex in self.Vertices:
-                #print 'clicked on non-endpoint vertex'
-                cut_vertex = self.Vertices[self.Vertices.index(start_vertex)]
-                cut_vertex.recolor_incoming(palette=self.palette)
-                cut_edge = cut_vertex.in_edge
-                cut_vertex.in_edge = None
-                start_vertex = cut_edge.start
-                x1, y1 = cut_vertex.point()
-                cut_edge.freeze()
+            if start_vertex in self.Vertices:
+                #print 'single click on a vertex'
+                self.state = 'dragging_state'
+                self.canvas.config(cursor='circle')
+                self.ActiveVertex = self.Vertices[self.Vertices.index(start_vertex)]
+                self.ActiveVertex.freeze()
+                x1, y1 = self.ActiveVertex.point()
+                if self.ActiveVertex.in_edge:
+                    x0, y0 = self.ActiveVertex.in_edge.start.point()
+                    self.ActiveVertex.in_edge.freeze()
+                    self.LiveEdge1 = self.canvas.create_line(x0,y0,x1,y1,
+                                                             fill='red')
+                if self.ActiveVertex.out_edge:
+                    x0, y0 = self.ActiveVertex.out_edge.end.point()
+                    self.ActiveVertex.out_edge.freeze()
+                    self.LiveEdge2 = self.canvas.create_line(x0,y0,x1,y1,
+                                                             fill='red')
+                return
             elif start_vertex in self.CrossPoints:
-                #print 'clicked on a crossing'
+                #print 'single click on a crossing'
                 crossing = self.Crossings[self.CrossPoints.index(start_vertex)]
                 crossing.reverse()
                 crossing.under.draw(self.Crossings)
                 crossing.over.draw(self.Crossings)
+                return
+            elif self.clicked_on_edge(start_vertex):
+                #print 'clicked on an edge.'
                 return
             else:
                 #print 'creating a new vertex'
@@ -162,13 +154,13 @@ class LinkEditor:
                     start_vertex.erase()
                     self.window.bell()
                     return
-                x1, y1 = start_vertex.point()
-                start_vertex.set_color(self.palette.new())
-                self.Vertices.append(start_vertex)
+            x1, y1 = start_vertex.point()
+            start_vertex.set_color(self.palette.new())
+            self.Vertices.append(start_vertex)
             self.ActiveVertex = start_vertex
             self.goto_drawing_state(x1,y1)
             return
-        elif self.state == 'drawing':
+        elif self.state == 'drawing_state':
             next_vertex = Vertex(x, y, self.canvas, hidden=True)
             if next_vertex == self.ActiveVertex:
                 #print 'clicked the same vertex twice'
@@ -193,7 +185,7 @@ class LinkEditor:
                 self.Edges.append(next_edge)
             next_vertex.set_color(next_edge.color)
             if next_vertex in [v for v in self.Vertices if v.is_endpoint()]:
-                #print 'joining up to another component'
+                #print 'melding vertices'
                 if not self.generic_edge(next_edge):
                     self.window.bell()
                     return
@@ -210,7 +202,7 @@ class LinkEditor:
                 next_edge.expose(self.Crossings)
                 self.goto_start_state()
                 return
-            # 'just extending a path, as usual'
+            #print 'just extending a path, as usual'
             self.update_crossings(next_edge)
             self.update_crosspoints()
             if not (self.generic_vertex(next_vertex) and
@@ -229,54 +221,43 @@ class LinkEditor:
             except ValueError:
                 self.window.bell()
 
-    def mouse2(self, event):
+    def double_click(self, event):
         """
-        Event handler for mouse button 2 (dragging).
+        Event handler for mouse double-clicks.
         """
         x = self.canvas.canvasx(event.x)
         y = self.canvas.canvasy(event.y)
         vertex = Vertex(x, y, self.canvas, hidden=True)
-        if vertex not in self.Vertices:
-            self.canvas.bell()
+        #print 'double-click in %s'%self.state
+        if self.state == 'dragging_state':
+            self.end_dragging_state()
+            # The first click on a vertex put us in dragging state.
+            if vertex in [v for v in self.Vertices if v.is_endpoint()]:
+                #print 'double-clicked on an endpoint'
+                vertex.erase()
+                vertex = self.Vertices[self.Vertices.index(vertex)]
+                x0, y0 = x1, y1 = vertex.point()
+                if vertex.out_edge:
+                    self.update_crosspoints()
+                    vertex.reverse_path()
+            elif vertex in self.Vertices:
+                #print 'double-clicked on a non-endpoint vertex'
+                cut_vertex = self.Vertices[self.Vertices.index(vertex)]
+                cut_vertex.recolor_incoming(palette=self.palette)
+                cut_edge = cut_vertex.in_edge
+                cut_vertex.in_edge = None
+                vertex = cut_edge.start
+                x1, y1 = cut_vertex.point()
+                cut_edge.freeze()
+            self.ActiveVertex = vertex
+            self.goto_drawing_state(x1,y1)
             return
-        if self.state == 'start_state':
-            self.state = 'dragging_state'
-            self.canvas.config(cursor='circle')
-            self.ActiveVertex = self.Vertices[self.Vertices.index(vertex)]
-            self.ActiveVertex.freeze()
-            x1, y1 = self.ActiveVertex.point()
-            if self.ActiveVertex.in_edge:
-                x0, y0 = self.ActiveVertex.in_edge.start.point()
-                self.ActiveVertex.in_edge.freeze()
-                self.LiveEdge1 = self.canvas.create_line(x0,y0,x1,y1,
-                                                         fill='red')
-            if self.ActiveVertex.out_edge:
-                x0, y0 = self.ActiveVertex.out_edge.end.point()
-                self.ActiveVertex.out_edge.freeze()
-                self.LiveEdge2 = self.canvas.create_line(x0,y0,x1,y1,
-                                                         fill='red')
-        elif self.state == 'dragging_state':
-            try:
-                self.end_dragging_state()
-            except ValueError:
-                self.window.bell()
-
-    def mouse3(self, event):
-        """
-        Event handler for mouse button 3 (reverses component).
-        """
-        if self.state != 'start_state':
-            return
-        x = self.canvas.canvasx(event.x)
-        y = self.canvas.canvasy(event.y)
-        vertex = Vertex(x, y, self.canvas, hidden=True)
-        if vertex in self.Vertices:
-            match = self.Vertices[self.Vertices.index(vertex)]
-            match.reverse_path(self.Crossings)
-            return
-        for edge in self.Edges:
-            if edge.too_close(vertex):
-                edge.end.reverse_path(self.Crossings)
+        elif self.state == 'drawing_state':
+            #print 'double-click while drawing'
+            dead_edge = self.ActiveVertex.out_edge
+            if dead_edge:
+                self.destroy_edge(dead_edge)
+            self.goto_start_state()
         
     def mouse_moved(self,event):
         """
@@ -291,9 +272,11 @@ class LinkEditor:
                 self.canvas.config(cursor='hand1')
             elif point in self.CrossPoints:
                 self.canvas.config(cursor='exchange')
+            elif self.cursor_on_edge(point):
+                self.canvas.config(cursor='double_arrow')
             else:
                 self.canvas.config(cursor='')
-        elif self.state == 'drawing':
+        elif self.state == 'drawing_state':
             x0,y0,x1,y1 = self.canvas.coords(self.LiveEdge1)
             self.canvas.coords(self.LiveEdge1, x0, y0, x, y)
         elif self.state == 'dragging_state':
@@ -313,7 +296,7 @@ class LinkEditor:
         Handler for keypress events.
         """
         if event.keysym == 'Delete' or event.keysym == 'BackSpace':
-            if self.state == 'drawing':
+            if self.state == 'drawing_state':
                 last_edge = self.ActiveVertex.in_edge
                 if last_edge:
                     dead_edge = self.ActiveVertex.out_edge
@@ -354,6 +337,19 @@ class LinkEditor:
         event.x, event.y = self.cursorx, self.cursory
         self.mouse_moved(event)
 
+    def clicked_on_edge(self, vertex):
+        for edge in self.Edges:
+            if edge.too_close(vertex):
+                edge.end.reverse_path(self.Crossings)
+                return True
+        return False
+
+    def cursor_on_edge(self, point):
+        for edge in self.Edges:
+            if edge.too_close(point):
+                return True
+        return False
+
     def goto_start_state(self):
         self.canvas.delete(self.LiveEdge1)
         self.LiveEdge1 = None
@@ -373,7 +369,7 @@ class LinkEditor:
         self.ActiveVertex.draw()
         x0, y0 = self.ActiveVertex.point()
         self.LiveEdge1 = self.canvas.create_line(x0,y0,x1,y1,fill='red')
-        self.state = 'drawing'
+        self.state = 'drawing_state'
         self.canvas.config(cursor='pencil')
 
     def verify_drag(self):
@@ -1002,7 +998,7 @@ class Edge:
             comp2 = (Dy*self.dx - Dx*self.dy)/self.length
             return -e < comp1 < self.length + e and -e < comp2 < e
         except:
-            print vertex
+            #print vertex
             return False
 
 class Crossing:
