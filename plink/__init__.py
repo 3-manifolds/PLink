@@ -16,6 +16,7 @@
 #
 #   $Author$ $Date$ $Revision$
 #
+plink_revision = '$Revision$'
 
 import os
 import sys
