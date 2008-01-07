@@ -1152,7 +1152,7 @@ class InfoDialog(tkSimpleDialog.Dialog):
         self.app = None
         self.destroy()
 
-About = """PLink version 1.0 rev%s
+About = """PLink version 1.0 (rev %s)
 
 PLink draws piecewise linear links.
 
