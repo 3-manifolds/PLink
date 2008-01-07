@@ -83,6 +83,7 @@ class LinkEditor:
         # Event bindings
         self.canvas.bind('<Button-1>', self.onebutton)
         self.canvas.bind('<Button-2>', self.mouse2)
+        self.canvas.bind('<Button-3>', self.mouse3)
         self.canvas.bind('<Motion>', self.mouse_moved)
         self.window.bind('<Key>', self.key_press)
         self.window.protocol("WM_DELETE_WINDOW", self.done)
@@ -97,7 +98,6 @@ class LinkEditor:
         self.LiveEdge1 = None
         self.LiveEdge2 = None
         self.ActiveVertex = None
-
 
     def done(self):
         if self.no_arcs:
@@ -138,10 +138,8 @@ class LinkEditor:
                 start_vertex = self.Vertices[self.Vertices.index(start_vertex)]
                 x0, y0 = x1, y1 = start_vertex.point()
                 if start_vertex.out_edge:
-                    start_vertex.reverse_path()
                     self.update_crosspoints()
-                    for edge in self.Edges: 
-                        edge.draw(self.Crossings)
+                    start_vertex.reverse_path()
             elif start_vertex in self.Vertices:
                 #print 'clicked on non-endpoint vertex'
                 cut_vertex = self.Vertices[self.Vertices.index(start_vertex)]
@@ -173,7 +171,7 @@ class LinkEditor:
         elif self.state == 'drawing':
             next_vertex = Vertex(x, y, self.canvas, hidden=True)
             if next_vertex == self.ActiveVertex:
-                #print 'clicked twice'
+                #print 'clicked the same vertex twice'
                 next_vertex.erase()
                 dead_edge = self.ActiveVertex.out_edge
                 if dead_edge:
@@ -274,12 +272,11 @@ class LinkEditor:
         vertex = Vertex(x, y, self.canvas, hidden=True)
         if vertex in self.Vertices:
             match = self.Vertices[self.Vertices.index(vertex)]
-            match.reverse_path()
+            match.reverse_path(self.Crossings)
             return
         for edge in self.Edges:
             if edge.too_close(vertex):
-                edge.end.reverse_path()
-                return
+                edge.end.reverse_path(self.Crossings)
         
     def mouse_moved(self,event):
         """
@@ -814,7 +811,7 @@ class Vertex:
             self.in_edge.set_end(self)
         other.erase()
             
-    def reverse_path(self):
+    def reverse_path(self, crossings=[]):
         """
         Reverse all vertices and edges of this vertex's component.
         """
@@ -823,7 +820,7 @@ class Vertex:
             e = v.in_edge
             v.reverse()
             if not e: break
-            e.reverse()
+            e.reverse(crossings)
             v = e.end
             if v == self: return
         self.reverse()
@@ -832,7 +829,7 @@ class Vertex:
             e = v.out_edge
             v.reverse()
             if not e: break
-            e.reverse()
+            e.reverse(crossings)
             v = e.start
             if v == self: return
 
@@ -916,10 +913,10 @@ class Edge:
         self.dy = float(self.end.y - self.start.y)
         self.length = sqrt(self.dx*self.dx + self.dy*self.dy) 
 
-    def reverse(self):
+    def reverse(self, crossings=[]):
         self.end, self.start = self.start, self.end
         self.vectorize()
-        self.draw()
+        self.draw(crossings)
 
     def hide(self):
         for line in self.lines:
