@@ -1159,7 +1159,7 @@ Written in Python by Marc Culler, with suggestions
 from Nathan Dunfield.
 
 Comments to: culler@math.uic.edu
-Download at http://www.math.uic.edu/~t3m/plink
+Download at http://www.math.uic.edu/~t3m
 Distributed under the GNU General Public License.
 
 Development supported by the National Science Foundation.
