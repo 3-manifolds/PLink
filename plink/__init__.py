@@ -1155,7 +1155,8 @@ About = """PLink version 1.0
 
 PLink draws piecewise linear links.
 
-Written in Python by Marc Culler.
+Written in Python by Marc Culler, with suggestions
+from Nathan Dunfield.
 
 Comments to: culler@math.uic.edu
 Download at http://www.math.uic.edu/~t3m/plink
