@@ -690,16 +690,25 @@ class LinkEditor:
                         U, O = self.Edges[int(u)], self.Edges[int(o)]
                         self.Crossings.append(Crossing(O, U))
                     hot = int(lines.pop(0))
-                    loadfile.close()
-                    self.goto_start_state()
-                    if hot != -1:
-                        self.ActiveVertex = self.Vertices[hot]
-                        self.goto_drawing_state(*self.canvas.winfo_pointerxy())
                 except:
                     tkMessageBox.showwarning(
                         'Bad file',
-                        'Could not parse line %d'%(num_lines - len(lines)))
+                        'Failed while parsing line %d'%(num_lines - len(lines)))
+                loadfile.close()
+                self.create_colors()
+                self.goto_start_state()
+                if hot != -1:
+                    self.ActiveVertex = self.Vertices[hot]
+                    self.goto_drawing_state(*self.canvas.winfo_pointerxy())
 
+    def create_colors(self):
+        components = self.edge_components()
+        for component in components:
+            color = self.palette.new()
+            component[0].start.set_color(color)
+            for edge in component:
+                edge.set_color(color)
+                edge.end.set_color(color)
 
     def about(self):
         InfoDialog(self.window, 'About PLink', About)
