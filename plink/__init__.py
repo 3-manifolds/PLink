@@ -52,14 +52,16 @@ class LinkEditor:
                        command=lambda : self.save_image(color_mode='mono'))
         print_menu.add_command(label='color', command=self.save_image)
         file_menu.add_cascade(label='Save Image ...', menu=print_menu)
-        export_menu = Tkinter.Menu(menubar, tearoff=0)
-        export_menu.add_command(label='DT code', command=self.dt_code)
-        export_menu.add_command(label='Gauss code', command=self.not_done)
-        export_menu.add_command(label='PD code', command=self.not_done)
-        file_menu.add_cascade(label='Export ...', menu=export_menu)
         file_menu.add_separator()
         file_menu.add_command(label='Exit', command=self.done)
         menubar.add_cascade(label='File', menu=file_menu)
+        info_menu = Tkinter.Menu(menubar, tearoff=0)
+        export_menu = Tkinter.Menu(menubar, tearoff=0)
+        info_menu.add_command(label='DT code', command=self.dt_normal)
+        info_menu.add_command(label='DT for Snap', command=self.dt_snap)
+        info_menu.add_command(label='Gauss code', command=self.not_done)
+        info_menu.add_command(label='PD code', command=self.not_done)
+        menubar.add_cascade(label='Info', menu=info_menu)
         tools_menu = Tkinter.Menu(menubar, tearoff=0)
         tools_menu.add_command(label='Make alternating',
                        command=self.make_alternating)
@@ -77,10 +79,19 @@ class LinkEditor:
                                    relief=Tkinter.SUNKEN)
         self.canvas = Tkinter.Canvas(self.frame,
                                      bg='#dcecff',
-                                     width=600,
-                                     height=600)
+                                     width=500,
+                                     height=500)
+        self.infoframe = Tkinter.Frame(self.window, 
+                                       borderwidth=2,
+                                       relief=Tkinter.SUNKEN)
+        self.infotext = Tkinter.Entry(self.infoframe, font="Helvetica 16")
+        spacer = Tkinter.Frame(self.window, height=16);
+        spacer.pack(side=Tkinter.BOTTOM)
+        self.infoframe.pack(padx=5, pady=0, fill=Tkinter.X, expand=Tkinter.NO,
+                            side=Tkinter.BOTTOM)
         self.frame.pack(padx=5, pady=5, fill=Tkinter.BOTH, expand=Tkinter.YES)
         self.canvas.pack(padx=5, pady=5, fill=Tkinter.BOTH, expand=Tkinter.YES)
+        self.infotext.pack(padx=0, pady=0, fill=Tkinter.X, expand=Tkinter.NO)
         # Event bindings
         self.canvas.bind('<Button-1>', self.single_click)
         self.canvas.bind('<Double-Button-1>', self.double_click)
@@ -119,6 +130,7 @@ class LinkEditor:
         """
         x = self.canvas.canvasx(event.x)
         y = self.canvas.canvasy(event.y)
+        self.clear_text()
         start_vertex = Vertex(x, y, self.canvas, hidden=True)
         if self.state == 'start_state':
             if start_vertex in self.Vertices:
@@ -228,6 +240,7 @@ class LinkEditor:
         """
         x = self.canvas.canvasx(event.x)
         y = self.canvas.canvasy(event.y)
+        self.clear_text()
         vertex = Vertex(x, y, self.canvas, hidden=True)
         #print 'double-click in %s'%self.state
         if self.state == 'dragging_state':
@@ -513,27 +526,12 @@ class LinkEditor:
             result.append([ECrossing(c[1],c[2]) for c in crosses]) 
         return result
 
-    def dt_code(self):
-        components = self.crossing_components()
-        for component in components:
-            crossings = []
-            pairs = []
-            print 'Component #%d'%components.index(component)
-            for ecrossing in component:
-                cross = ecrossing.crossing
-                if cross in crossings:
-                    m, n = 1 + crossings.index(cross), 1 + len(crossings)
-                    if m%2: # m is odd
-                        if ecrossing.goes_over():
-                            n = -n
-                        pairs.append((m,n))
-                    else:   # m is even
-                        if component[m-1].goes_over():
-                            m = -m
-                        pairs.append((n,m))
-                crossings.append(cross)
-            pairs.sort()
-            print ', '.join(tuple([str(p[1]) for p in pairs]))
+    def clear_text(self):
+        self.infotext.delete(0, Tkinter.END)
+
+    def write_text(self, string):
+        self.infotext.delete(0, Tkinter.END)
+        self.infotext.insert(Tkinter.END, string)
 
     def make_alternating(self):
         """
@@ -586,10 +584,27 @@ class LinkEditor:
 
     def SnapPea_KLPProjection(self):
         """
-        Constructs a python simulation of a SnapPea KLPProjection.
-        (See the SnapPea file link_projection.h for definitions.)
-        The KLPCrossings are modeled by dictionaries.
-        Requires that all components be closed.
+        Constructs a python simulation of a SnapPea KLPProjection
+        (Kernel Link Projection) structure.  See Jeff Weeks' SnapPea
+        file link_projection.h for definitions.  Here the KLPCrossings
+        are modeled by dictionaries.  This method requires that all
+        components be closed.  A side effect is that the KLP attributes
+        of all crossings are updated.
+
+        The following excerpt from link_projection.h describes the
+        main convention:
+        *  If you view a crossing (from above) so that the strands go in the
+        *  direction of the postive x- and y-axes, then the strand going in
+        *  the x-direction is the KLPStrandX, and the strand going in the
+        *  y-direction is the KLPStrandY.  Note that this definition does not
+        *  depend on which is the overstrand and which is the understrand.
+        *
+        *                             KLPStrandY
+        *                                 ^
+        *                                 |
+        *                             ----+---> KLPStrandX
+        *                                 |
+        *                                 |
         """
         try:
             crossing_components = self.crossing_components()
@@ -623,6 +638,67 @@ class LinkEditor:
                 num_free_loops += 1
         KLP_crossings = [crossing.KLP for crossing in self.Crossings]
         return num_crossings, num_free_loops, num_components, KLP_crossings
+
+    def dt_code(self):
+        """
+        Return the Dowker-Thistlethwaite code as a list of even integers.
+        """
+        components = self.crossing_components()
+        component_sizes = [len(self.Crossings)<<1, len(components)<<1]
+        for crossing in self.Crossings:
+            crossing.clear_hits()
+        count = 1
+        while len(components) > 0:
+            this_component = components.pop()
+            component_sizes.append(len(this_component))
+            for ecrossing in this_component:
+                if count%2 == 0 and ecrossing.goes_over():
+                    ecrossing.crossing.hit(-count)
+                else:
+                    ecrossing.crossing.hit(count)
+                count += 1
+            # look for a component that has been hit
+            for component in components:
+                hits = [x for x in component if x.crossing.hit1 is not None]
+                if len(hits) > 0:
+                    # reorder its crossings
+                    components.remove(component)
+                    first = hits[0]
+                    n = component.index(first)
+                    if (count + first.crossing.hit1)%2 == 0:
+                        component = component[n-1:]+component[:n-1]
+                    else:
+                        component = component[n:]+component[:n]
+                    components.append(component)
+                    break
+        # build the Dowker-Thistlethwaite code
+        code = [None for crossing in self.Crossings]
+        for crossing in self.Crossings:
+            if crossing.hit1%2:
+                code[(crossing.hit1 - 1)/2] = crossing.hit2
+            else:
+                code[(crossing.hit2 - 1)/2] = crossing.hit1
+        return code, component_sizes
+
+    def dt_normal(self):
+        """
+        Return the standard Dowker-Thistlethwaite code as a sequence
+        of even integers.  (Ignores free loops.)
+        """
+        code, component_sizes = self.dt_code()
+        self.write_text('DT code:  ' + str(code))
+
+    def dt_snap(self):
+        """
+        Return the alphabetic Dowker-Thistlethwaite code as used
+        by Oliver Goodman's Snap.
+        """
+        code, component_sizes = self.dt_code()
+        alphacode = ''.join(tuple([DT_alphabet[x>>1] for x in code]))
+        if component_sizes[0] > 26:
+            raise ValueError, 'Too many crossings!'
+        prefix = ''.join(tuple([DT_alphabet[n>>1] for n in component_sizes]))
+        self.write_text('DT code:  ' + prefix + alphacode)
 
     def SnapPea_projection_file(self):
         """
@@ -1041,8 +1117,9 @@ class Crossing:
         self.over = over
         self.under = under
         self.locked = False
-        self.KLP = {}
-        # See the SnapPea file link_projection.h
+        self.KLP = {}    # See the SnapPea file link_projection.h
+        self.hit1 = None # For computing DT codes
+        self.hit2 = None
 
     def __repr__(self):
         return '%s over %s at (%d,%d)'%(self.over, self.under, self.x, self.y)
@@ -1099,9 +1176,22 @@ class Crossing:
         else:
             return None
 
+    def hit(self, count):
+        if self.hit1 is None:
+            self.hit1 = count
+        elif self.hit2 is None:
+            self.hit2 = count
+        else:
+            raise ValueError, 'Too many hits!'
+
+    def clear_hits(self):
+        self.hit1, self.hit2 = None, None
+
+
 class ECrossing:
     """
     A pair: (Crossing, Arrow), where the Arrow is involved in the Crossing.
+    The ECrossings correspond 1-1 with edges of the link diagram.
     """ 
     def __init__(self, crossing, arrow):
         if arrow not in crossing:
@@ -1117,6 +1207,8 @@ class ECrossing:
         if self.arrow == self.crossing.over:
             return True
         return False
+
+DT_alphabet = '_abcdefghijklmnopqrstuvwxyzZYXWVUTSRQPONMLKJIHGFEDCBA'
 
 class Palette:
     """
