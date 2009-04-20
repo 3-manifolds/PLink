@@ -641,7 +641,8 @@ class LinkEditor:
 
     def dt_code(self):
         """
-        Return the Dowker-Thistlethwaite code as a list of even integers.
+        Returns the Dowker-Thistlethwaite code as a list of even integers
+        and a list of the number of crossings in each component.
         """
         components = self.crossing_components()
         component_sizes = [len(self.Crossings)<<1, len(components)<<1]
@@ -682,15 +683,15 @@ class LinkEditor:
 
     def dt_normal(self):
         """
-        Return the standard Dowker-Thistlethwaite code as a sequence
-        of even integers.  (Ignores free loops.)
+        Displays the standard Dowker-Thistlethwaite code as a sequence
+        of signed even integers. (Ignores free loops.)
         """
         code, component_sizes = self.dt_code()
         self.write_text('DT code:  ' + str(code))
 
     def dt_snap(self):
         """
-        Return the alphabetic Dowker-Thistlethwaite code as used
+        Displays the alphabetical Dowker-Thistlethwaite code as used
         by Oliver Goodman's Snap.
         """
         code, component_sizes = self.dt_code()
