@@ -51,7 +51,7 @@ class LinkEditor:
         print_menu.add_command(label='monochrome',
                        command=lambda : self.save_image(color_mode='mono'))
         print_menu.add_command(label='color', command=self.save_image)
-        file_menu.add_cascade(label='Save Image ...', menu=print_menu)
+        file_menu.add_cascade(label='Save Image', menu=print_menu)
         file_menu.add_separator()
         file_menu.add_command(label='Exit', command=self.done)
         menubar.add_cascade(label='File', menu=file_menu)

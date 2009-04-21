@@ -27,33 +27,39 @@ colors.</p>
 
 <p>When using the mouse to draw a link with PLink, you should always
 <i>click-and-release</i>.  Do not hold the mouse button down while
-drawing.  PLink uses only the left mouse button.
+drawing.  PLink requires only the left mouse button.
 </p>
  
-<p>Click-and-release the left mouse button to place a starting vertex
-and begin drawing.  The vertex will be connected to the pencil cursor
-by a thin red line.  Click-and-release to place a second vertex.  The
-two vertices will then be joined by an edge.  Continue to draw other
-vertices and edges to your heart's content.</p>
+<p>The default state of the editor is indicated by the arrow cursor.
+In this state, click-and-release the left mouse button on the background
+to place a starting vertex and begin drawing.  The vertex will be
+connected to the pencil cursor by a thin red line.  Click-and-release
+to place a second vertex.  The two vertices will then be joined by an
+edge. Continue to draw other vertices and edges to your heart's content.</p>
 
 <p>To stop drawing, either click twice on the same vertex to create an
 arc, or click on an endpoint vertex.  The latter operation will either
 create a circle component or join together two arc components.</p>
 
-<p>To drag a vertex to a new location click-and-release on the vertex.
-The vertex will now be enclosed in a circular cursor.  Move it to
-where you want it to go and click the left (or middle) button to place
-it.  If you drag one endpoint on top of another, they will meld.</p>
+<p>When the cursor hovers over a vertex it changes to the pointing
+finger.  From this state you can drag a vertex to a new location
+with a click-and-release on the vertex. The vertex will become enclosed
+in a circular cursor.  Move it to where you want it to go and click the
+left (or middle) button to place it.  If you drag one endpoint on top
+of another, they will meld.</p>
 
-<p>To change the orientation of a component, click on one of the edges
-in that component, not too close to a vertex or crossing.</p>
+<p>When the cursor hovers over an edge, not too close to a vertex
+or crossing, it changes to the push-me-pull-you cursor.  Clicking in this
+state will change the orientation of the component containing the
+edge.</p>
 
-<p>The default state of the editor, i.e. neither drawing nor dragging,
-is indicated by the arrow cursor.  In this state, clicking on a
-crossing will toggle the handedness of the crossing.  Double-clicking
-on an endpoint vertex will restart drawing from that vertex.
-Double-clicking on a non-endpoint vertex will break the link at that
-point and begin drawing with the old incoming edge.</p>
+<p>When the cursor hovers over a crossing it changes to the yin-yang
+recycling cursor.  Clicking while in this state changes the
+the handedness of the crossing.</p>
+
+<p>Double-clicking on an endpoint vertex will restart drawing from
+that vertex.  Double-clicking on a non-endpoint vertex will break the
+link at that point and begin drawing with the old incoming edge.</p>
 
 <p>You will not be allowed to create edges that pass too close to a
 vertex or a crossing, or to place vertices too close to edges or
