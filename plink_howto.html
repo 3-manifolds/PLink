@@ -58,7 +58,7 @@ point and begin drawing with the old incoming edge.</p>
 <p>You will not be allowed to create edges that pass too close to a
 vertex or a crossing, or to place vertices too close to edges or
 to crossings or to other vertices.  If you attempt to do any of these
-things, <i>you will be beeped at</i>.</p>
+things, <i>PLink will beep at you</i>.</p>
 
 <p>The window can be resized to allow for different sizes of link
 projections, and the arrow keys can be used to slide the projection
@@ -73,11 +73,13 @@ link projection file.  (This can be done from the drawing state as
 well, in which case the "hot vertex" is remembered in the file!).  The
 "File->Open File" command will read a SnapPea link projection file,
 and restart drawing if the projection was saved while drawing.  The
-"File->Export" menu allows the projection to be exported in various
-standard formats for describing link projections.</p>
+"Info" menu allows an encoding of the link projection to be printed
+in the info line at the bottom.  Various encoding schemes for link
+projections are supported.  Cutting and pasting from the info line
+is possible.</p>
 
-<p>If you are running PLink from inside SnapPeaPython, closing the
-window or exiting the program will pass your projection to SnapPea to
+<p>If you are running PLink from inside SnapPy, closing the
+window or exiting the program will pass your projection to SnapPy to
 have its complement triangulated.</p>
 
 </body>
