@@ -696,7 +696,7 @@ class LinkEditor:
         """
         code, component_sizes = self.dt_code()
         alphacode = ''.join(tuple([DT_alphabet[x>>1] for x in code]))
-        if component_sizes[0] > 26:
+        if component_sizes[0] > 52:
             raise ValueError, 'Too many crossings!'
         prefix = ''.join(tuple([DT_alphabet[n>>1] for n in component_sizes]))
         self.write_text('DT code:  ' + prefix + alphacode)
