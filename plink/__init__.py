@@ -639,10 +639,13 @@ class LinkEditor:
         KLP_crossings = [crossing.KLP for crossing in self.Crossings]
         return num_crossings, num_free_loops, num_components, KLP_crossings
 
-    def dt_code(self):
+    def dt_code(self, snap_style=False):
         """
         Returns the Dowker-Thistlethwaite code as a list of even integers
         and a list of the number of crossings in each component.
+
+        If snap_style is set to True, it returns the alphabetical
+        Dowker-Thistlethwaite code as used by Oliver Goodman's Snap.
         """
         components = self.crossing_components()
         component_sizes = [len(self.Crossings)<<1, len(components)<<1]
@@ -679,7 +682,17 @@ class LinkEditor:
                 code[(crossing.hit1 - 1)/2] = crossing.hit2
             else:
                 code[(crossing.hit2 - 1)/2] = crossing.hit1
-        return code, component_sizes
+
+        if not snap_style:
+            return code, component_sizes
+        else:
+            alphacode = ''.join(tuple([DT_alphabet[x>>1] for x in code]))
+            if component_sizes[0] > 52:
+                raise ValueError, 'Too many crossings!'
+            prefix = ''.join(tuple([DT_alphabet[n>>1] for n in component_sizes]))
+            return prefix + alphacode
+
+            
 
     def dt_normal(self):
         """
@@ -694,12 +707,7 @@ class LinkEditor:
         Displays the alphabetical Dowker-Thistlethwaite code as used
         by Oliver Goodman's Snap.
         """
-        code, component_sizes = self.dt_code()
-        alphacode = ''.join(tuple([DT_alphabet[x>>1] for x in code]))
-        if component_sizes[0] > 52:
-            raise ValueError, 'Too many crossings!'
-        prefix = ''.join(tuple([DT_alphabet[n>>1] for n in component_sizes]))
-        self.write_text('DT code:  ' + prefix + alphacode)
+        self.write_text('DT code:  ' +  self.dt_code(snap_style=True))
 
     def SnapPea_projection_file(self):
         """
@@ -756,13 +764,16 @@ class LinkEditor:
             savefile.write(self.canvas.postscript(colormode=color_mode))
             savefile.close()
 
-    def load(self):
-        loadfile = tkFileDialog.askopenfile(
-            mode='r',
-            title='Open SnapPea Projection File',
-            filetypes=[('Any','*')])
+    def load(self, file_name=None):
+        if file_name:
+            loadfile = open(file_name, "r")
+        else:
+            loadfile = tkFileDialog.askopenfile(
+                mode='r',
+                title='Open SnapPea Projection File',
+                filetypes=[('Any','*')])
         if loadfile:
-            lines = loadfile.readlines()
+            lines = [line for line in loadfile.readlines() if len(line) > 1]
             num_lines = len(lines)
             if not lines.pop(0).startswith('% Link Projection'):
                 tkMessageBox.showwarning(
