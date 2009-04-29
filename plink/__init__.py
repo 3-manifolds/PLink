@@ -14,9 +14,6 @@
 #   the National Science Foundation under grants DMS0608567,
 #   DMS0504975and DMS0204142.
 #
-#   $Author$ $Date$ $Revision$
-#
-plink_revision = '$Revision$'.split()[1]
 
 import os
 import sys
@@ -825,7 +822,7 @@ class LinkEditor:
 
     def howto(self):
         doc_file = 'plink_howto.html'
-        doc_file2 = os.path.join(__path__[0], doc_file)
+        doc_file2 = os.path.join(os.path.dirname(__file__), 'doc', doc_file)
         for path in sys.path + [os.path.abspath(os.path.dirname(sys.argv[0]))]:
             doc_path = os.path.join(path, doc_file)
             if os.path.exists(doc_path):
@@ -1292,7 +1289,7 @@ class InfoDialog(tkSimpleDialog.Dialog):
         self.app = None
         self.destroy()
 
-About = """PLink version 1.0 (rev %s)
+About = """PLink version 1.0
 
 PLink draws piecewise linear links.
 
@@ -1307,7 +1304,7 @@ Development supported by the National Science Foundation.
 
 Inspired by SnapPea (written by Jeff Weeks) and
 LinkSmith (written by Jim Hoste and Morwen Thistlethwaite).
-"""%plink_revision
+"""
 
 if __name__ == '__main__':
     LE = LinkEditor()
