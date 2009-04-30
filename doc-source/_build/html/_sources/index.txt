@@ -9,7 +9,7 @@ How to use PLink
 =================================
 
 PLink draws piecewise linear link projections.  Components may be
-points, PL arcs, or PL circles.  Edges are oriented consistently in
+points, PL arcs, or PL circles.  Line segments are oriented consistently in
 each component.  Different components are different colors.
 
 ..  image:: plink-action.png
@@ -87,7 +87,7 @@ have its complement triangulated.
 Credits
 =============
 
-Written by `Marc Culler <http://math.uic.edu/~culler>`_ with minor help from `Nathan Dunfield <http://dunfield.info>`_.  
+Written by `Marc Culler <http://math.uic.edu/~culler>`_ and `Nathan Dunfield <http://dunfield.info>`_.  
 
 Contents
 ============

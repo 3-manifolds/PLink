@@ -3,7 +3,7 @@
 plink -- A Python/Tk link editor
 ======================================================
 
-Technical documenation of the Python objects that underly PLink.  Of
+Technical documentation of the Python objects that underly PLink.  Of
 interest only to Marc, Nathan, or similar folks.  
 
 ..  automodule:: plink
