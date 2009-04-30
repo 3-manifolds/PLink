@@ -22,12 +22,12 @@ Drawing Basics
   PLink requires only the left mouse button.
  
 * The default state of the editor is indicated by the arrow cursor.
-   In this state, click-and-release the left mouse button on the
-   background to place a starting vertex and begin drawing.  The vertex
-   will be connected to the pencil cursor by a thin red line.
-   Click-and-release to place a second vertex.  The two vertices will
-   then be joined by an edge. Continue to draw other vertices and edges
-   to your heart's content.
+  In this state, click-and-release the left mouse button on the
+  background to place a starting vertex and begin drawing.  The vertex
+  will be connected to the pencil cursor by a thin red line.
+  Click-and-release to place a second vertex.  The two vertices will
+  then be joined by an edge. Continue to draw other vertices and edges
+  to your heart's content.
 
 * To stop drawing, either click twice on the same vertex to create an
   arc, or click on an endpoint vertex.  The latter operation will
