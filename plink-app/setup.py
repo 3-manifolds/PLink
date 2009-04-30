@@ -9,8 +9,7 @@ from setuptools import setup
 
 APP = ['PLink.py']
 DATA_FILES = []
-OPTIONS = {'argv_emulation': True, 'iconfile': 'plink.icns', 'semi_standalone': False}
-
+OPTIONS = {'argv_emulation': True, 'iconfile': 'plink.icns'}
 
 setup(
     app=APP,
