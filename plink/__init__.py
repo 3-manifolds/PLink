@@ -12,7 +12,7 @@
 #
 #   The development of this program was partially supported by
 #   the National Science Foundation under grants DMS0608567,
-#   DMS0504975and DMS0204142.
+#   DMS0504975 and DMS0204142.
 #
 
 import os
@@ -590,18 +590,20 @@ class LinkEditor:
 
         The following excerpt from link_projection.h describes the
         main convention:
-        *  If you view a crossing (from above) so that the strands go in the
-        *  direction of the postive x- and y-axes, then the strand going in
-        *  the x-direction is the KLPStrandX, and the strand going in the
-        *  y-direction is the KLPStrandY.  Note that this definition does not
-        *  depend on which is the overstrand and which is the understrand.
-        *
-        *                             KLPStrandY
-        *                                 ^
-        *                                 |
-        *                             ----+---> KLPStrandX
-        *                                 |
-        *                                 |
+        
+        If you view a crossing (from above) so that the strands go in
+        the direction of the postive x- and y-axes, then the strand
+        going in the x-direction is the KLPStrandX, and the strand
+        going in the y-direction is the KLPStrandY.  Note that this
+        definition does not depend on which is the overstrand and
+        which is the understrand::
+         
+                                     KLPStrandY
+                                         ^
+                                         |
+                                     ----+---> KLPStrandX
+                                         |
+                                         |
         """
         try:
             crossing_components = self.crossing_components()
