@@ -28,10 +28,12 @@ py2applet --make-setup --semi-standalone --iconfile=plink.icns PLink.py
 
 One annoyance is that py2app adds a "console window".  I suppressed
 this by adding a forth line to PLink.py
+
+MC 2009-05-6 This is now handled by plink.  Fourth line commented out.
 """
 
 
 import plink
 LE = plink.LinkEditor()
-LE.window.tk.call('console', 'hide')  # Gets rid of the silly console Window.  
+#LE.window.tk.call('console', 'hide')  # Gets rid of the silly console Window.  
 LE.window.mainloop()
