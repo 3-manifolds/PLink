@@ -12,7 +12,7 @@
 #
 #   The development of this program was partially supported by
 #   the National Science Foundation under grants DMS0608567,
-#   DMS0504975and DMS0204142.
+#   DMS0504975 and DMS0204142.
 #
 
 import os
@@ -31,14 +31,16 @@ class LinkEditor:
     A graphical link drawing tool based on the one embedded in Jeff Weeks'
     original SnapPea program.
     """
-    def __init__(self, root=None, no_arcs=False):
+    def __init__(self, root=None, no_arcs=False, callback=None, cb_menu=''):
         self.no_arcs = no_arcs
+        self.callback = callback
         self.initialize()
         self.cursorx = 0
         self.cursory = 0
         if root is None:
-            root = Tkinter._default_root
-        self.window = Tkinter.Toplevel(root)
+            self.window = Tkinter.Tk()
+        else:
+            self.window = Tkinter.Toplevel(root)
         self.window.title('PLink Editor')
         self.palette = Palette()
         # Menus
@@ -52,6 +54,8 @@ class LinkEditor:
         print_menu.add_command(label='color', command=self.save_image)
         file_menu.add_cascade(label='Save Image', menu=print_menu)
         file_menu.add_separator()
+        if callback:
+            file_menu.add_command(label=cb_menu, command=self.callback)
         file_menu.add_command(label='Exit', command=self.done)
         menubar.add_cascade(label='File', menu=file_menu)
         info_menu = Tkinter.Menu(menubar, tearoff=0)
@@ -592,18 +596,19 @@ class LinkEditor:
 
         The following excerpt from link_projection.h describes the
         main convention:
-        *  If you view a crossing (from above) so that the strands go in the
-        *  direction of the postive x- and y-axes, then the strand going in
-        *  the x-direction is the KLPStrandX, and the strand going in the
-        *  y-direction is the KLPStrandY.  Note that this definition does not
-        *  depend on which is the overstrand and which is the understrand.
-        *
-        *                             KLPStrandY
-        *                                 ^
-        *                                 |
-        *                             ----+---> KLPStrandX
-        *                                 |
-        *                                 |
+
+        If you view a crossing (from above) so that the strands go in the
+        direction of the postive x- and y-axes, then the strand going in
+        the x-direction is the KLPStrandX, and the strand going in the
+        y-direction is the KLPStrandY.  Note that this definition does not
+        depend on which is the overstrand and which is the understrand.
+        
+                                   KLPStrandY
+                                       ^
+                                       |
+                                   ----+---> KLPStrandX
+                                       |
+                                       |
         """
         try:
             crossing_components = self.crossing_components()
