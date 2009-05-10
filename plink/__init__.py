@@ -526,6 +526,16 @@ class LinkEditor:
                 pool.remove(next)
                 component.append(next)
             result.append(component)
+
+        # We want adding components to not change their numeric labels
+        # on components, so we'll sort them by age of oldest vertex.
+        def oldest_vertex(component):
+            def oldest(arrow):
+                return min([self.Vertices.index(v) for v in [arrow.start, arrow.end] if v])
+            return min( [len(self.Vertices)] +  [oldest(a) for a in component])
+        def cmp_components(comp1, comp2):
+            return cmp(oldest_vertex(comp1), oldest_vertex(comp2))
+        result.sort(cmp_components)
         return result
 
     def crossing_components(self):
