@@ -37,6 +37,8 @@ class LinkEditor:
         self.initialize()
         self.cursorx = 0
         self.cursory = 0
+        self.colors = []
+        self.color_keys = []
         if root is None:
             self.window = Tkinter.Tk()
         else:
@@ -55,8 +57,10 @@ class LinkEditor:
         file_menu.add_cascade(label='Save Image', menu=print_menu)
         file_menu.add_separator()
         if callback:
-            file_menu.add_command(label=cb_menu, command=self.callback)
-        file_menu.add_command(label='Exit', command=self.done)
+            file_menu.add_command(label=cb_menu, command=self.do_callback)
+            file_menu.add_command(label='Close', command=self.done)
+        else:
+            file_menu.add_command(label='Exit', command=self.done)
         menubar.add_cascade(label='File', menu=file_menu)
         info_menu = Tkinter.Menu(menubar, tearoff=0)
         export_menu = Tkinter.Menu(menubar, tearoff=0)
@@ -113,7 +117,7 @@ class LinkEditor:
         self.LiveArrow2 = None
         self.ActiveVertex = None
 
-    def done(self):
+    def warn_arcs(self):
         if self.no_arcs:
             for vertex in self.Vertices:
                 if vertex.is_endpoint():
@@ -122,10 +126,25 @@ class LinkEditor:
                          'Click "retry" to continue editing.\n'
                          'Click "cancel" to quit anyway.\n'
                          '(The link projection may be useless.)'):
-                        return
+                        return 'oops'
                     else:
                         break
-        self.window.destroy()
+
+    def done(self):
+        if self.warn_arcs() == 'oops':
+            return
+        if self.callback is not None:
+            self.window.withdraw()
+        else:
+            self.window.destroy()
+
+    def do_callback(self):
+        if self.warn_arcs() == 'oops':
+            return
+        self.callback()
+
+    def reopen(self):
+        self.window.deiconify()
 
     def single_click(self, event):
         """
@@ -379,6 +398,7 @@ class LinkEditor:
         for arrow in self.Arrows: 
             arrow.draw(self.Crossings)
         self.canvas.config(cursor='')
+        self.show_color_keys()
         self.state = 'start_state'
 
     def goto_drawing_state(self, x1,y1):
@@ -528,6 +548,24 @@ class LinkEditor:
                 crosses += arrow_crosses
             result.append([ECrossing(c[1],c[2]) for c in crosses]) 
         return result
+
+    def show_color_keys(self):
+        components = self.arrow_components()
+        self.colors = []
+        for key in self.color_keys:
+            self.canvas.delete(key)
+        self.color_keys = []
+        x, y, n = 10, int(self.canvas.cget('height')), 0
+        for component in components:
+            color = component[0].color
+            self.colors.append(color)
+            self.color_keys.append(
+                self.canvas.create_text(x, y,
+                                        text=str(n),
+                                        fill=color,
+                                        anchor=Tkinter.SW,
+                                        font='Helvetica 16 bold'))
+            x, n = x+16, n+1
 
     def clear_text(self):
         self.infotext.delete(0, Tkinter.END)
@@ -695,8 +733,6 @@ class LinkEditor:
                 raise ValueError, 'Too many crossings!'
             prefix = ''.join(tuple([DT_alphabet[n>>1] for n in component_sizes]))
             return prefix + alphacode
-
-            
 
     def dt_normal(self):
         """
