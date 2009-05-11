@@ -21,8 +21,8 @@ setup(name='plink',
       url='http://www.math.uic.edu/~t3m',
       cmdclass = {"install_data" : my_install_data},
       packages=['plink'],
-      data_files=[('plink',['plink_howto.html'])],
-      package_data={'plink': ['plink_howto.html']},
+      data_files=[('plink',[])],
+      package_data={'plink': []},
       scripts=['bin/plink']
      )
 
