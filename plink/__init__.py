@@ -651,7 +651,7 @@ class LinkEditor:
         direction of the postive x- and y-axes, then the strand going in
         the x-direction is the KLPStrandX, and the strand going in the
         y-direction is the KLPStrandY.  Note that this definition does not
-        depend on which is the overstrand and which is the understrand.
+        depend on which is the overstrand and which is the understrand::
         
                                    KLPStrandY
                                        ^
