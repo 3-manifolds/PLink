@@ -1,6 +1,6 @@
 # Sphinx inventory version 1
 # Project: PLink
-# Version: 1.0
+# Version: 1.1
 plink mod plink.html
 plink.Crossing.sign method plink.html
 plink.LinkEditor.howto method plink.html
