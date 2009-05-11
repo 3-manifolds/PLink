@@ -876,16 +876,8 @@ class LinkEditor:
         InfoDialog(self.window, 'About PLink', About)
 
     def howto(self):
-        doc_file = 'plink_howto.html'
-        doc_file2 = os.path.join(os.path.dirname(__file__), 'doc', doc_file)
-        for path in sys.path + [os.path.abspath(os.path.dirname(sys.argv[0]))]:
-            doc_path = os.path.join(path, doc_file)
-            if os.path.exists(doc_path):
-                break
-            doc_path = os.path.join(path, doc_file2)
-            if os.path.exists(doc_path):
-                break
-        doc_path = os.path.abspath(doc_path)
+        doc_file = os.path.join(os.path.dirname(__file__), 'doc', 'index.html')
+        doc_path = os.path.abspath(doc_file)
         url = 'file:' + pathname2url(doc_path)
         try:
             webbrowser.open(url) 
