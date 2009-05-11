@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 #
-#   Copyright (C) 2007 Marc Culler and others
+#   Copyright (C) 2007-2009 Marc Culler, Nathan Dunfield and others.
 #
 #   This program is distributed under the terms of the 
-#   GNU General Public License, version 3 or later, as published by
-#   the Free Software Foundation.  See the file gpl-3.0.txt for details.
+#   GNU General Public License, version 2 or later, as published by
+#   the Free Software Foundation.  See the file gpl-2.0.txt for details.
 #   The URL for this program is
 #     http://www.math.uic.edu/~t3m/plink
 #   A copy of the license file may be found at:
-#     http://www.gnu.org/licenses/gpl-3.0.txt
+#     http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 #
 #   The development of this program was partially supported by
 #   the National Science Foundation under grants DMS0608567,
@@ -505,10 +505,9 @@ class LinkEditor:
         for arrow in damage_list:
             arrow.draw(self.Crossings)
 
-    def arrow_components(self):
+    def arrow_components(self, include_isolated_vertices=False):
         """
         Returns a list of lists of arrows, one per component of the diagram.
-        An empty list corresponds to a component consisting of one vertex.
         """
         pool = [v.out_arrow  for v in self.Vertices if not v.is_endpoint()]
         pool += [v.out_arrow for v in self.Vertices if v.in_arrow == None]
@@ -516,7 +515,6 @@ class LinkEditor:
         while len(pool):
             first_arrow = pool.pop()
             if first_arrow == None:
-                result.append([])
                 continue
             component = [first_arrow]
             while component[-1].end != component[0].start:
@@ -526,12 +524,16 @@ class LinkEditor:
                 pool.remove(next)
                 component.append(next)
             result.append(component)
+        if include_isolated_vertices:
+            for vertex in [v for v in self.Vertices if v.is_isolated()]:
+                result.append([Arrow(vertex, vertex, color=vertex.color)])
 
         # We want adding components to not change their numeric labels
         # on components, so we'll sort them by age of oldest vertex.
         def oldest_vertex(component):
             def oldest(arrow):
-                return min([self.Vertices.index(v) for v in [arrow.start, arrow.end] if v])
+                return min([self.Vertices.index(v)
+                            for v in [arrow.start, arrow.end] if v])
             return min( [len(self.Vertices)] +  [oldest(a) for a in component])
         def cmp_components(comp1, comp2):
             return cmp(oldest_vertex(comp1), oldest_vertex(comp2))
@@ -560,12 +562,12 @@ class LinkEditor:
         return result
 
     def show_color_keys(self):
-        components = self.arrow_components()
+        components = self.arrow_components(include_isolated_vertices=True)
         self.colors = []
         for key in self.color_keys:
             self.canvas.delete(key)
         self.color_keys = []
-        x, y, n = 10, int(self.canvas.cget('height')), 0
+        x, y, n = 10, 24, 0
         for component in components:
             color = component[0].color
             self.colors.append(color)
@@ -949,6 +951,9 @@ class Vertex:
     def is_endpoint(self):
         return self.in_arrow == None or self.out_arrow == None
     
+    def is_isolated(self):
+        return self.in_arrow == None and self.out_arrow == None
+
     def reverse(self):
         self.in_arrow, self.out_arrow = self.out_arrow, self.in_arrow
 
@@ -1042,18 +1047,19 @@ class Arrow:
     """
     epsilon = 12
     
-    def __init__(self, start, end, canvas, hidden=False, color='black'):
+    def __init__(self, start, end, canvas=None, hidden=False, color='black'):
         self.start, self.end = start, end
-        self.start.out_arrow = self
-        self.end.in_arrow = self
         self.canvas = canvas
         self.color = color
         self.hidden = hidden
         self.frozen = False
         self.lines = []
         self.cross_params = []
-        self.vectorize()
-        self.draw()
+        if self.start != self.end:
+            self.start.out_arrow = self
+            self.end.in_arrow = self
+            self.vectorize()
+            self.draw()
         
     def __repr__(self):
         return '%s-->%s'%(self.start, self.end)
@@ -1346,10 +1352,9 @@ About = """PLink version 1.0
 
 PLink draws piecewise linear links.
 
-Written in Python by Marc Culler, with suggestions
-from Nathan Dunfield.
+Written in Python by Marc Culler and Nathan Dunfield.
 
-Comments to: culler@math.uic.edu
+Comments to: culler@math.uic.edu, nmd@illinois.edu
 Download at http://www.math.uic.edu/~t3m
 Distributed under the GNU General Public License.
 
