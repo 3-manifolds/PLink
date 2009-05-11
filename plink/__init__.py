@@ -1340,7 +1340,9 @@ class InfoDialog(tkSimpleDialog.Dialog):
         self.app = None
         self.destroy()
 
-About = """PLink version 1.0
+import version
+
+About = """PLink version %s
 
 PLink draws piecewise linear links.
 
@@ -1354,7 +1356,7 @@ Development supported by the National Science Foundation.
 
 Inspired by SnapPea (written by Jeff Weeks) and
 LinkSmith (written by Jim Hoste and Morwen Thistlethwaite).
-"""
+""" % version.version
 
 if __name__ == '__main__':
     LE = LinkEditor()
