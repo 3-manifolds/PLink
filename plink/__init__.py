@@ -34,6 +34,7 @@ class LinkEditor:
     def __init__(self, root=None, no_arcs=False, callback=None, cb_menu=''):
         self.no_arcs = no_arcs
         self.callback = callback
+        self.cb_menu = cb_menu
         self.initialize()
         self.cursorx = 0
         self.cursory = 0
@@ -45,7 +46,38 @@ class LinkEditor:
             self.window = Tkinter.Toplevel(root)
         self.window.title('PLink Editor')
         self.palette = Palette()
+        # Frame and Canvas
+        self.frame = Tkinter.Frame(self.window, 
+                                   borderwidth=2,
+                                   relief=Tkinter.SUNKEN)
+        self.canvas = Tkinter.Canvas(self.frame,
+                                     bg='#dcecff',
+                                     width=500,
+                                     height=500)
+        self.infoframe = Tkinter.Frame(self.window, 
+                                       borderwidth=2,
+                                       relief=Tkinter.SUNKEN)
+        self.infotext = Tkinter.Entry(self.infoframe, font="Helvetica 16")
+        spacer = Tkinter.Frame(self.window, height=16);
+        spacer.pack(side=Tkinter.BOTTOM)
+        self.infoframe.pack(padx=5, pady=0, fill=Tkinter.X, expand=Tkinter.NO,
+                            side=Tkinter.BOTTOM)
+        self.frame.pack(padx=5, pady=5, fill=Tkinter.BOTH, expand=Tkinter.YES)
+        self.canvas.pack(padx=5, pady=5, fill=Tkinter.BOTH, expand=Tkinter.YES)
+        self.infotext.pack(padx=0, pady=0, fill=Tkinter.X, expand=Tkinter.NO)
         # Menus
+        self.build_menus()
+        # Event bindings
+        self.canvas.bind('<Button-1>', self.single_click)
+        self.canvas.bind('<Double-Button-1>', self.double_click)
+        self.canvas.bind('<Motion>', self.mouse_moved)
+        self.window.bind('<Key>', self.key_press)
+        self.window.protocol("WM_DELETE_WINDOW", self.done)
+        # Go
+        self.state='start_state'
+    
+    # Subclasses will probably want to overide this method.
+    def build_menus(self):
         menubar = Tkinter.Menu(self.window)
         file_menu = Tkinter.Menu(menubar, tearoff=0)
         file_menu.add_command(label='Open File ...', command=self.load)
@@ -56,8 +88,8 @@ class LinkEditor:
         print_menu.add_command(label='color', command=self.save_image)
         file_menu.add_cascade(label='Save Image', menu=print_menu)
         file_menu.add_separator()
-        if callback:
-            file_menu.add_command(label=cb_menu, command=self.do_callback)
+        if self.callback:
+            file_menu.add_command(label=self.cb_menu, command=self.do_callback)
             file_menu.add_command(label='Close', command=self.done)
         else:
             file_menu.add_command(label='Exit', command=self.done)
@@ -80,33 +112,6 @@ class LinkEditor:
         help_menu.add_command(label='Instructions ...', command=self.howto)
         menubar.add_cascade(label='Help', menu=help_menu)
         self.window.config(menu=menubar)
-        # Frame and Canvas
-        self.frame = Tkinter.Frame(self.window, 
-                                   borderwidth=2,
-                                   relief=Tkinter.SUNKEN)
-        self.canvas = Tkinter.Canvas(self.frame,
-                                     bg='#dcecff',
-                                     width=500,
-                                     height=500)
-        self.infoframe = Tkinter.Frame(self.window, 
-                                       borderwidth=2,
-                                       relief=Tkinter.SUNKEN)
-        self.infotext = Tkinter.Entry(self.infoframe, font="Helvetica 16")
-        spacer = Tkinter.Frame(self.window, height=16);
-        spacer.pack(side=Tkinter.BOTTOM)
-        self.infoframe.pack(padx=5, pady=0, fill=Tkinter.X, expand=Tkinter.NO,
-                            side=Tkinter.BOTTOM)
-        self.frame.pack(padx=5, pady=5, fill=Tkinter.BOTH, expand=Tkinter.YES)
-        self.canvas.pack(padx=5, pady=5, fill=Tkinter.BOTH, expand=Tkinter.YES)
-        self.infotext.pack(padx=0, pady=0, fill=Tkinter.X, expand=Tkinter.NO)
-        # Event bindings
-        self.canvas.bind('<Button-1>', self.single_click)
-        self.canvas.bind('<Double-Button-1>', self.double_click)
-        self.canvas.bind('<Motion>', self.mouse_moved)
-        self.window.bind('<Key>', self.key_press)
-        self.window.protocol("WM_DELETE_WINDOW", self.done)
-        # Go
-        self.state='start_state'
 
     def initialize(self):
         self.Arrows = []
@@ -370,6 +375,7 @@ class LinkEditor:
                 vertex.y += dy
             self.update_crosspoints()
             self.canvas.move('all', dx, dy)
+            self.show_color_keys()
         event.x, event.y = self.cursorx, self.cursory
         self.mouse_moved(event)
 
