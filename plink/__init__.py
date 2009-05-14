@@ -109,7 +109,7 @@ class LinkEditor:
         tools_menu.add_command(label='Reflect', command=self.reflect)
         tools_menu.add_command(label='Clear', command=self.clear)
         menubar.add_cascade(label='Tools', menu=tools_menu)
-        help_menu = Tkinter.Menu(menubar, tearoff=0)
+        Help_menu = Tkinter.Menu(menubar, tearoff=0)
         help_menu.add_command(label='About PLink...', command=self.about)
         help_menu.add_command(label='Instructions ...', command=self.howto)
         menubar.add_cascade(label='Help', menu=help_menu)
@@ -155,7 +155,6 @@ class LinkEditor:
         if self.warn_arcs() == 'oops':
             return
         if self.callback is not None:
-            self.unfocus()
             self.window.withdraw()
         else:
             self.window.destroy()
@@ -166,7 +165,6 @@ class LinkEditor:
         self.callback()
 
     def reopen(self):
-        self.focus()
         self.window.deiconify()
 
     def single_click(self, event):
