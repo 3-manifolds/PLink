@@ -72,11 +72,13 @@ class LinkEditor:
         self.canvas.bind('<Double-Button-1>', self.double_click)
         self.canvas.bind('<Motion>', self.mouse_moved)
         self.window.bind('<Key>', self.key_press)
+        self.canvas.bind('<FocusIn>', self.focus)
+        self.canvas.bind('<FocusOut>', self.unfocus)
         self.window.protocol("WM_DELETE_WINDOW", self.done)
         # Go
         self.state='start_state'
     
-    # Subclasses will probably want to overide this method.
+    # Subclasses may want to overide this method.
     def build_menus(self):
         menubar = Tkinter.Menu(self.window)
         file_menu = Tkinter.Menu(menubar, tearoff=0)
@@ -112,6 +114,20 @@ class LinkEditor:
         help_menu.add_command(label='Instructions ...', command=self.howto)
         menubar.add_cascade(label='Help', menu=help_menu)
         self.window.config(menu=menubar)
+
+    # Subclasses may override this, e.g. for menu manipulation.
+    def focus(self, event):
+        """
+        Called when the PLink window receives focus.
+        """
+        pass
+
+    # Subclasses may override this too.
+    def unfocus(self, event):
+        """
+        Called when the PLink window loses focus.
+        """
+        pass
 
     def initialize(self):
         self.Arrows = []
