@@ -155,6 +155,7 @@ class LinkEditor:
         if self.warn_arcs() == 'oops':
             return
         if self.callback is not None:
+            self.unfocus()
             self.window.withdraw()
         else:
             self.window.destroy()
@@ -165,6 +166,7 @@ class LinkEditor:
         self.callback()
 
     def reopen(self):
+        self.focus()
         self.window.deiconify()
 
     def single_click(self, event):
