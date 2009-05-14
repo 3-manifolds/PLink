@@ -109,7 +109,7 @@ class LinkEditor:
         tools_menu.add_command(label='Reflect', command=self.reflect)
         tools_menu.add_command(label='Clear', command=self.clear)
         menubar.add_cascade(label='Tools', menu=tools_menu)
-        Help_menu = Tkinter.Menu(menubar, tearoff=0)
+        help_menu = Tkinter.Menu(menubar, tearoff=0)
         help_menu.add_command(label='About PLink...', command=self.about)
         help_menu.add_command(label='Instructions ...', command=self.howto)
         menubar.add_cascade(label='Help', menu=help_menu)
