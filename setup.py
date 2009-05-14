@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
-from distutils.core import setup
+from setuptools import setup
 import os
 
-# We need to collect the names of the Sphinx-generated documenation files to add
+# We need to collect the names of the Sphinx-generated documentation files to add
 
 pjoin = os.path.join
 doc_path = pjoin('plink', 'doc')
@@ -18,8 +18,8 @@ from plink.version import version
 setup(name='plink',
       version= version,
       description='Link Projection Editor',
-      author='Marc Culler',
-      author_email='culler@math.uic.edu',
+      author='Marc Culler and Nathan Dunfield',
+      author_email='culler@math.uic.edu, nmd@illinois.edu',
       url='http://www.math.uic.edu/~t3m',
       packages=['plink'],
       package_data={'plink': doc_files},
