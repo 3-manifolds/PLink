@@ -18,7 +18,7 @@
 import os
 import sys
 import webbrowser
-import Tkinter
+import Tkinter as Tk_
 import tkFileDialog
 import tkMessageBox
 import tkSimpleDialog
@@ -41,30 +41,37 @@ class LinkEditor:
         self.colors = []
         self.color_keys = []
         if root is None:
-            self.window = Tkinter.Tk()
+            self.window = Tk_.Tk()
         else:
-            self.window = Tkinter.Toplevel(root)
+            self.window = Tk_.Toplevel(root)
         self.window.title('PLink Editor')
         self.palette = Palette()
         # Frame and Canvas
-        self.frame = Tkinter.Frame(self.window, 
+        self.frame = Tk_.Frame(self.window, 
+                               borderwidth=0,
+                               relief=Tk_.FLAT,
+                               background='#dcecff')
+        self.canvas = Tk_.Canvas(self.frame,
+                                 bg='#dcecff',
+                                 width=500,
+                                 height=500,
+                                 highlightthickness=0)
+        self.infoframe = Tk_.Frame(self.window, 
                                    borderwidth=2,
-                                   relief=Tkinter.SUNKEN)
-        self.canvas = Tkinter.Canvas(self.frame,
-                                     bg='#dcecff',
-                                     width=500,
-                                     height=500)
-        self.infoframe = Tkinter.Frame(self.window, 
-                                       borderwidth=2,
-                                       relief=Tkinter.SUNKEN)
-        self.infotext = Tkinter.Entry(self.infoframe, font="Helvetica 16")
-        spacer = Tkinter.Frame(self.window, height=16);
-        spacer.pack(side=Tkinter.BOTTOM)
-        self.infoframe.pack(padx=5, pady=0, fill=Tkinter.X, expand=Tkinter.NO,
-                            side=Tkinter.BOTTOM)
-        self.frame.pack(padx=5, pady=5, fill=Tkinter.BOTH, expand=Tkinter.YES)
-        self.canvas.pack(padx=5, pady=5, fill=Tkinter.BOTH, expand=Tkinter.YES)
-        self.infotext.pack(padx=0, pady=0, fill=Tkinter.X, expand=Tkinter.NO)
+                                   relief=Tk_.FLAT,
+                                   background='#dcecff')
+        self.infotext = Tk_.Entry(self.infoframe,
+                                  font="Helvetica 16",
+                                  highlightthickness=0)
+        spacer = Tk_.Frame(self.window,
+                           height=16,
+                           background='#dcecff')
+        spacer.pack(side=Tk_.BOTTOM)
+        self.infoframe.pack(padx=0, pady=0, fill=Tk_.X, expand=Tk_.NO,
+                            side=Tk_.BOTTOM)
+        self.frame.pack(padx=0, pady=0, fill=Tk_.BOTH, expand=Tk_.YES)
+        self.canvas.pack(padx=0, pady=0, fill=Tk_.BOTH, expand=Tk_.YES)
+        self.infotext.pack(padx=5, pady=0, fill=Tk_.X, expand=Tk_.NO)
         # Menus
         self.build_menus()
         # Event bindings
@@ -74,17 +81,19 @@ class LinkEditor:
         self.window.bind('<Key>', self.key_press)
         self.canvas.bind('<FocusIn>', self.focus)
         self.canvas.bind('<FocusOut>', self.unfocus)
+        self.infotext.bind('<<Copy>>', lambda event : None)
+        self.infotext.bind('<Key>', lambda event : 'break')
         self.window.protocol("WM_DELETE_WINDOW", self.done)
         # Go
         self.state='start_state'
     
     # Subclasses may want to overide this method.
     def build_menus(self):
-        menubar = Tkinter.Menu(self.window)
-        file_menu = Tkinter.Menu(menubar, tearoff=0)
+        menubar = Tk_.Menu(self.window)
+        file_menu = Tk_.Menu(menubar, tearoff=0)
         file_menu.add_command(label='Open File ...', command=self.load)
         file_menu.add_command(label='Save ...', command=self.save)
-        print_menu = Tkinter.Menu(menubar, tearoff=0)
+        print_menu = Tk_.Menu(menubar, tearoff=0)
         print_menu.add_command(label='monochrome',
                        command=lambda : self.save_image(color_mode='mono'))
         print_menu.add_command(label='color', command=self.save_image)
@@ -96,20 +105,20 @@ class LinkEditor:
         else:
             file_menu.add_command(label='Exit', command=self.done)
         menubar.add_cascade(label='File', menu=file_menu)
-        info_menu = Tkinter.Menu(menubar, tearoff=0)
-        export_menu = Tkinter.Menu(menubar, tearoff=0)
+        info_menu = Tk_.Menu(menubar, tearoff=0)
+        export_menu = Tk_.Menu(menubar, tearoff=0)
         info_menu.add_command(label='DT code', command=self.dt_normal)
         info_menu.add_command(label='DT for Snap', command=self.dt_snap)
         info_menu.add_command(label='Gauss code', command=self.not_done)
         info_menu.add_command(label='PD code', command=self.not_done)
         menubar.add_cascade(label='Info', menu=info_menu)
-        tools_menu = Tkinter.Menu(menubar, tearoff=0)
+        tools_menu = Tk_.Menu(menubar, tearoff=0)
         tools_menu.add_command(label='Make alternating',
                        command=self.make_alternating)
         tools_menu.add_command(label='Reflect', command=self.reflect)
         tools_menu.add_command(label='Clear', command=self.clear)
         menubar.add_cascade(label='Tools', menu=tools_menu)
-        help_menu = Tkinter.Menu(menubar, tearoff=0)
+        help_menu = Tk_.Menu(menubar, tearoff=0)
         help_menu.add_command(label='About PLink...', command=self.about)
         help_menu.add_command(label='Instructions ...', command=self.howto)
         menubar.add_cascade(label='Help', menu=help_menu)
@@ -430,6 +439,7 @@ class LinkEditor:
         self.LiveArrow1 = self.canvas.create_line(x0,y0,x1,y1,fill='red')
         self.state = 'drawing_state'
         self.canvas.config(cursor='pencil')
+        self.infotext.delete(0, Tk_.END)
 
     def verify_drag(self):
         self.ActiveVertex.update_arrows()
@@ -597,16 +607,16 @@ class LinkEditor:
                 self.canvas.create_text(x, y,
                                         text=str(n),
                                         fill=color,
-                                        anchor=Tkinter.SW,
+                                        anchor=Tk_.SW,
                                         font='Helvetica 16 bold'))
             x, n = x+16, n+1
 
     def clear_text(self):
-        self.infotext.delete(0, Tkinter.END)
+        self.infotext.delete(0, Tk_.END)
 
     def write_text(self, string):
-        self.infotext.delete(0, Tkinter.END)
-        self.infotext.insert(Tkinter.END, string)
+        self.infotext.delete(0, Tk_.END)
+        self.infotext.insert(Tk_.END, string)
 
     def make_alternating(self):
         """
@@ -774,7 +784,7 @@ class LinkEditor:
         of signed even integers. (Ignores free loops.)
         """
         code, component_sizes = self.dt_code()
-        self.write_text('DT code:  ' + str(code))
+        self.write_text('DT code:  ' + str(code).replace(', ', ','))
 
     def dt_snap(self):
         """
@@ -1145,7 +1155,7 @@ class Arrow:
         x1, y1 = self.end.point()
         self.lines.append(self.canvas.create_line(
                 x0, y0, x1, y1,
-                arrow=Tkinter.LAST,
+                arrow=Tk_.LAST,
                 width=3, fill=self.color))
         if recurse:
             under_arrows = [c.under for c in crossings if c.over == self]
@@ -1328,20 +1338,20 @@ class InfoDialog(tkSimpleDialog.Dialog):
     def __init__(self, parent, title, content=''):
         self.parent = parent
         self.content = content
-        Tkinter.Toplevel.__init__(self, parent)
-        NW = Tkinter.N+Tkinter.W
+        Tk_.Toplevel.__init__(self, parent)
+        NW = Tk_.N+Tk_.W
         if title:
             self.title(title)
 #        self.icon = PhotoImage(data=icon_string)
-        canvas = Tkinter.Canvas(self, width=58, height=58)
+        canvas = Tk_.Canvas(self, width=58, height=58)
 #        canvas.create_image(10, 10, anchor=NW, image=self.icon)
         canvas.grid(row=0, column=0, sticky=NW)
-        text = Tkinter.Text(self, font='Helvetica 14',
+        text = Tk_.Text(self, font='Helvetica 14',
                     width=50, height=16, padx=10)
-        text.insert(Tkinter.END, self.content)
+        text.insert(Tk_.END, self.content)
         text.grid(row=0, column=1, sticky=NW,
                   padx=10, pady=10)
-        text.config(state=Tkinter.DISABLED)
+        text.config(state=Tk_.DISABLED)
         self.buttonbox()
         self.grab_set()
         self.protocol('WM_DELETE_WINDOW', self.ok)
@@ -1349,10 +1359,10 @@ class InfoDialog(tkSimpleDialog.Dialog):
         self.wait_window(self)
 
     def buttonbox(self):
-        box = Tkinter.Frame(self)
-        w = Tkinter.Button(box, text="OK", width=10, command=self.ok,
-                   default=Tkinter.ACTIVE)
-        w.pack(side=Tkinter.LEFT, padx=5, pady=5)
+        box = Tk_.Frame(self)
+        w = Tk_.Button(box, text="OK", width=10, command=self.ok,
+                   default=Tk_.ACTIVE)
+        w.pack(side=Tk_.LEFT, padx=5, pady=5)
         self.bind("<Return>", self.ok)
         self.bind("<Escape>", self.ok)
         box.grid(row=1, columnspan=2)
