@@ -31,10 +31,12 @@ class LinkEditor:
     A graphical link drawing tool based on the one embedded in Jeff Weeks'
     original SnapPea program.
     """
-    def __init__(self, root=None, no_arcs=False, callback=None, cb_menu=''):
+    def __init__(self, root=None, no_arcs=False, callback=None, cb_menu='',
+                 title='PLink Editor'):
         self.no_arcs = no_arcs
         self.callback = callback
         self.cb_menu = cb_menu
+        self.title = title
         self.initialize()
         self.cursorx = 0
         self.cursory = 0
@@ -44,7 +46,7 @@ class LinkEditor:
             self.window = Tk_.Tk()
         else:
             self.window = Tk_.Toplevel(root)
-        self.window.title('PLink Editor')
+        self.window.title(title)
         self.palette = Palette()
         # Frame and Canvas
         self.frame = Tk_.Frame(self.window, 
@@ -79,8 +81,6 @@ class LinkEditor:
         self.canvas.bind('<Double-Button-1>', self.double_click)
         self.canvas.bind('<Motion>', self.mouse_moved)
         self.window.bind('<Key>', self.key_press)
-        self.canvas.bind('<FocusIn>', self.focus)
-        self.canvas.bind('<FocusOut>', self.unfocus)
         self.infotext.bind('<<Copy>>', lambda event : None)
         self.infotext.bind('<Key>', lambda event : 'break')
         self.window.protocol("WM_DELETE_WINDOW", self.done)
@@ -124,20 +124,6 @@ class LinkEditor:
         menubar.add_cascade(label='Help', menu=help_menu)
         self.window.config(menu=menubar)
 
-    # Subclasses may override this, e.g. for menu manipulation.
-    def focus(self, event):
-        """
-        Called when the PLink window receives focus.
-        """
-        pass
-
-    # Subclasses may override this too.
-    def unfocus(self, event):
-        """
-        Called when the PLink window loses focus.
-        """
-        pass
-
     def initialize(self):
         self.Arrows = []
         self.Vertices = []
@@ -161,10 +147,11 @@ class LinkEditor:
                         break
 
     def done(self):
-        if self.warn_arcs() == 'oops':
-            return
         if self.callback is not None:
             self.window.withdraw()
+            return
+        if self.warn_arcs() == 'oops':
+            return
         else:
             self.window.destroy()
 
