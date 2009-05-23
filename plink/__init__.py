@@ -901,7 +901,7 @@ class LinkEditor:
         try:
             webbrowser.open(url) 
         except:
-            showwarning('Not found!', 'Could not open URL\n(%s)'%url)
+            tkMessageBox.showwarning('Not found!', 'Could not open URL\n(%s)'%url)
   
 class Vertex:
     """
