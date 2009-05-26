@@ -153,6 +153,10 @@ echo "Done fixing permissions."
 if [ -x /usr/local/bin/openUp ]; then
     echo "Applying openUp..."
     /usr/local/bin/openUp "${MOUNT_DIR}"
+else
+    # added by NMD
+    bless --folder "${MOUNT_DIR}"
+    bless --openfolder "${MOUNT_DIR}"
 fi
 
 # unmount
