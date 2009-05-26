@@ -37,6 +37,7 @@ plink.LinkEditor.save_image method plink.html
 plink.LinkEditor.write_text method plink.html
 plink.LinkEditor.update_crossings method plink.html
 plink.Arrow class plink.html
+plink.Arrow.set_end method plink.html
 plink.Crossing.reverse method plink.html
 plink.LinkEditor.cursor_on_arrow method plink.html
 plink.Crossing class plink.html
@@ -44,7 +45,7 @@ plink.LinkEditor.arrow_components method plink.html
 plink.Arrow.set_color method plink.html
 plink.LinkEditor.save method plink.html
 plink.LinkEditor.key_press method plink.html
-plink.Arrow.set_end method plink.html
+plink.LinkEditor.build_menus method plink.html
 plink.Arrow.hide method plink.html
 plink.ECrossing.pair method plink.html
 plink.LinkEditor.make_alternating method plink.html
