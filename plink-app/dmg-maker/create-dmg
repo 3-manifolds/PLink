@@ -155,6 +155,7 @@ if [ -x /usr/local/bin/openUp ]; then
     /usr/local/bin/openUp "${MOUNT_DIR}"
 else
     # added by NMD
+    echo "Blessing volume..."
     bless --folder "${MOUNT_DIR}"
     bless --openfolder "${MOUNT_DIR}"
 fi
