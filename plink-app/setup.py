@@ -10,7 +10,12 @@ import os
 
 APP = ['PLink.py']
 DATA_FILES = []
-OPTIONS = {'argv_emulation': True, 'iconfile': 'plink.icns', 'semi_standalone' : False}
+OPTIONS = {
+    'argv_emulation': True,
+    'iconfile': 'plink.icns',
+    'semi_standalone' : False,
+    'packages' : 'plink',
+    }
 
 class clean(Command):
     user_options = []
