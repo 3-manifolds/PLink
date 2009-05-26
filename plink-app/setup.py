@@ -16,7 +16,7 @@ class clean(Command):
     user_options = []
 
     def initialize_options(self):
-        pass 
+        pass
         
     def finalize_options(self):
         pass
