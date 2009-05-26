@@ -29,8 +29,8 @@ def main():
     if os.path.exists(name + ".dmg"):
         os.remove(name + ".dmg")
     # Add symlink to /Applications if not there:
-    if not os.path.exists("../dist/Applications"):
-        os.symlink("/Applications/", dist_dir)
+    if not os.path.exists(dist_dir + "/Applications"):
+        os.symlink("/Applications/", dist_dir + "/Applications")
     # figure out the needed size:
     size, units = re.match("([\d.]+)([KMG])", os.popen("du -sh " + dist_dir).read()).groups()
     new_size = "%d" % ceil(1.2 * float(size)) + units
