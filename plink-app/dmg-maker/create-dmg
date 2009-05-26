@@ -8,11 +8,13 @@
 #                       <applescript>
 #                       <artpath>
 #                       <eula_resource_file>
+#
+# Modified by NMD 2009/5/26.  
 
 set -e;
 
 function pure_version() {
-  echo '1.0.0.2'
+  echo '1.0.0.2.nmd'
 }
 
 function version() {
@@ -39,6 +41,8 @@ function usage() {
   echo "      set position of the file's icon"
   echo "  --custom-icon file_name custom_icon_or_sample_file x y"
   echo "      set position and custom icon"
+  echo "  --dmg-size dmg_size    #added by NMD"
+  echo "      set the size of the dmg to be created (must exceed size of directory!), e.g. 12m."
   echo "  --version         show tool version number"
   echo "  -h, --help        display this help"
   exit 0
@@ -49,6 +53,7 @@ WINY=60
 WINW=600
 WINH=400
 ICON_SIZE=128
+DMG_SIZE=300m
 
 while test "${1:0:1}" = "-"; do
   case $1 in
@@ -75,6 +80,9 @@ while test "${1:0:1}" = "-"; do
       shift; shift; shift; shift;;
     --custom-icon)
       shift; shift; shift; shift; shift;;
+    --dmg-size)
+      DMG_SIZE="$2"
+      shift; shift;;
     -h | --help)
       usage;;
     --version)
@@ -110,7 +118,7 @@ test -d "$AUX_PATH" || {
 # Create the image
 echo "Creating disk image..."
 test -f "${DMG_TEMP_NAME}" && rm -f "${DMG_TEMP_NAME}"
-hdiutil create -srcfolder "$SRC_FOLDER" -volname "${VOLUME_NAME}" -fs HFS+ -fsargs "-c c=64,a=16,e=16" -format UDRW -size 300m "${DMG_TEMP_NAME}"
+hdiutil create -srcfolder "$SRC_FOLDER" -volname "${VOLUME_NAME}" -fs HFS+ -fsargs "-c c=64,a=16,e=16" -format UDRW -size "${DMG_SIZE}"  "${DMG_TEMP_NAME}"
 
 # mount it
 echo "Mounting disk image..."
