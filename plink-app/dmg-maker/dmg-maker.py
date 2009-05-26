@@ -32,7 +32,8 @@ def main():
     if not os.path.exists(dist_dir + "/Applications"):
         os.symlink("/Applications/", dist_dir + "/Applications")
     # figure out the needed size:
-    size, units = re.match("([\d.]+)([KMG])", os.popen("du -sh " + dist_dir).read()).groups()
+    raw_size = os.popen("du -sh " + dist_dir).read()
+    size, units = re.search("([0-9.]+)([KMG])", raw_size).groups()
     new_size = "%d" % ceil(1.2 * float(size)) + units
 # Run the main script:
     os.system( command_str % (name, name, size, name, dist_dir) )
