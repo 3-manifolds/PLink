@@ -34,6 +34,12 @@ MC 2009-05-6 This is now handled by plink.  Fourth line commented out.
 
 
 import plink
-LE = plink.LinkEditor()
-#LE.window.tk.call('console', 'hide')  # Gets rid of the silly console Window.  
-LE.window.mainloop()
+
+def main():
+    LE = plink.LinkEditor()
+    #LE.window.tk.call('console', 'hide')  # Gets rid of the silly console Window.  
+    LE.window.mainloop()
+
+if __name__ == "__main__":
+    main()
+
