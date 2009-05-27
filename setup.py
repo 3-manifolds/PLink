@@ -23,9 +23,6 @@ setup(name='plink',
       url='http://www.math.uic.edu/~t3m',
       packages=['plink'],
       package_data={'plink': doc_files},
-      entry_points = {
-    'console_scripts': [
-            'plink = plink.app:main'
-        ]}
+      entry_points = {'console_scripts': ['plink = plink.app:main']}
      )
 
