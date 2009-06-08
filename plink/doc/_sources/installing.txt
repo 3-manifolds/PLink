@@ -6,10 +6,9 @@ Installing and running PLink
 Mac OS X:
 ---------------
 
-Simply download the disk image `PLink.dmg
-<http://math.uic.edu/~t3m/plink/PLink.dmg>`_ and copy PLink.app to the
-Applications folder.  Double-click to start it, just like any other
-application.
+Simply download `PLink.dmg <http://math.uic.edu/~t3m/plink/PLink.dmg>`_
+and copy PLink.app to the Applications folder.  Double-click to start
+it, just like any other application.
 
 Windows:
 -------------------
@@ -38,10 +37,10 @@ If you don't have root privileges, download the source-code below and do::
 
 to start PLink.  
 
-Source code:
+Source code
 -----------------------------------
 
-The complete source code for all platforms: `PLink.tar.gz <http://math.uic.edu/~t3m/plink/PLink.tar.gz>`_ 
+The complete source code for all platforms: `plink.tar.gz <http://math.uic.edu/~t3m/plink/plink.tar.gz>`_ 
 
 
 
