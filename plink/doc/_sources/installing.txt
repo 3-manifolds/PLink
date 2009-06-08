@@ -15,7 +15,9 @@ Windows
 
 To be improved, but for now the following works: Install `Python
 <http://python.org>`_, and then get the source code below and expand
-it.  Then double-click the file plink\plink\__init__.py
+it.  Then double-click the file::
+
+  plink\plink\__init__.py
 
 Linux and other Unixes
 -------------------------------------------------------
@@ -26,7 +28,7 @@ Ubuntu, install the package "python-tk".
 
 If you have root privileges and `setuptools
 <http://peak.telecommunity.com/DevCenter/setuptools>`_ installed (the
-Linux package is usually called "python-setuptools") and simply do::
+Linux package is usually called "python-setuptools"), simply do::
 
   sudo easy_install plink
 
@@ -43,7 +45,7 @@ to start PLink.
 Source code
 -----------------------------------
 
-The complete source code for all platforms: `plink.tar.gz <http://math.uic.edu/~t3m/plink/plink.tar.gz>`_ 
+The complete source code for all platforms: `plink.tar.gz <http://math.uic.edu/~t3m/plink/plink.tar.gz>`_
 
 
 
