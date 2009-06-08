@@ -3,16 +3,19 @@
 Installing and running PLink
 ======================================================
 
-Mac OS X:
+Mac OS X
 ---------------
 
 Simply download `PLink.dmg <http://math.uic.edu/~t3m/plink/PLink.dmg>`_
 and copy PLink.app to the Applications folder.  Double-click to start
 it, just like any other application.
 
-Windows:
+Windows
 -------------------
 
+To be improved, but for now the following works: Install `Python
+<http://python.org>`_, and then get the source code below and expand
+it.  Then double-click the file plink\plink\__init__.py
 
 Linux and other Unixes
 -------------------------------------------------------
