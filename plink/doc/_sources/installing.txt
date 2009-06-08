@@ -21,7 +21,7 @@ You will need to have Python (> 2.4), Tk (>= 8.4), and Tkinter
 installed to run plink; for instance, if you are using Debian or
 Ubuntu, install the package "python-tk".
 
-If you have root privileges and `distutils
+If you have root privileges and `setuptools
 <http://peak.telecommunity.com/DevCenter/setuptools>`_ installed (the
 Linux package is usually called "python-setuptools") and simply do::
 
@@ -31,8 +31,8 @@ This installs a shell-command called "plink" which starts PLink.
 
 If you don't have root privileges, download the source-code below and do::
 
-  tar xfz PLink.tar.gz
-  cd PLink
+  tar xfz plink.tar.gz
+  cd plink
   python -m plink.app
 
 to start PLink.  
