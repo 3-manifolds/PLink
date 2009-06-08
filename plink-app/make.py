@@ -32,7 +32,9 @@ os.system("dmg-maker.py")
 user = os.environ['USER']
 if user in ['nmd', 'dunfield']:
     print "Hi there Nathan..."
-    os.system("scp PLink.dmg t3m@shell.math.uic.edu:public_html/")
+    os.system("scp PLink.dmg t3m@shell.math.uic.edu:public_html/plink/")
+    os.system("ssh t3m@shell.math.uic.edu update_plink.py)"
 if user == 'culler':
     print "Hi there Marc..."
-    os.system("scp PLink.dmg culler@shell.math.uic.edu:~t3m/public_html/")
+    os.system("scp PLink.dmg culler@shell.math.uic.edu:~t3m/public_html/plink/")
+    os.system("ssh culler@shell.math.uic.edu update_plink.py")

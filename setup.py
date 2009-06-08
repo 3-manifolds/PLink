@@ -1,7 +1,20 @@
 #!/usr/bin/env python
 
-from setuptools import setup
+from setuptools import setup, Command
 import os
+
+
+# A real clean
+
+class clean(Command):
+    user_options = []
+    def initialize_options(self):
+        pass 
+    def finalize_options(self):
+        pass
+    def run(self):
+        os.system("rm -rf build dist *.pyc")
+        os.system("rm -rf plink*.egg-info")
 
 # We need to collect the names of the Sphinx-generated documentation files to add
 
@@ -23,6 +36,7 @@ setup(name='plink',
       url='http://www.math.uic.edu/~t3m',
       packages=['plink'],
       package_data={'plink': doc_files},
-      entry_points = {'console_scripts': ['plink = plink.app:main']}
+      entry_points = {'console_scripts': ['plink = plink.app:main']},
+      cmdclass =  {'clean' : clean},
      )
 
