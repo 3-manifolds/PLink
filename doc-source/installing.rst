@@ -24,13 +24,13 @@ Linux and other Unixes
 
 You will need to have Python (> 2.4), Tk (>= 8.4), and Tkinter
 installed to run plink; for instance, if you are using Debian or
-Ubuntu, install the package "python-tk".
+Ubuntu, just install the package "python-tk".
 
 If you have root privileges and `setuptools
 <http://peak.telecommunity.com/DevCenter/setuptools>`_ installed (the
 Linux package is usually called "python-setuptools"), simply do::
 
-  sudo easy_install plink
+  sudo easy_install -f http://math.uic.edu/~t3m/nest/plink plink
 
 This installs a shell-command called "plink" which starts PLink.  
 
@@ -45,7 +45,14 @@ to start PLink.
 Source code
 -----------------------------------
 
-The complete source code for all platforms: `plink.tar.gz <http://math.uic.edu/~t3m/plink/plink.tar.gz>`_
+The complete source code for all platforms: `plink.tar.gz <http://math.uic.edu/~t3m/plink/plink.tar.gz>`_   
+
+You can also get it straight from the `Mercurial
+<www.selenic.com/mercurial>`_ repository::
+
+  hg clone static-http://math.uic.edu/~t3m/hg/plink
+
+
 
 
 
