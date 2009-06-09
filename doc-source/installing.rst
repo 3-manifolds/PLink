@@ -30,7 +30,7 @@ If you have root privileges and `setuptools
 <http://peak.telecommunity.com/DevCenter/setuptools>`_ installed (the
 Linux package is usually called "python-setuptools"), simply do::
 
-  sudo easy_install -f http://math.uic.edu/~t3m/nest/plink plink
+  sudo python -m easy_install -f http://math.uic.edu/~t3m/plink plink
 
 This installs a shell-command called "plink" which starts PLink.  
 
