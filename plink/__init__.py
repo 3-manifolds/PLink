@@ -83,6 +83,8 @@ class LinkEditor:
         self.window.bind('<Key>', self.key_press)
         self.infotext.bind('<<Copy>>', lambda event : None)
         self.infotext.bind('<Key>', lambda event : 'break')
+        self.infotext.bind('<Up>', self.key_press)
+        self.infotext.bind('<Down>', self.key_press)
         self.window.protocol("WM_DELETE_WINDOW", self.done)
         # Go
         self.state='start_state'
@@ -600,6 +602,7 @@ class LinkEditor:
 
     def clear_text(self):
         self.infotext.delete(0, Tk_.END)
+        self.canvas.set_focus()
 
     def write_text(self, string):
         self.infotext.delete(0, Tk_.END)
