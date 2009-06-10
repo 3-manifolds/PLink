@@ -45,7 +45,7 @@ def upload_files():
 
 
     eggs = glob.glob("../../dist/plink-*.egg")
-    os.system("scp PLink.dmg %s %s:public_html/plink/" % (" ".join(eggs), address))
+    os.system("scp PLink.dmg %s %s:~t3m/public_html/plink/" % (" ".join(eggs), address))
     os.system("ssh %s update_plink.py" % address)
 
 if __name__ == "__main__":
