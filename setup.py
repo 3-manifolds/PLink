@@ -1,12 +1,5 @@
 #!/usr/bin/env python
 
-# First, bootstrap setuptools
-
-import ez_setup
-ez_setup.use_setuptools()
-
-# Now start the main part of setup.py
-
 from setuptools import setup, Command
 import os
 
