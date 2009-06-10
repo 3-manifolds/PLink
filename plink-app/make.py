@@ -37,4 +37,4 @@ if user in ['nmd', 'dunfield']:
 if user == 'culler':
     print "Hi there Marc..."
     os.system("scp PLink.dmg culler@shell.math.uic.edu:~t3m/public_html/plink/")
-    os.system("ssh culler@shell.math.uic.edu update_plink.py")
+    os.system("ssh culler@shell.math.uic.edu ~t3m/bin/update_plink.py")
