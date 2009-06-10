@@ -30,7 +30,7 @@ def build_app():
 
 def build_disk_image():
     os.chdir("dmg-maker")
-    os.system("dmg-maker.py")
+    os.system("./dmg-maker.py")
 
 # Now put it on the webpage:
 
