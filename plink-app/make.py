@@ -16,8 +16,6 @@ def build_module_and_eggs():
     os.chdir("doc-source")
     os.system("make install")
     os.chdir("../")
-    os.system("python2.6 setup.py install")
-    os.system("python2.5 setup.py install")
 
 # Now build the .app
 
