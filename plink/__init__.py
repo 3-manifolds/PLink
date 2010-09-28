@@ -17,6 +17,7 @@
 
 import os
 import sys
+import time
 import webbrowser
 import Tkinter as Tk_
 import tkFileDialog
@@ -87,6 +88,7 @@ class LinkEditor:
         self.infotext.bind('<Down>', self.key_press)
         self.window.protocol("WM_DELETE_WINDOW", self.done)
         # Go
+        self.flipcheck = None
         self.state='start_state'
     
     # Subclasses may want to overide this method.
@@ -324,12 +326,19 @@ class LinkEditor:
         if self.state == 'start_state':
             point = Vertex(x, y, self.canvas, hidden=True)
             if point in self.Vertices:
+                self.flipcheck=None
                 self.canvas.config(cursor='hand1')
             elif point in self.CrossPoints:
+                self.flipcheck=None
                 self.canvas.config(cursor='exchange')
             elif self.cursor_on_arrow(point):
-                self.canvas.config(cursor='double_arrow')
+                now = time.time()
+                if self.flipcheck is None:
+                    self.flipcheck = now
+                elif now - self.flipcheck > 0.5:
+                    self.canvas.config(cursor='double_arrow')
             else:
+                self.flipcheck=None
                 self.canvas.config(cursor='')
         elif self.state == 'drawing_state':
             x0,y0,x1,y1 = self.canvas.coords(self.LiveArrow1)
@@ -602,7 +611,6 @@ class LinkEditor:
 
     def clear_text(self):
         self.infotext.delete(0, Tk_.END)
-        self.canvas.focus_set()
 
     def write_text(self, string):
         self.infotext.delete(0, Tk_.END)
