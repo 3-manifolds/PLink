@@ -6,7 +6,7 @@ Installing and running PLink
 Mac OS X
 ---------------
 
-Simply download `PLink.dmg <http://math.uic.edu/~t3m/plink/PLink.dmg>`_
+Simply download `PLink.dmg <http://math.uic.edu/t3m/plink/PLink.dmg>`_
 and copy PLink.app to the Applications folder.  Double-click to start
 it, just like any other application.
 
@@ -30,7 +30,7 @@ If you have root privileges and `setuptools
 <http://peak.telecommunity.com/DevCenter/setuptools>`_ installed (the
 Linux package is usually called "python-setuptools"), simply do::
 
-  sudo python -m easy_install -f http://math.uic.edu/~t3m/plink plink
+  sudo python -m easy_install -f http://math.uic.edu/t3m/plink plink
 
 This installs a shell-command called "plink" which starts PLink.  
 
@@ -45,7 +45,7 @@ to start PLink.
 Source code
 -----------------------------------
 
-The complete source code for all platforms: `plink.tar.gz <http://t3m.computop.org/plink.tar.gz>`_   
+The complete source code for all platforms: `plink.tar.gz <http://math.uic.edu/t3m/plink.tar.gz>`_   
 
 You can also get it straight from the `Mercurial
 <www.selenic.com/mercurial>`_ repository::
