@@ -1,3 +1,5 @@
+
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
@@ -12,12 +14,13 @@
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '',
         VERSION:     '1.1',
-        COLLAPSE_MODINDEX: false,
+        COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
       };
     </script>
     <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="top" title="PLink v1.1 documentation" href="index.html" />
     <link rel="prev" title="Installing and running PLink" href="installing.html" /> 
@@ -30,8 +33,8 @@
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
-          <a href="modindex.html" title="Global Module Index"
-             accesskey="M">modules</a> |</li>
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
         <li class="right" >
           <a href="installing.html" title="Installing and running PLink"
              accesskey="P">previous</a> |</li>
@@ -44,14 +47,13 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="module-plink">
-<h1>plink &#8211; A Python/Tk link editor<a class="headerlink" href="#module-plink" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="plink-a-python-tk-link-editor">
+<h1>plink &#8211; A Python/Tk link editor<a class="headerlink" href="#plink-a-python-tk-link-editor" title="Permalink to this headline">¶</a></h1>
 <p>Technical documentation of the Python objects that underly PLink.  Of
 interest only to Marc, Nathan, or similar folks.</p>
-<dl class="class">
+<span class="target" id="module-plink"></span><dl class="class">
 <dt id="plink.LinkEditor">
-<em class="property">
-class </em><tt class="descclassname">plink.</tt><tt class="descname">LinkEditor</tt><big>(</big><em>root=None</em>, <em>no_arcs=False</em>, <em>callback=None</em>, <em>cb_menu=''</em>, <em>title='PLink Editor'</em><big>)</big><a class="headerlink" href="#plink.LinkEditor" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">plink.</tt><tt class="descname">LinkEditor</tt><big>(</big><em>root=None</em>, <em>no_arcs=False</em>, <em>callback=None</em>, <em>cb_menu=''</em>, <em>title='PLink Editor'</em><big>)</big><a class="headerlink" href="#plink.LinkEditor" title="Permalink to this definition">¶</a></dt>
 <dd><p>A graphical link drawing tool based on the one embedded in Jeff Weeks&#8217;
 original SnapPea program.</p>
 <dl class="method">
@@ -82,8 +84,9 @@ depend on which is the overstrand and which is the understrand:</p>
 <dl class="method">
 <dt id="plink.LinkEditor.SnapPea_projection_file">
 <tt class="descname">SnapPea_projection_file</tt><big>(</big><big>)</big><a class="headerlink" href="#plink.LinkEditor.SnapPea_projection_file" title="Permalink to this definition">¶</a></dt>
-<dd>Returns a string containing the contents of a SnapPea link
-projection file.</dd></dl>
+<dd><p>Returns a string containing the contents of a SnapPea link
+projection file.</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="plink.LinkEditor.about">
@@ -93,7 +96,8 @@ projection file.</dd></dl>
 <dl class="method">
 <dt id="plink.LinkEditor.arrow_components">
 <tt class="descname">arrow_components</tt><big>(</big><em>include_isolated_vertices=False</em><big>)</big><a class="headerlink" href="#plink.LinkEditor.arrow_components" title="Permalink to this definition">¶</a></dt>
-<dd>Returns a list of lists of arrows, one per component of the diagram.</dd></dl>
+<dd><p>Returns a list of lists of arrows, one per component of the diagram.</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="plink.LinkEditor.build_menus">
@@ -123,9 +127,10 @@ projection file.</dd></dl>
 <dl class="method">
 <dt id="plink.LinkEditor.crossing_components">
 <tt class="descname">crossing_components</tt><big>(</big><big>)</big><a class="headerlink" href="#plink.LinkEditor.crossing_components" title="Permalink to this definition">¶</a></dt>
-<dd>Returns a list of lists of ECrossings, one per component,
+<dd><p>Returns a list of lists of ECrossings, one per component,
 where the corresponding crossings are ordered consecutively
-through the component.  Requires that all components be closed.</dd></dl>
+through the component.  Requires that all components be closed.</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="plink.LinkEditor.cursor_on_arrow">
@@ -150,7 +155,8 @@ through the component.  Requires that all components be closed.</dd></dl>
 <dl class="method">
 <dt id="plink.LinkEditor.double_click">
 <tt class="descname">double_click</tt><big>(</big><em>event</em><big>)</big><a class="headerlink" href="#plink.LinkEditor.double_click" title="Permalink to this definition">¶</a></dt>
-<dd>Event handler for mouse double-clicks.</dd></dl>
+<dd><p>Event handler for mouse double-clicks.</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="plink.LinkEditor.dt_code">
@@ -164,14 +170,16 @@ Dowker-Thistlethwaite code as used by Oliver Goodman&#8217;s Snap.</p>
 <dl class="method">
 <dt id="plink.LinkEditor.dt_normal">
 <tt class="descname">dt_normal</tt><big>(</big><big>)</big><a class="headerlink" href="#plink.LinkEditor.dt_normal" title="Permalink to this definition">¶</a></dt>
-<dd>Displays the standard Dowker-Thistlethwaite code as a sequence
-of signed even integers. (Ignores free loops.)</dd></dl>
+<dd><p>Displays the standard Dowker-Thistlethwaite code as a sequence
+of signed even integers. (Ignores free loops.)</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="plink.LinkEditor.dt_snap">
 <tt class="descname">dt_snap</tt><big>(</big><big>)</big><a class="headerlink" href="#plink.LinkEditor.dt_snap" title="Permalink to this definition">¶</a></dt>
-<dd>Displays the alphabetical Dowker-Thistlethwaite code as used
-by Oliver Goodman&#8217;s Snap.</dd></dl>
+<dd><p>Displays the alphabetical Dowker-Thistlethwaite code as used
+by Oliver Goodman&#8217;s Snap.</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="plink.LinkEditor.end_dragging_state">
@@ -211,7 +219,8 @@ by Oliver Goodman&#8217;s Snap.</dd></dl>
 <dl class="method">
 <dt id="plink.LinkEditor.key_press">
 <tt class="descname">key_press</tt><big>(</big><em>event</em><big>)</big><a class="headerlink" href="#plink.LinkEditor.key_press" title="Permalink to this definition">¶</a></dt>
-<dd>Handler for keypress events.</dd></dl>
+<dd><p>Handler for keypress events.</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="plink.LinkEditor.load">
@@ -221,13 +230,15 @@ by Oliver Goodman&#8217;s Snap.</dd></dl>
 <dl class="method">
 <dt id="plink.LinkEditor.make_alternating">
 <tt class="descname">make_alternating</tt><big>(</big><big>)</big><a class="headerlink" href="#plink.LinkEditor.make_alternating" title="Permalink to this definition">¶</a></dt>
-<dd>Changes crossings to make the projection alternating.
-Requires that all components be closed.</dd></dl>
+<dd><p>Changes crossings to make the projection alternating.
+Requires that all components be closed.</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="plink.LinkEditor.mouse_moved">
 <tt class="descname">mouse_moved</tt><big>(</big><em>event</em><big>)</big><a class="headerlink" href="#plink.LinkEditor.mouse_moved" title="Permalink to this definition">¶</a></dt>
-<dd>Handler for mouse motion events.</dd></dl>
+<dd><p>Handler for mouse motion events.</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="plink.LinkEditor.not_done">
@@ -262,7 +273,8 @@ Requires that all components be closed.</dd></dl>
 <dl class="method">
 <dt id="plink.LinkEditor.single_click">
 <tt class="descname">single_click</tt><big>(</big><em>event</em><big>)</big><a class="headerlink" href="#plink.LinkEditor.single_click" title="Permalink to this definition">¶</a></dt>
-<dd>Event handler for mouse clicks.</dd></dl>
+<dd><p>Event handler for mouse clicks.</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="plink.LinkEditor.update_crossings">
@@ -293,8 +305,7 @@ Requires that all components be closed.</dd></dl>
 
 <dl class="class">
 <dt id="plink.Arrow">
-<em class="property">
-class </em><tt class="descclassname">plink.</tt><tt class="descname">Arrow</tt><big>(</big><em>start</em>, <em>end</em>, <em>canvas=None</em>, <em>hidden=False</em>, <em>color='black'</em><big>)</big><a class="headerlink" href="#plink.Arrow" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">plink.</tt><tt class="descname">Arrow</tt><big>(</big><em>start</em>, <em>end</em>, <em>canvas=None</em>, <em>hidden=False</em>, <em>color='black'</em><big>)</big><a class="headerlink" href="#plink.Arrow" title="Permalink to this definition">¶</a></dt>
 <dd><p>An arrow in a PL link diagram.</p>
 <dl class="method">
 <dt id="plink.Arrow.draw">
@@ -304,7 +315,8 @@ class </em><tt class="descclassname">plink.</tt><tt class="descname">Arrow</tt><
 <dl class="method">
 <dt id="plink.Arrow.erase">
 <tt class="descname">erase</tt><big>(</big><big>)</big><a class="headerlink" href="#plink.Arrow.erase" title="Permalink to this definition">¶</a></dt>
-<dd>Prepare the arrow for the garbage collector.</dd></dl>
+<dd><p>Prepare the arrow for the garbage collector.</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="plink.Arrow.expose">
@@ -355,8 +367,7 @@ class </em><tt class="descclassname">plink.</tt><tt class="descname">Arrow</tt><
 
 <dl class="class">
 <dt id="plink.Crossing">
-<em class="property">
-class </em><tt class="descclassname">plink.</tt><tt class="descname">Crossing</tt><big>(</big><em>over</em>, <em>under</em><big>)</big><a class="headerlink" href="#plink.Crossing" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">plink.</tt><tt class="descname">Crossing</tt><big>(</big><em>over</em>, <em>under</em><big>)</big><a class="headerlink" href="#plink.Crossing" title="Permalink to this definition">¶</a></dt>
 <dd><p>A pair of crossing arrows in a PL link diagram.</p>
 <dl class="method">
 <dt id="plink.Crossing.clear_hits">
@@ -397,8 +408,7 @@ class </em><tt class="descclassname">plink.</tt><tt class="descname">Crossing</t
 
 <dl class="class">
 <dt id="plink.ECrossing">
-<em class="property">
-class </em><tt class="descclassname">plink.</tt><tt class="descname">ECrossing</tt><big>(</big><em>crossing</em>, <em>arrow</em><big>)</big><a class="headerlink" href="#plink.ECrossing" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">plink.</tt><tt class="descname">ECrossing</tt><big>(</big><em>crossing</em>, <em>arrow</em><big>)</big><a class="headerlink" href="#plink.ECrossing" title="Permalink to this definition">¶</a></dt>
 <dd><p>A pair: (Crossing, Arrow), where the Arrow is involved in the Crossing.
 The ECrossings correspond 1-1 with edges of the link diagram.</p>
 <dl class="method">
@@ -421,27 +431,27 @@ The ECrossings correspond 1-1 with edges of the link diagram.</p>
       </div>
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper">
-            <h4>Previous topic</h4>
-            <p class="topless"><a href="installing.html"
-                                  title="previous chapter">Installing and running PLink</a></p>
-            <h3>This Page</h3>
-            <ul class="this-page-menu">
-              <li><a href="_sources/plink.txt"
-                     rel="nofollow">Show Source</a></li>
-            </ul>
-          <div id="searchbox" style="display: none">
-            <h3>Quick search</h3>
-              <form class="search" action="search.html" method="get">
-                <input type="text" name="q" size="18" />
-                <input type="submit" value="Go" />
-                <input type="hidden" name="check_keywords" value="yes" />
-                <input type="hidden" name="area" value="default" />
-              </form>
-              <p class="searchtip" style="font-size: 90%">
-              Enter search terms or a module, class or function name.
-              </p>
-          </div>
-          <script type="text/javascript">$('#searchbox').show(0);</script>
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="installing.html"
+                        title="previous chapter">Installing and running PLink</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/plink.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -453,7 +463,7 @@ The ECrossings correspond 1-1 with edges of the link diagram.</p>
           <a href="genindex.html" title="General Index"
              >index</a></li>
         <li class="right" >
-          <a href="modindex.html" title="Global Module Index"
+          <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
           <a href="installing.html" title="Installing and running PLink"
@@ -462,8 +472,8 @@ The ECrossings correspond 1-1 with edges of the link diagram.</p>
       </ul>
     </div>
     <div class="footer">
-      &copy; Copyright 2009, Marc Culler, Nathan Dunfield and others.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.1.
+        &copy; Copyright 2009, Marc Culler, Nathan Dunfield and others.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.4.
     </div>
   </body>
 </html>
