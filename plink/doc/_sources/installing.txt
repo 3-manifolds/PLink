@@ -48,7 +48,7 @@ Source code
 The complete source code for all platforms: `plink.tar.gz <http://math.uic.edu/t3m/plink.tar.gz>`_   
 
 You can also get it straight from the `Mercurial
-<www.selenic.com/mercurial>`_ repository::
+<http://www.selenic.com/mercurial>`_ repository::
 
   hg clone static-http://math.uic.edu/t3m/hg/plink
 
