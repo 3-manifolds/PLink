@@ -19,13 +19,21 @@ import os
 import sys
 import time
 import webbrowser
-import Tkinter as Tk_
-import tkFileDialog
-import tkMessageBox
-import tkSimpleDialog
-from urllib import pathname2url
 from math import sqrt
 from random import random
+
+try:
+    import Tkinter as Tk_
+    import tkFileDialog
+    import tkMessageBox
+    import tkSimpleDialog
+    from urllib import pathname2url
+except ImportError: # Python 3
+    import tkinter as Tk_
+    import tkinter.filedialog as tkFileDialog
+    import tkinter.messagebox as tkMessageBox
+    import tkinter.simpledialog as tkSimpleDialog
+    from urllib.request import pathname2url
 
 class LinkEditor:
     """
@@ -772,7 +780,7 @@ class LinkEditor:
         else:
             alphacode = ''.join(tuple([DT_alphabet[x>>1] for x in code]))
             if component_sizes[0] > 52:
-                raise ValueError, 'Too many crossings!'
+                raise ValueError('Too many crossings!')
             prefix = ''.join(tuple([DT_alphabet[n>>1] for n in component_sizes]))
             return prefix + alphacode
 
@@ -1272,7 +1280,7 @@ class Crossing:
         elif self.hit2 is None:
             self.hit2 = count
         else:
-            raise ValueError, 'Too many hits!'
+            raise ValueError('Too many hits!')
 
     def clear_hits(self):
         self.hit1, self.hit2 = None, None
@@ -1370,7 +1378,10 @@ class InfoDialog(tkSimpleDialog.Dialog):
         self.app = None
         self.destroy()
 
-import version
+try:
+    import version
+except ImportError: # Python 3
+    from . import version
 
 About = """PLink version %s
 
