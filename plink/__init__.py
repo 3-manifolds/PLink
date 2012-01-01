@@ -573,9 +573,9 @@ class LinkEditor:
                 return min([self.Vertices.index(v)
                             for v in [arrow.start, arrow.end] if v])
             return min( [len(self.Vertices)] +  [oldest(a) for a in component])
-        def cmp_components(comp1, comp2):
-            return cmp(oldest_vertex(comp1), oldest_vertex(comp2))
-        result.sort(cmp_components)
+        def component_key(comp):
+            return oldest_vertex(comp)
+        result.sort(key=component_key)
         return result
 
     def crossing_components(self):
@@ -771,9 +771,9 @@ class LinkEditor:
         code = [None for crossing in self.Crossings]
         for crossing in self.Crossings:
             if crossing.hit1%2:
-                code[(crossing.hit1 - 1)/2] = crossing.hit2
+                code[(crossing.hit1 - 1)//2] = crossing.hit2
             else:
-                code[(crossing.hit2 - 1)/2] = crossing.hit1
+                code[(crossing.hit2 - 1)//2] = crossing.hit1
 
         if not snap_style:
             return code, component_sizes
