@@ -24,8 +24,12 @@ doc_files = [pjoin('doc', file) for file in os.listdir(doc_path) if file[0] != "
 for dir_name in [file for file in os.listdir(doc_path) if file[0] == "_"]:
     doc_files += [pjoin('doc', dir_name, file) for file in os.listdir(pjoin('plink', 'doc', dir_name))]
 
+# Get version number:
+
+exec(open('plink/version.py').read())
+
 setup(name='plink',
-      version= '1.1',
+      version=version,
       description='Link Projection Editor',
       author='Marc Culler and Nathan Dunfield',
       author_email='culler@math.uic.edu, nmd@illinois.edu',

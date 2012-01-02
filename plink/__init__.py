@@ -35,6 +35,21 @@ except ImportError: # Python 3
     import tkinter.simpledialog as tkSimpleDialog
     from urllib.request import pathname2url
 
+# Make the Tk file dialog work better with file extensions on OX
+
+def asksaveasfile(mode='w',**options):
+    """
+    Ask for a filename to save as, and returned the opened file.
+    Modified from tkFileDialog to more intelligently handle
+    default file extensions. 
+    """
+    if sys.platform == 'darwin':
+        if 'defaultextension' in options and not 'initialfile' in options:
+            options['initialfile'] = 'untitled' + options['defaultextension']
+
+    return tkFileDialog.asksaveasfile(mode=mode, **options)
+
+
 class LinkEditor:
     """
     A graphical link drawing tool based on the one embedded in Jeff Weeks'
@@ -837,18 +852,24 @@ class LinkEditor:
             'Sorry!  That feature has not been written yet.')
 
     def save(self):
-        savefile = tkFileDialog.asksaveasfile(
+        savefile = asksaveasfile(
             mode='w',
             title='Save As Snappea Projection File',
-            filetypes=[('Any','*')])
+            defaultextension = '.lnk',
+            filetypes = [
+                ("Link and text files", "*.lnk *.txt", "TEXT"),
+                ("All text files", "", "TEXT"),
+                ("All files", "")],
+            )
         if savefile:
             savefile.write(self.SnapPea_projection_file())
             savefile.close()
 
     def save_image(self, color_mode='color'):
-        savefile = tkFileDialog.asksaveasfile(
+        savefile = asksaveasfile(
             mode='w',
             title='Save As Postscript Image File (%s)'%color_mode,
+            defaultextension = ".eps", 
             filetypes=[('ps','eps')])
         if savefile:
             savefile.write(self.canvas.postscript(colormode=color_mode))
@@ -861,7 +882,12 @@ class LinkEditor:
             loadfile = tkFileDialog.askopenfile(
                 mode='r',
                 title='Open SnapPea Projection File',
-                filetypes=[('Any','*')])
+                defaultextension = ".lnk",
+                filetypes = [
+                ("Link and text files", "*.lnk *.txt", "TEXT"),
+                ("All text files", "", "TEXT"),
+                ("All files", "")],
+                )
         if loadfile:
             lines = [line for line in loadfile.readlines() if len(line) > 1]
             num_lines = len(lines)
