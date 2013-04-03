@@ -1,0 +1,207 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>How to use PLink &mdash; PLink v1.1 documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '1.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="PLink v1.1 documentation" href="#" />
+    <link rel="next" title="Installing and running PLink" href="installing.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="installing.html" title="Installing and running PLink"
+             accesskey="N">next</a> |</li>
+        <li><a href="#">PLink v1.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="how-to-use-plink">
+<h1>How to use PLink<a class="headerlink" href="#how-to-use-plink" title="Permalink to this headline">¶</a></h1>
+<p>PLink draws piecewise linear link projections.  Components may be
+points, PL arcs, or PL circles.  Line segments are oriented consistently in
+each component.  Different components are different colors.</p>
+<img alt="_images/plink-action.png" src="_images/plink-action.png" />
+<div class="section" id="drawing-basics">
+<h2>Drawing Basics<a class="headerlink" href="#drawing-basics" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>When using the mouse to draw a link with PLink, you should always
+<em>click-and-release</em>.  Do not hold the mouse button down while drawing.
+PLink requires only the left mouse button.</li>
+<li>The default state of the editor is indicated by the arrow cursor.
+In this state, click-and-release the left mouse button on the
+background to place a starting vertex and begin drawing.  The vertex
+will be connected to the pencil cursor by a thin red line.
+Click-and-release to place a second vertex.  The two vertices will
+then be joined by an edge. Continue to draw other vertices and edges
+to your heart&#8217;s content.</li>
+<li>To stop drawing, either click twice on the same vertex to create an
+arc, or click on an endpoint vertex.  The latter operation will
+either create a circle component or join together two arc
+components.</li>
+<li>When the cursor hovers over a vertex it changes to the pointing
+finger.  From this state you can drag a vertex to a new location
+with a click-and-release on the vertex. The vertex will become
+enclosed in a circular cursor.  Move it to where you want it to go
+and click the left (or middle) button to place it.  If you drag one
+endpoint on top of another, they will meld.</li>
+<li>When the cursor hovers over an edge, not too close to a vertex or
+crossing, it changes to the push-me-pull-you cursor.  Clicking in
+this state will change the orientation of the component containing
+the edge.</li>
+<li>When the cursor hovers over a crossing it changes to the yin-yang
+recycling cursor.  Clicking while in this state changes the the
+handedness of the crossing.</li>
+<li>Double-clicking on an endpoint vertex will restart drawing from
+that vertex.  Double-clicking on a non-endpoint vertex will break
+the link at that point and begin drawing with the old incoming edge.</li>
+<li>While in drawing state, hitting the Delete key removes the last
+vertex before the cursor.  If no vertices remain, the drawing state
+ends and the active component is removed.  This can be used to
+remove a segment from the diagram.  Double-click a vertex; hit
+Delete to remove the incoming segment at that vertex; then click the
+vertex again to reconnect.</li>
+<li>You will not be allowed to create edges that pass too close to a
+vertex or a crossing, or to place vertices too close to edges or to
+crossings or to other vertices.  If you attempt to do any of these
+things, <em>PLink will beep at you</em>.</li>
+</ul>
+</div>
+<div class="section" id="miscellaneous-features">
+<h2>Miscellaneous Features<a class="headerlink" href="#miscellaneous-features" title="Permalink to this headline">¶</a></h2>
+<p>The window can be resized to allow for different sizes of link
+projections, and the arrow keys can be used to slide the projection
+around in order to make more room on one side or another.</p>
+<p>The &#8220;Tools&#8221; menu can be used to make the projection alternating
+(provided that all components are circles), or to clear the screen,
+or to reflect the projection in the xy-plane, changing all crossings.</p>
+<p>The &#8220;File&#8221; menu can be used to save the projection as a SnapPea
+link projection file.  (This can be done from the drawing state as
+well, in which case the &#8220;hot vertex&#8221; is remembered in the file!).  The
+&#8220;File-&gt;Open File&#8221; command will read a SnapPea link projection file,
+and restart drawing if the projection was saved while drawing.  The
+&#8220;Info&#8221; menu allows an encoding of the link projection to be printed
+in the info line at the bottom.  Various encoding schemes for link
+projections are supported.  Cutting and pasting from the info line
+is possible.</p>
+<p>If you are running PLink from inside SnapPy, closing the
+window or exiting the program will pass your projection to SnapPy to
+have its complement triangulated.</p>
+</div>
+</div>
+<div class="section" id="credits">
+<h1>Credits<a class="headerlink" href="#credits" title="Permalink to this headline">¶</a></h1>
+<p>Written by <a class="reference external" href="http://math.uic.edu/~culler">Marc Culler</a> and <a class="reference external" href="http://dunfield.info">Nathan Dunfield</a>.</p>
+</div>
+<div class="section" id="contents">
+<h1>Contents<a class="headerlink" href="#contents" title="Permalink to this headline">¶</a></h1>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="installing.html">Installing and running PLink</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="installing.html#mac-os-x">Mac OS X</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installing.html#windows">Windows</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installing.html#linux-and-other-unixes">Linux and other Unixes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installing.html#source-code">Source code</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="plink.html">plink &#8211; A Python/Tk link editor</a></li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="#">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">How to use PLink</a><ul>
+<li><a class="reference internal" href="#drawing-basics">Drawing Basics</a></li>
+<li><a class="reference internal" href="#miscellaneous-features">Miscellaneous Features</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#credits">Credits</a></li>
+<li><a class="reference internal" href="#contents">Contents</a><ul>
+</ul>
+</li>
+</ul>
+
+  <h4>Next topic</h4>
+  <p class="topless"><a href="installing.html"
+                        title="next chapter">Installing and running PLink</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/index.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="installing.html" title="Installing and running PLink"
+             >next</a> |</li>
+        <li><a href="#">PLink v1.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2009, Marc Culler, Nathan Dunfield and others.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.4.
+    </div>
+  </body>
+</html>

@@ -1,28 +1,42 @@
 #!/usr/bin/env python
 
-from distutils.core import setup
-from distutils.command.install_data import install_data
+from setuptools import setup, Command
+import os
 
-class my_install_data(install_data):
-    """
-    Put the data in the package directory, where we can find it.
-    """
-    def finalize_options (self):
-        self.set_undefined_options('install',
-                                   ('install_lib', 'install_dir'),
-                                   ('root', 'root'),
-                                   ('force', 'force'),
-                                  )
+
+# A real clean
+
+class clean(Command):
+    user_options = []
+    def initialize_options(self):
+        pass 
+    def finalize_options(self):
+        pass
+    def run(self):
+        os.system("rm -rf build dist *.pyc")
+        os.system("rm -rf plink*.egg-info")
+
+# We need to collect the names of the Sphinx-generated documentation files to add
+
+pjoin = os.path.join
+doc_path = pjoin('plink', 'doc')
+doc_files = [pjoin('doc', file) for file in os.listdir(doc_path) if file[0] != "_"]
+for dir_name in [file for file in os.listdir(doc_path) if file[0] == "_"]:
+    doc_files += [pjoin('doc', dir_name, file) for file in os.listdir(pjoin('plink', 'doc', dir_name))]
+
+# Get version number:
+
+exec(open('plink/version.py').read())
+
 setup(name='plink',
-      version='1.0',
+      version=version,
       description='Link Projection Editor',
-      author='Marc Culler',
-      author_email='culler@math.uic.edu',
+      author='Marc Culler and Nathan Dunfield',
+      author_email='culler@math.uic.edu, nmd@illinois.edu',
       url='http://www.math.uic.edu/~t3m',
-      cmdclass = {"install_data" : my_install_data},
       packages=['plink'],
-      data_files=[('plink',['plink_howto.html'])],
-      package_data={'plink': ['plink_howto.html']},
-      scripts=['bin/plink']
+      package_data={'plink': doc_files},
+      entry_points = {'console_scripts': ['plink = plink.app:main']},
+      cmdclass =  {'clean' : clean},
      )
 

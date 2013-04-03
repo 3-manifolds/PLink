@@ -1,152 +1,231 @@
 #!/usr/bin/env python
 #
-#   Copyright (C) 2007 Marc Culler and others
+#   Copyright (C) 2007-2009 Marc Culler, Nathan Dunfield and others.
 #
 #   This program is distributed under the terms of the 
-#   GNU General Public License, version 3 or later, as published by
-#   the Free Software Foundation.  See the file gpl-3.0.txt for details.
+#   GNU General Public License, version 2 or later, as published by
+#   the Free Software Foundation.  See the file gpl-2.0.txt for details.
 #   The URL for this program is
 #     http://www.math.uic.edu/~t3m/plink
 #   A copy of the license file may be found at:
-#     http://www.gnu.org/licenses/gpl-3.0.txt
+#     http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 #
 #   The development of this program was partially supported by
 #   the National Science Foundation under grants DMS0608567,
-#   DMS0504975and DMS0204142.
-#
-#   $Author$ $Date$ $Revision$
+#   DMS0504975 and DMS0204142.
 #
 
 import os
 import sys
+import time
 import webbrowser
-import Tkinter
-import tkFileDialog
-import tkMessageBox
-import tkSimpleDialog
-from urllib import pathname2url
 from math import sqrt
 from random import random
+
+try:
+    import Tkinter as Tk_
+    import tkFileDialog
+    import tkMessageBox
+    import tkSimpleDialog
+    from urllib import pathname2url
+except ImportError: # Python 3
+    import tkinter as Tk_
+    import tkinter.filedialog as tkFileDialog
+    import tkinter.messagebox as tkMessageBox
+    import tkinter.simpledialog as tkSimpleDialog
+    from urllib.request import pathname2url
+
+# Make the Tk file dialog work better with file extensions on OX
+
+def asksaveasfile(mode='w',**options):
+    """
+    Ask for a filename to save as, and returned the opened file.
+    Modified from tkFileDialog to more intelligently handle
+    default file extensions. 
+    """
+    if sys.platform == 'darwin':
+        if 'defaultextension' in options and not 'initialfile' in options:
+            options['initialfile'] = 'untitled' + options['defaultextension']
+
+    return tkFileDialog.asksaveasfile(mode=mode, **options)
+
 
 class LinkEditor:
     """
     A graphical link drawing tool based on the one embedded in Jeff Weeks'
     original SnapPea program.
     """
-    def __init__(self, callback=None):
-        self.callback=callback
+    def __init__(self, root=None, no_arcs=False, callback=None, cb_menu='',
+                 title='PLink Editor'):
+        self.no_arcs = no_arcs
+        self.callback = callback
+        self.cb_menu = cb_menu
+        self.title = title
         self.initialize()
         self.cursorx = 0
         self.cursory = 0
-        self.window = Tkinter.Tk()
-        self.window.title('PLink Editor')
+        self.colors = []
+        self.color_keys = []
+        if root is None:
+            self.window = Tk_.Tk()
+        else:
+            self.window = Tk_.Toplevel(root)
+        self.window.title(title)
         self.palette = Palette()
+        # Frame and Canvas
+        self.frame = Tk_.Frame(self.window, 
+                               borderwidth=0,
+                               relief=Tk_.FLAT,
+                               background='#dcecff')
+        self.canvas = Tk_.Canvas(self.frame,
+                                 bg='#dcecff',
+                                 width=500,
+                                 height=500,
+                                 highlightthickness=0)
+        self.infoframe = Tk_.Frame(self.window, 
+                                   borderwidth=2,
+                                   relief=Tk_.FLAT,
+                                   background='#dcecff')
+        self.infotext = Tk_.Entry(self.infoframe,
+                                  font="Helvetica 16",
+                                  highlightthickness=0)
+        spacer = Tk_.Frame(self.window,
+                           height=16,
+                           background='#dcecff')
+        spacer.pack(side=Tk_.BOTTOM)
+        self.infoframe.pack(padx=0, pady=0, fill=Tk_.X, expand=Tk_.NO,
+                            side=Tk_.BOTTOM)
+        self.frame.pack(padx=0, pady=0, fill=Tk_.BOTH, expand=Tk_.YES)
+        self.canvas.pack(padx=0, pady=0, fill=Tk_.BOTH, expand=Tk_.YES)
+        self.infotext.pack(padx=5, pady=0, fill=Tk_.X, expand=Tk_.NO)
         # Menus
-        menubar = Tkinter.Menu(self.window)
-        file_menu = Tkinter.Menu(menubar, tearoff=0)
+        self.build_menus()
+        # Event bindings
+        self.canvas.bind('<Button-1>', self.single_click)
+        self.canvas.bind('<Double-Button-1>', self.double_click)
+        self.canvas.bind('<Motion>', self.mouse_moved)
+        self.window.bind('<Key>', self.key_press)
+        self.infotext.bind('<<Copy>>', lambda event : None)
+        self.infotext.bind('<Key>', lambda event : 'break')
+        self.infotext.bind('<Up>', self.key_press)
+        self.infotext.bind('<Down>', self.key_press)
+        self.window.protocol("WM_DELETE_WINDOW", self.done)
+        # Go
+        self.flipcheck = None
+        self.state='start_state'
+    
+    # Subclasses may want to overide this method.
+    def build_menus(self):
+        menubar = Tk_.Menu(self.window)
+        file_menu = Tk_.Menu(menubar, tearoff=0)
         file_menu.add_command(label='Open File ...', command=self.load)
         file_menu.add_command(label='Save ...', command=self.save)
-        print_menu = Tkinter.Menu(menubar, tearoff=0)
+        print_menu = Tk_.Menu(menubar, tearoff=0)
         print_menu.add_command(label='monochrome',
                        command=lambda : self.save_image(color_mode='mono'))
         print_menu.add_command(label='color', command=self.save_image)
-        file_menu.add_cascade(label='Save Image ...', menu=print_menu)
-        export_menu = Tkinter.Menu(menubar, tearoff=0)
-        export_menu.add_command(label='DT code', command=self.not_done)
-        export_menu.add_command(label='Gauss code', command=self.not_done)
-        export_menu.add_command(label='PD code', command=self.not_done)
-        file_menu.add_cascade(label='Export ...', menu=export_menu)
+        file_menu.add_cascade(label='Save Image', menu=print_menu)
         file_menu.add_separator()
-        file_menu.add_command(label='Exit', command=self.done)
+        if self.callback:
+            file_menu.add_command(label=self.cb_menu, command=self.do_callback)
+            file_menu.add_command(label='Close', command=self.done)
+        else:
+            file_menu.add_command(label='Exit', command=self.done)
         menubar.add_cascade(label='File', menu=file_menu)
-        tools_menu = Tkinter.Menu(menubar, tearoff=0)
+        info_menu = Tk_.Menu(menubar, tearoff=0)
+        export_menu = Tk_.Menu(menubar, tearoff=0)
+        info_menu.add_command(label='DT code', command=self.DT_normal)
+        info_menu.add_command(label='DT for Snap', command=self.DT_snap)
+        info_menu.add_command(label='Gauss code', command=self.not_done)
+        info_menu.add_command(label='PD code', command=self.not_done)
+        menubar.add_cascade(label='Info', menu=info_menu)
+        tools_menu = Tk_.Menu(menubar, tearoff=0)
         tools_menu.add_command(label='Make alternating',
                        command=self.make_alternating)
         tools_menu.add_command(label='Reflect', command=self.reflect)
         tools_menu.add_command(label='Clear', command=self.clear)
         menubar.add_cascade(label='Tools', menu=tools_menu)
-        help_menu = Tkinter.Menu(menubar, tearoff=0)
+        help_menu = Tk_.Menu(menubar, tearoff=0)
         help_menu.add_command(label='About PLink...', command=self.about)
         help_menu.add_command(label='Instructions ...', command=self.howto)
         menubar.add_cascade(label='Help', menu=help_menu)
         self.window.config(menu=menubar)
-        # Frame and Canvas
-        self.frame = Tkinter.Frame(self.window, 
-                                   borderwidth=2,
-                                   relief=Tkinter.SUNKEN)
-        self.canvas = Tkinter.Canvas(self.frame,
-                                     bg='#dcecff',
-                                     width=600,
-                                     height=600)
-        self.frame.pack(padx=5, pady=5, fill=Tkinter.BOTH, expand=Tkinter.YES)
-        self.canvas.pack(padx=5, pady=5, fill=Tkinter.BOTH, expand=Tkinter.YES)
-        # Event bindings
-        self.canvas.bind('<Button-1>', self.onebutton)
-        self.canvas.bind('<Button-2>', self.mouse2)
-        self.canvas.bind('<Motion>', self.mouse_moved)
-        self.window.bind('<Key>', self.key_press)
-        self.window.protocol("WM_DELETE_WINDOW", self.done)
-        # Go
-        self.state='start_state'
 
     def initialize(self):
-        self.Edges = []
+        self.Arrows = []
         self.Vertices = []
         self.Crossings = []
         self.CrossPoints = []
-        self.LiveEdge1 = None
-        self.LiveEdge2 = None
+        self.LiveArrow1 = None
+        self.LiveArrow2 = None
         self.ActiveVertex = None
 
+    def warn_arcs(self):
+        if self.no_arcs:
+            for vertex in self.Vertices:
+                if vertex.is_endpoint():
+                    if tkMessageBox.askretrycancel('Warning',
+                         'This link has non-closed components!\n'
+                         'Click "retry" to continue editing.\n'
+                         'Click "cancel" to quit anyway.\n'
+                         '(The link projection may be useless.)'):
+                        return 'oops'
+                    else:
+                        break
+
     def done(self):
-        if self.callback:
-            self.callback(self.SnapPea_KLPProjection())
-        self.window.destroy()
-
-    def onebutton(self, event):
-        """
-        Simulates a 3-button mouse for OS X.
-        """
-        if (event.state & 24 == 8):
-            self.mouse3(event)
-        elif (event.state & 24 == 16):
-            self.mouse2(event)
+        if self.callback is not None:
+            self.window.withdraw()
+            return
+        if self.warn_arcs() == 'oops':
+            return
         else:
-            self.mouse1(event)
+            self.window.destroy()
 
-    def mouse1(self, event):
+    def do_callback(self):
+        if self.warn_arcs() == 'oops':
+            return
+        self.callback()
+
+    def reopen(self):
+        self.window.deiconify()
+
+    def single_click(self, event):
         """
-        Event handler for mouse button 1.
+        Event handler for mouse clicks.
         """
         x = self.canvas.canvasx(event.x)
         y = self.canvas.canvasy(event.y)
+        self.clear_text()
+        start_vertex = Vertex(x, y, self.canvas, hidden=True)
         if self.state == 'start_state':
-            start_vertex = Vertex(x, y, self.canvas, hidden=True)
-            if start_vertex in [v for v in self.Vertices if v.is_endpoint()]:
-                #print 'clicked on an endpoint'
-                start_vertex.erase()
-                start_vertex = self.Vertices[self.Vertices.index(start_vertex)]
-                x0, y0 = x1, y1 = start_vertex.point()
-                if start_vertex.out_edge:
-                    start_vertex.reverse_path()
-                    self.update_crosspoints()
-                    for edge in self.Edges: 
-                        edge.draw(self.Crossings)
-            elif start_vertex in self.Vertices:
-                #print 'clicked on non-endpoint vertex'
-                cut_vertex = self.Vertices[self.Vertices.index(start_vertex)]
-                cut_vertex.recolor_incoming(palette=self.palette)
-                cut_edge = cut_vertex.in_edge
-                cut_vertex.in_edge = None
-                start_vertex = cut_edge.start
-                x1, y1 = cut_vertex.point()
-                cut_edge.freeze()
+            if start_vertex in self.Vertices:
+                #print 'single click on a vertex'
+                self.state = 'dragging_state'
+                self.canvas.config(cursor='circle')
+                self.ActiveVertex = self.Vertices[self.Vertices.index(start_vertex)]
+                self.ActiveVertex.freeze()
+                x1, y1 = self.ActiveVertex.point()
+                if self.ActiveVertex.in_arrow:
+                    x0, y0 = self.ActiveVertex.in_arrow.start.point()
+                    self.ActiveVertex.in_arrow.freeze()
+                    self.LiveArrow1 = self.canvas.create_line(x0,y0,x1,y1,
+                                                             fill='red')
+                if self.ActiveVertex.out_arrow:
+                    x0, y0 = self.ActiveVertex.out_arrow.end.point()
+                    self.ActiveVertex.out_arrow.freeze()
+                    self.LiveArrow2 = self.canvas.create_line(x0,y0,x1,y1,
+                                                             fill='red')
+                return
             elif start_vertex in self.CrossPoints:
-                #print 'clicked on a crossing'
+                #print 'single click on a crossing'
                 crossing = self.Crossings[self.CrossPoints.index(start_vertex)]
                 crossing.reverse()
                 crossing.under.draw(self.Crossings)
                 crossing.over.draw(self.Crossings)
+                return
+            elif self.clicked_on_arrow(start_vertex):
+                #print 'clicked on an arrow.'
                 return
             else:
                 #print 'creating a new vertex'
@@ -154,66 +233,66 @@ class LinkEditor:
                     start_vertex.erase()
                     self.window.bell()
                     return
-                x1, y1 = start_vertex.point()
-                start_vertex.set_color(self.palette.new())
-                self.Vertices.append(start_vertex)
+            x1, y1 = start_vertex.point()
+            start_vertex.set_color(self.palette.new())
+            self.Vertices.append(start_vertex)
             self.ActiveVertex = start_vertex
             self.goto_drawing_state(x1,y1)
             return
-        elif self.state == 'drawing':
+        elif self.state == 'drawing_state':
             next_vertex = Vertex(x, y, self.canvas, hidden=True)
             if next_vertex == self.ActiveVertex:
-                #print 'clicked twice'
+                #print 'clicked the same vertex twice'
                 next_vertex.erase()
-                dead_edge = self.ActiveVertex.out_edge
-                if dead_edge:
-                    self.destroy_edge(dead_edge)
+                dead_arrow = self.ActiveVertex.out_arrow
+                if dead_arrow:
+                    self.destroy_arrow(dead_arrow)
                 self.goto_start_state()
                 return
-            #print 'setting up a new edge'
-            if self.ActiveVertex.out_edge:
-                next_edge = self.ActiveVertex.out_edge
-                next_edge.set_end(next_vertex)
-                next_vertex.in_edge = next_edge
-                if not next_edge.frozen:
-                    next_edge.hide()
+            #print 'setting up a new arrow'
+            if self.ActiveVertex.out_arrow:
+                next_arrow = self.ActiveVertex.out_arrow
+                next_arrow.set_end(next_vertex)
+                next_vertex.in_arrow = next_arrow
+                if not next_arrow.frozen:
+                    next_arrow.hide()
             else:
                 this_color = self.ActiveVertex.color
-                next_edge = Edge(self.ActiveVertex, next_vertex,
+                next_arrow = Arrow(self.ActiveVertex, next_vertex,
                                  self.canvas, hidden=True,
                                  color=this_color)
-                self.Edges.append(next_edge)
-            next_vertex.set_color(next_edge.color)
+                self.Arrows.append(next_arrow)
+            next_vertex.set_color(next_arrow.color)
             if next_vertex in [v for v in self.Vertices if v.is_endpoint()]:
-                #print 'joining up to another component'
-                if not self.generic_edge(next_edge):
+                #print 'melding vertices'
+                if not self.generic_arrow(next_arrow):
                     self.window.bell()
                     return
                 next_vertex.erase()
                 next_vertex = self.Vertices[self.Vertices.index(next_vertex)]
-                if next_vertex.in_edge:
+                if next_vertex.in_arrow:
                     next_vertex.reverse_path()
-                next_edge.set_end(next_vertex)
-                next_vertex.in_edge = next_edge
+                next_arrow.set_end(next_vertex)
+                next_vertex.in_arrow = next_arrow
                 if next_vertex.color != self.ActiveVertex.color:
                     self.palette.recycle(self.ActiveVertex.color)
                     next_vertex.recolor_incoming(color = next_vertex.color)
-                self.update_crossings(next_edge)
-                next_edge.expose(self.Crossings)
+                self.update_crossings(next_arrow)
+                next_arrow.expose(self.Crossings)
                 self.goto_start_state()
                 return
-            # 'just extending a path, as usual'
-            self.update_crossings(next_edge)
+            #print 'just extending a path, as usual'
+            self.update_crossings(next_arrow)
             self.update_crosspoints()
             if not (self.generic_vertex(next_vertex) and
-                    self.generic_edge(next_edge) ):
+                    self.generic_arrow(next_arrow) ):
                 self.window.bell()
                 return
-            next_edge.expose(self.Crossings)
+            next_arrow.expose(self.Crossings)
             self.Vertices.append(next_vertex)
             next_vertex.expose()
             self.ActiveVertex = next_vertex
-            self.canvas.coords(self.LiveEdge1,x,y,x,y)
+            self.canvas.coords(self.LiveArrow1,x,y,x,y)
             return
         elif self.state == 'dragging_state':
             try:
@@ -221,55 +300,44 @@ class LinkEditor:
             except ValueError:
                 self.window.bell()
 
-    def mouse2(self, event):
+    def double_click(self, event):
         """
-        Event handler for mouse button 2 (dragging).
+        Event handler for mouse double-clicks.
         """
         x = self.canvas.canvasx(event.x)
         y = self.canvas.canvasy(event.y)
+        self.clear_text()
         vertex = Vertex(x, y, self.canvas, hidden=True)
-        if vertex not in self.Vertices:
-            self.canvas.bell()
+        #print 'double-click in %s'%self.state
+        if self.state == 'dragging_state':
+            self.end_dragging_state()
+            # The first click on a vertex put us in dragging state.
+            if vertex in [v for v in self.Vertices if v.is_endpoint()]:
+                #print 'double-clicked on an endpoint'
+                vertex.erase()
+                vertex = self.Vertices[self.Vertices.index(vertex)]
+                x0, y0 = x1, y1 = vertex.point()
+                if vertex.out_arrow:
+                    self.update_crosspoints()
+                    vertex.reverse_path()
+            elif vertex in self.Vertices:
+                #print 'double-clicked on a non-endpoint vertex'
+                cut_vertex = self.Vertices[self.Vertices.index(vertex)]
+                cut_vertex.recolor_incoming(palette=self.palette)
+                cut_arrow = cut_vertex.in_arrow
+                cut_vertex.in_arrow = None
+                vertex = cut_arrow.start
+                x1, y1 = cut_vertex.point()
+                cut_arrow.freeze()
+            self.ActiveVertex = vertex
+            self.goto_drawing_state(x1,y1)
             return
-        if self.state == 'start_state':
-            self.state = 'dragging_state'
-            self.canvas.config(cursor='circle')
-            self.ActiveVertex = self.Vertices[self.Vertices.index(vertex)]
-            self.ActiveVertex.freeze()
-            x1, y1 = self.ActiveVertex.point()
-            if self.ActiveVertex.in_edge:
-                x0, y0 = self.ActiveVertex.in_edge.start.point()
-                self.ActiveVertex.in_edge.freeze()
-                self.LiveEdge1 = self.canvas.create_line(x0,y0,x1,y1,
-                                                         fill='red')
-            if self.ActiveVertex.out_edge:
-                x0, y0 = self.ActiveVertex.out_edge.end.point()
-                self.ActiveVertex.out_edge.freeze()
-                self.LiveEdge2 = self.canvas.create_line(x0,y0,x1,y1,
-                                                         fill='red')
-        elif self.state == 'dragging_state':
-            try:
-                self.end_dragging_state()
-            except ValueError:
-                self.window.bell()
-
-    def mouse3(self, event):
-        """
-        Event handler for mouse button 3 (reverses component).
-        """
-        if self.state != 'start_state':
-            return
-        x = self.canvas.canvasx(event.x)
-        y = self.canvas.canvasy(event.y)
-        vertex = Vertex(x, y, self.canvas, hidden=True)
-        if vertex in self.Vertices:
-            match = self.Vertices[self.Vertices.index(vertex)]
-            match.reverse_path()
-            return
-        for edge in self.Edges:
-            if edge.too_close(vertex):
-                edge.end.reverse_path()
-                return
+        elif self.state == 'drawing_state':
+            #print 'double-click while drawing'
+            dead_arrow = self.ActiveVertex.out_arrow
+            if dead_arrow:
+                self.destroy_arrow(dead_arrow)
+            self.goto_start_state()
         
     def mouse_moved(self,event):
         """
@@ -281,51 +349,60 @@ class LinkEditor:
         if self.state == 'start_state':
             point = Vertex(x, y, self.canvas, hidden=True)
             if point in self.Vertices:
+                self.flipcheck=None
                 self.canvas.config(cursor='hand1')
             elif point in self.CrossPoints:
+                self.flipcheck=None
                 self.canvas.config(cursor='exchange')
+            elif self.cursor_on_arrow(point):
+                now = time.time()
+                if self.flipcheck is None:
+                    self.flipcheck = now
+                elif now - self.flipcheck > 0.5:
+                    self.canvas.config(cursor='double_arrow')
             else:
+                self.flipcheck=None
                 self.canvas.config(cursor='')
-        elif self.state == 'drawing':
-            x0,y0,x1,y1 = self.canvas.coords(self.LiveEdge1)
-            self.canvas.coords(self.LiveEdge1, x0, y0, x, y)
+        elif self.state == 'drawing_state':
+            x0,y0,x1,y1 = self.canvas.coords(self.LiveArrow1)
+            self.canvas.coords(self.LiveArrow1, x0, y0, x, y)
         elif self.state == 'dragging_state':
             x = self.canvas.canvasx(event.x)
             y = self.canvas.canvasy(event.y)
             self.ActiveVertex.x, self.ActiveVertex.y = x, y
             self.ActiveVertex.draw()
-            if self.LiveEdge1:
-                x0,y0,x1,y1 = self.canvas.coords(self.LiveEdge1)
-                self.canvas.coords(self.LiveEdge1, x0, y0, x, y)
-            if self.LiveEdge2:
-                x0,y0,x1,y1 = self.canvas.coords(self.LiveEdge2)
-                self.canvas.coords(self.LiveEdge2, x0, y0, x, y)
+            if self.LiveArrow1:
+                x0,y0,x1,y1 = self.canvas.coords(self.LiveArrow1)
+                self.canvas.coords(self.LiveArrow1, x0, y0, x, y)
+            if self.LiveArrow2:
+                x0,y0,x1,y1 = self.canvas.coords(self.LiveArrow2)
+                self.canvas.coords(self.LiveArrow2, x0, y0, x, y)
 
     def key_press(self, event):
         """
         Handler for keypress events.
         """
         if event.keysym == 'Delete' or event.keysym == 'BackSpace':
-            if self.state == 'drawing':
-                last_edge = self.ActiveVertex.in_edge
-                if last_edge:
-                    dead_edge = self.ActiveVertex.out_edge
-                    if dead_edge:
-                        self.destroy_edge(dead_edge)
-                    self.ActiveVertex = last_edge.start
-                    self.ActiveVertex.out_edge = None
-                    x0,y0,x1,y1 = self.canvas.coords(self.LiveEdge1)
+            if self.state == 'drawing_state':
+                last_arrow = self.ActiveVertex.in_arrow
+                if last_arrow:
+                    dead_arrow = self.ActiveVertex.out_arrow
+                    if dead_arrow:
+                        self.destroy_arrow(dead_arrow)
+                    self.ActiveVertex = last_arrow.start
+                    self.ActiveVertex.out_arrow = None
+                    x0,y0,x1,y1 = self.canvas.coords(self.LiveArrow1)
                     x0, y0 = self.ActiveVertex.point()
-                    self.canvas.coords(self.LiveEdge1, x0, y0, x1, y1)
+                    self.canvas.coords(self.LiveArrow1, x0, y0, x1, y1)
                     self.Crossings = [c for c in self.Crossings
-                                      if last_edge not in c]
-                    self.Vertices.remove(last_edge.end)
-                    self.Edges.remove(last_edge)
-                    last_edge.end.erase()
-                    last_edge.erase()
-                    for edge in self.Edges:
-                        edge.draw(self.Crossings)
-                if not self.ActiveVertex.in_edge:
+                                      if last_arrow not in c]
+                    self.Vertices.remove(last_arrow.end)
+                    self.Arrows.remove(last_arrow)
+                    last_arrow.end.erase()
+                    last_arrow.erase()
+                    for arrow in self.Arrows:
+                        arrow.draw(self.Crossings)
+                if not self.ActiveVertex.in_arrow:
                     self.Vertices.remove(self.ActiveVertex)
                     self.ActiveVertex.erase()
                     self.goto_start_state()
@@ -344,38 +421,54 @@ class LinkEditor:
                 vertex.y += dy
             self.update_crosspoints()
             self.canvas.move('all', dx, dy)
+            self.show_color_keys()
         event.x, event.y = self.cursorx, self.cursory
         self.mouse_moved(event)
 
+    def clicked_on_arrow(self, vertex):
+        for arrow in self.Arrows:
+            if arrow.too_close(vertex):
+                arrow.end.reverse_path(self.Crossings)
+                return True
+        return False
+
+    def cursor_on_arrow(self, point):
+        for arrow in self.Arrows:
+            if arrow.too_close(point):
+                return True
+        return False
+
     def goto_start_state(self):
-        self.canvas.delete(self.LiveEdge1)
-        self.LiveEdge1 = None
-        self.canvas.delete(self.LiveEdge2)
-        self.LiveEdge2 = None
+        self.canvas.delete(self.LiveArrow1)
+        self.LiveArrow1 = None
+        self.canvas.delete(self.LiveArrow2)
+        self.LiveArrow2 = None
         self.ActiveVertex = None
         self.update_crosspoints()
         for vertex in self.Vertices:
             vertex.draw()
-        for edge in self.Edges: 
-            edge.draw(self.Crossings)
+        for arrow in self.Arrows: 
+            arrow.draw(self.Crossings)
         self.canvas.config(cursor='')
+        self.show_color_keys()
         self.state = 'start_state'
 
     def goto_drawing_state(self, x1,y1):
         self.ActiveVertex.hidden = False
         self.ActiveVertex.draw()
         x0, y0 = self.ActiveVertex.point()
-        self.LiveEdge1 = self.canvas.create_line(x0,y0,x1,y1,fill='red')
-        self.state = 'drawing'
+        self.LiveArrow1 = self.canvas.create_line(x0,y0,x1,y1,fill='red')
+        self.state = 'drawing_state'
         self.canvas.config(cursor='pencil')
+        self.infotext.delete(0, Tk_.END)
 
     def verify_drag(self):
-        self.ActiveVertex.update_edges()
-        self.update_crossings(self.ActiveVertex.in_edge)
-        self.update_crossings(self.ActiveVertex.out_edge)
+        self.ActiveVertex.update_arrows()
+        self.update_crossings(self.ActiveVertex.in_arrow)
+        self.update_crossings(self.ActiveVertex.out_arrow)
         self.update_crosspoints()
-        return (self.generic_edge(self.ActiveVertex.in_edge) and
-                self.generic_edge(self.ActiveVertex.out_edge) )
+        return (self.generic_arrow(self.ActiveVertex.in_arrow) and
+                self.generic_arrow(self.ActiveVertex.out_arrow) )
 
     def end_dragging_state(self):
         if not self.verify_drag():
@@ -388,48 +481,48 @@ class LinkEditor:
                 endpoint = other_ends[other_ends.index(self.ActiveVertex)]
                 self.ActiveVertex.swallow(endpoint, self.palette)
                 self.Vertices = [v for v in self.Vertices if v is not endpoint]
-            self.update_crossings(self.ActiveVertex.in_edge)
-            self.update_crossings(self.ActiveVertex.out_edge)
+            self.update_crossings(self.ActiveVertex.in_arrow)
+            self.update_crossings(self.ActiveVertex.out_arrow)
         if endpoint is None and not self.generic_vertex(self.ActiveVertex):
             raise ValueError
         self.ActiveVertex.expose()
-        if self.ActiveVertex.in_edge:
-            self.ActiveVertex.in_edge.expose()
-        if self.ActiveVertex.out_edge:
-            self.ActiveVertex.out_edge.expose()
+        if self.ActiveVertex.in_arrow:
+            self.ActiveVertex.in_arrow.expose()
+        if self.ActiveVertex.out_arrow:
+            self.ActiveVertex.out_arrow.expose()
         self.goto_start_state()
 
     def generic_vertex(self, vertex):
         if vertex in [v for v in self.Vertices if v is not vertex]:
             return False
-        for edge in self.Edges:
-            if edge.too_close(vertex):
+        for arrow in self.Arrows:
+            if arrow.too_close(vertex):
                 #print 'non-generic vertex'
                 return False
         return True
 
-    def generic_edge(self, edge):
-        if edge == None:
+    def generic_arrow(self, arrow):
+        if arrow == None:
             return True
         for vertex in self.Vertices:
-            if edge.too_close(vertex):
-                #print 'edge too close to vertex'
+            if arrow.too_close(vertex):
+                #print 'arrow too close to vertex'
                 return False
         for crossing in self.Crossings:
             point = self.CrossPoints[self.Crossings.index(crossing)]
-            if edge not in crossing and edge.too_close(point):
-                #print 'edge too close to crossing'
+            if arrow not in crossing and arrow.too_close(point):
+                #print 'arrow too close to crossing'
                 return False
         return True
        
-    def destroy_edge(self, edge):
-        self.Edges.remove(edge)
-        if edge.end:
-            edge.end.in_edge = None
-        if edge.start:
-            edge.start.out_edge = None
-        edge.erase()
-        self.Crossings = [c for c in self.Crossings if edge not in c]
+    def destroy_arrow(self, arrow):
+        self.Arrows.remove(arrow)
+        if arrow.end:
+            arrow.end.in_arrow = None
+        if arrow.start:
+            arrow.start.out_arrow = None
+        arrow.erase()
+        self.Crossings = [c for c in self.Crossings if arrow not in c]
 
     def update_crosspoints(self):
         for c in self.Crossings:
@@ -437,17 +530,17 @@ class LinkEditor:
         self.CrossPoints = [Vertex(c.x, c.y, self.canvas, hidden=True)
                                     for c in self.Crossings]
 
-    def update_crossings(self, this_edge):
-        if this_edge == None:
+    def update_crossings(self, this_arrow):
+        if this_arrow == None:
             return
-        cross_list = [c for c in self.Crossings if this_edge in c]
+        cross_list = [c for c in self.Crossings if this_arrow in c]
         damage_list =[]
         find = lambda x: cross_list[cross_list.index(x)]
-        for edge in self.Edges:
-            if this_edge == edge:
+        for arrow in self.Arrows:
+            if this_arrow == arrow:
                 continue
-            new_crossing = Crossing(this_edge, edge)
-            if this_edge ^ edge:
+            new_crossing = Crossing(this_arrow, arrow)
+            if this_arrow ^ arrow:
                 if new_crossing in cross_list:
                     #print 'keeping %s'%new_crossing
                     find(new_crossing).locate()
@@ -459,33 +552,45 @@ class LinkEditor:
             else:
                 #print 'removing %s'%new_crossing
                 if new_crossing in self.Crossings:
-                    if edge == find(new_crossing).under:
-                        damage_list.append(edge)
+                    if arrow == find(new_crossing).under:
+                        damage_list.append(arrow)
                     self.Crossings.remove(new_crossing)
-        for edge in damage_list:
-            edge.draw(self.Crossings)
+        for arrow in damage_list:
+            arrow.draw(self.Crossings)
 
-    def edge_components(self):
+    def arrow_components(self, include_isolated_vertices=False):
         """
-        Returns a list of lists of edges, one per component of the diagram.
-        An empty list corresponds to a component consisting of one vertex.
+        Returns a list of lists of arrows, one per component of the diagram.
         """
-        pool = [v.out_edge  for v in self.Vertices if not v.is_endpoint()]
-        pool += [v.out_edge for v in self.Vertices if v.in_edge == None]
+        pool = [v.out_arrow  for v in self.Vertices if not v.is_endpoint()]
+        pool += [v.out_arrow for v in self.Vertices if v.in_arrow == None]
         result = []
         while len(pool):
-            first_edge = pool.pop()
-            if first_edge == None:
-                result.append([])
+            first_arrow = pool.pop()
+            if first_arrow == None:
                 continue
-            component = [first_edge]
+            component = [first_arrow]
             while component[-1].end != component[0].start:
-                next = component[-1].end.out_edge
+                next = component[-1].end.out_arrow
                 if next == None:
                     break
                 pool.remove(next)
                 component.append(next)
             result.append(component)
+        if include_isolated_vertices:
+            for vertex in [v for v in self.Vertices if v.is_isolated()]:
+                result.append([Arrow(vertex, vertex, color=vertex.color)])
+
+        # We want adding components to not change their numeric labels
+        # on components, so we'll sort them by age of oldest vertex.
+        def oldest_vertex(component):
+            def oldest(arrow):
+                return min([self.Vertices.index(v)
+                            for v in [arrow.start, arrow.end] if v])
+            return min( [len(self.Vertices)] +  [oldest(a) for a in component])
+        def component_key(comp):
+            return oldest_vertex(comp)
+        result.sort(key=component_key)
         return result
 
     def crossing_components(self):
@@ -498,16 +603,41 @@ class LinkEditor:
             if vertex.is_endpoint():
                 raise ValueError
         result = []
-        edge_components = self.edge_components()
-        for component in edge_components:
+        arrow_components = self.arrow_components()
+        for component in arrow_components:
             crosses=[]
-            for edge in component:
-                edge_crosses = [(c.height(edge), c, edge) 
-                                for c in self.Crossings if edge in c]
-                edge_crosses.sort()
-                crosses += edge_crosses
+            for arrow in component:
+                arrow_crosses = [(c.height(arrow), c, arrow) 
+                                for c in self.Crossings if arrow in c]
+                arrow_crosses.sort()
+                crosses += arrow_crosses
             result.append([ECrossing(c[1],c[2]) for c in crosses]) 
         return result
+
+    def show_color_keys(self):
+        components = self.arrow_components(include_isolated_vertices=True)
+        self.colors = []
+        for key in self.color_keys:
+            self.canvas.delete(key)
+        self.color_keys = []
+        x, y, n = 10, 24, 0
+        for component in components:
+            color = component[0].color
+            self.colors.append(color)
+            self.color_keys.append(
+                self.canvas.create_text(x, y,
+                                        text=str(n),
+                                        fill=color,
+                                        anchor=Tk_.SW,
+                                        font='Helvetica 16 bold'))
+            x, n = x+16, n+1
+
+    def clear_text(self):
+        self.infotext.delete(0, Tk_.END)
+
+    def write_text(self, string):
+        self.infotext.delete(0, Tk_.END)
+        self.infotext.insert(Tk_.END, string)
 
     def make_alternating(self):
         """
@@ -522,11 +652,11 @@ class LinkEditor:
                 'All components must be closed to use this tool.')
             return
         for component in crossing_components:
-            cross0, edge0 = component[0].pair()
+            cross0, arrow0 = component[0].pair()
             for ecrossing in component[1:]:
-                cross, edge = ecrossing.pair()
-                if ( (edge0 == cross0.under and edge == cross.under) or 
-                     (edge0 == cross0.over and edge == cross.over) ):
+                cross, arrow = ecrossing.pair()
+                if ( (arrow0 == cross0.under and arrow == cross.under) or 
+                     (arrow0 == cross0.over and arrow == cross.over) ):
                     if cross.locked:
                         for ecrossing2 in component:
                             if ecrossing2.crossing == cross:
@@ -534,23 +664,23 @@ class LinkEditor:
                             ecrossing2.crossing.reverse()
                     else:
                         cross.reverse()
-                cross0, edge0 = cross, edge
+                cross0, arrow0 = cross, arrow
             for ecrossing in component:
                 ecrossing.crossing.locked = True
         for crossing in self.Crossings:
             crossing.locked = False
-        for edge in self.Edges:
-            edge.draw(self.Crossings)
+        for arrow in self.Arrows:
+            arrow.draw(self.Crossings)
 
     def reflect(self):
         for crossing in self.Crossings:
             crossing.reverse()
-        for edge in self.Edges:
-            edge.draw(self.Crossings)
+        for arrow in self.Arrows:
+            arrow.draw(self.Crossings)
 
     def clear(self):
-        for edge in self.Edges:
-            edge.erase()
+        for arrow in self.Arrows:
+            arrow.erase()
         for vertex in self.Vertices:
             vertex.erase()
         self.canvas.delete('all')
@@ -560,12 +690,33 @@ class LinkEditor:
 
     def SnapPea_KLPProjection(self):
         """
-        Constructs a python simulation of a SnapPea KLPProjection.
-        (See the SnapPea file link_projection.h for definitions.)
-        The KLPCrossings are modeled by dictionaries.
-        Requires that all components be closed.
+        Constructs a python simulation of a SnapPea KLPProjection
+        (Kernel Link Projection) structure.  See Jeff Weeks' SnapPea
+        file link_projection.h for definitions.  Here the KLPCrossings
+        are modeled by dictionaries.  This method requires that all
+        components be closed.  A side effect is that the KLP attributes
+        of all crossings are updated.
+
+        The following excerpt from link_projection.h describes the
+        main convention:
+
+        If you view a crossing (from above) so that the strands go in the
+        direction of the postive x- and y-axes, then the strand going in
+        the x-direction is the KLPStrandX, and the strand going in the
+        y-direction is the KLPStrandY.  Note that this definition does not
+        depend on which is the overstrand and which is the understrand::
+        
+                                   KLPStrandY
+                                       ^
+                                       |
+                                   ----+---> KLPStrandX
+                                       |
+                                       |
         """
-        crossing_components = self.crossing_components()
+        try:
+            crossing_components = self.crossing_components()
+        except ValueError:
+            return None
         num_crossings = len(self.Crossings)
         num_free_loops = 0
         num_components = len(crossing_components)
@@ -595,6 +746,83 @@ class LinkEditor:
         KLP_crossings = [crossing.KLP for crossing in self.Crossings]
         return num_crossings, num_free_loops, num_components, KLP_crossings
 
+    def DT_code(self, alpha=False):
+        """
+        Returns the Dowker-Thistlethwaite code as a list of tuples of
+        even integers.
+
+        If alpha is set to True, it returns the alphabetical
+        Dowker-Thistlethwaite code as used in Oliver Goodman's Snap
+        and the tabulations by Hoste and Thistlethwaite.
+        """
+        components = self.crossing_components()
+        for crossing in self.Crossings:
+            crossing.clear_hits()
+        count = 1
+        chunks = []
+        prefix_ints = [len(self.Crossings), len(components)]
+        while len(components) > 0:
+            this_component = components.pop()
+            odd_count = 0
+            for ecrossing in this_component:
+                crossing = ecrossing.crossing
+                if count%2 == 0 and ecrossing.goes_over():
+                    crossing.hit(-count)
+                else:
+                    crossing.hit(count)
+                if count%2 == 1:
+                    odd_count += 1
+                count += 1
+            chunks.append(odd_count)
+            # Jump to the next component; look for one that has been hit
+            for component in components:
+                hits = [x for x in component if x.crossing.hit1 is not None]
+                if len(hits) > 0:
+                    # reorder its crossings
+                    components.remove(component)
+                    first = hits[0]
+                    n = component.index(first)
+                    if (count + first.crossing.hit1)%2 == 0:
+                        component = component[n-1:]+component[:n-1]
+                    else:
+                        component = component[n:]+component[:n]
+                    components.append(component)
+                    break
+        # build the Dowker-Thistlethwaite code
+        even_codes = [None]*len(self.Crossings)
+        for crossing in self.Crossings:
+            if crossing.hit1%2 != 0:
+                even_codes[(crossing.hit1 - 1)//2] = crossing.hit2
+            else:
+                even_codes[(crossing.hit2 - 1)//2] = crossing.hit1
+        if not alpha:
+            result = []
+            for chunk in chunks:
+                result.append(tuple(even_codes[:chunk]))
+                even_codes = even_codes[chunk:]
+            return result
+        else:
+            alphacode = ''.join(tuple([DT_alphabet[x>>1] for x in even_codes]))
+            prefix_ints += chunks
+            if prefix_ints[0] > 26:
+                raise ValueError('Too many crossings!')
+            prefix = ''.join(tuple([DT_alphabet[n] for n in prefix_ints]))
+            return prefix + alphacode
+
+    def DT_normal(self):
+        """
+        Displays the standard Dowker-Thistlethwaite code as a sequence
+        of signed even integers. (Ignores free loops.)
+        """
+        self.write_text('DT code:  ' + str(self.DT_code()))
+
+    def DT_snap(self):
+        """
+        Displays the alphabetical Dowker-Thistlethwaite code as used
+        by Oliver Goodman's Snap.
+        """
+        self.write_text('DT code:  ' +  self.DT_code(alpha=True))
+
     def SnapPea_projection_file(self):
         """
         Returns a string containing the contents of a SnapPea link
@@ -602,7 +830,7 @@ class LinkEditor:
         """
         result = ''
         result += '% Link Projection\n'
-        components = self.edge_components()
+        components = self.arrow_components()
         result += '%d\n'%len(components)
         for component in components:
             first = self.Vertices.index(component[0].start)
@@ -611,15 +839,15 @@ class LinkEditor:
         result += '%d\n'%len(self.Vertices)
         for vertex in self.Vertices:
             result += '%5.1d %5.1d\n'%vertex.point()
-        result += '%d\n'%len(self.Edges)
-        for edge in self.Edges:
-            start_index = self.Vertices.index(edge.start)
-            end_index = self.Vertices.index(edge.end)
+        result += '%d\n'%len(self.Arrows)
+        for arrow in self.Arrows:
+            start_index = self.Vertices.index(arrow.start)
+            end_index = self.Vertices.index(arrow.end)
             result += '%4.1d %4.1d\n'%(start_index, end_index)
         result += '%d\n'%len(self.Crossings)
         for crossing in self.Crossings:
-            under = self.Edges.index(crossing.under)
-            over = self.Edges.index(crossing.over)
+            under = self.Arrows.index(crossing.under)
+            over = self.Arrows.index(crossing.over)
             result += '%4.1d %4.1d\n'%(under, over)
         if self.ActiveVertex:
             result += '%d\n'%self.Vertices.index(self.ActiveVertex)
@@ -633,30 +861,44 @@ class LinkEditor:
             'Sorry!  That feature has not been written yet.')
 
     def save(self):
-        savefile = tkFileDialog.asksaveasfile(
+        savefile = asksaveasfile(
             mode='w',
             title='Save As Snappea Projection File',
-            filetypes=[('Any','*')])
+            defaultextension = '.lnk',
+            filetypes = [
+                ("Link and text files", "*.lnk *.txt", "TEXT"),
+                ("All text files", "", "TEXT"),
+                ("All files", "")],
+            )
         if savefile:
             savefile.write(self.SnapPea_projection_file())
             savefile.close()
 
     def save_image(self, color_mode='color'):
-        savefile = tkFileDialog.asksaveasfile(
+        savefile = asksaveasfile(
             mode='w',
             title='Save As Postscript Image File (%s)'%color_mode,
+            defaultextension = ".eps", 
             filetypes=[('ps','eps')])
         if savefile:
             savefile.write(self.canvas.postscript(colormode=color_mode))
             savefile.close()
 
-    def load(self):
-        loadfile = tkFileDialog.askopenfile(
-            mode='r',
-            title='Open SnapPea Projection File',
-            filetypes=[('Any','*')])
+    def load(self, file_name=None):
+        if file_name:
+            loadfile = open(file_name, "r")
+        else:
+            loadfile = tkFileDialog.askopenfile(
+                mode='r',
+                title='Open SnapPea Projection File',
+                defaultextension = ".lnk",
+                filetypes = [
+                ("Link and text files", "*.lnk *.txt", "TEXT"),
+                ("All text files", "", "TEXT"),
+                ("All files", "")],
+                )
         if loadfile:
-            lines = loadfile.readlines()
+            lines = [line for line in loadfile.readlines() if len(line) > 1]
             num_lines = len(lines)
             if not lines.pop(0).startswith('% Link Projection'):
                 tkMessageBox.showwarning(
@@ -672,47 +914,48 @@ class LinkEditor:
                         x, y = lines.pop(0).split()
                         X, Y = int(x), int(y)
                         self.Vertices.append(Vertex(X, Y, self.canvas))
-                    num_edges = int(lines.pop(0))
-                    for n in range(num_edges):
+                    num_arrows = int(lines.pop(0))
+                    for n in range(num_arrows):
                         s, e = lines.pop(0).split()
                         S, E = self.Vertices[int(s)], self.Vertices[int(e)]
-                        self.Edges.append(Edge(S, E, self.canvas))
+                        self.Arrows.append(Arrow(S, E, self.canvas))
                     num_crossings = int(lines.pop(0))
                     for n in range(num_crossings):
                         u, o = lines.pop(0).split()
-                        U, O = self.Edges[int(u)], self.Edges[int(o)]
+                        U, O = self.Arrows[int(u)], self.Arrows[int(o)]
                         self.Crossings.append(Crossing(O, U))
                     hot = int(lines.pop(0))
-                    loadfile.close()
-                    self.goto_start_state()
-                    if hot != -1:
-                        self.ActiveVertex = self.Vertices[hot]
-                        self.goto_drawing_state(*self.canvas.winfo_pointerxy())
                 except:
                     tkMessageBox.showwarning(
                         'Bad file',
-                        'Could not parse line %d'%(num_lines - len(lines)))
+                        'Failed while parsing line %d'%(num_lines - len(lines)))
+                loadfile.close()
+                self.create_colors()
+                self.goto_start_state()
+                if hot != -1:
+                    self.ActiveVertex = self.Vertices[hot]
+                    self.goto_drawing_state(*self.canvas.winfo_pointerxy())
 
+    def create_colors(self):
+        components = self.arrow_components()
+        for component in components:
+            color = self.palette.new()
+            component[0].start.set_color(color)
+            for arrow in component:
+                arrow.set_color(color)
+                arrow.end.set_color(color)
 
     def about(self):
         InfoDialog(self.window, 'About PLink', About)
 
     def howto(self):
-        doc_file = 'plink_howto.html'
-        doc_file2 = os.path.join(__path__[0], doc_file)
-        for path in sys.path + [os.path.abspath(os.path.dirname(sys.argv[0]))]:
-            doc_path = os.path.join(path, doc_file)
-            if os.path.exists(doc_path):
-                break
-            doc_path = os.path.join(path, doc_file2)
-            if os.path.exists(doc_path):
-                break
-        doc_path = os.path.abspath(doc_path)
+        doc_file = os.path.join(os.path.dirname(__file__), 'doc', 'index.html')
+        doc_path = os.path.abspath(doc_file)
         url = 'file:' + pathname2url(doc_path)
         try:
             webbrowser.open(url) 
         except:
-            showwarning('Not found!', 'Could not open URL\n(%s)'%url)
+            tkMessageBox.showwarning('Not found!', 'Could not open URL\n(%s)'%url)
   
 class Vertex:
     """
@@ -722,8 +965,8 @@ class Vertex:
 
     def __init__(self, x, y, canvas, hidden=False,color='black'):
         self.x, self.y = int(x), int(y)
-        self.in_edge = None
-        self.out_edge = None
+        self.in_arrow = None
+        self.out_arrow = None
         self.canvas = canvas
         self.color = color
         self.dot = None
@@ -771,10 +1014,13 @@ class Vertex:
         self.canvas.itemconfig(self.dot, fill=color, outline=color)
         
     def is_endpoint(self):
-        return self.in_edge == None or self.out_edge == None
+        return self.in_arrow == None or self.out_arrow == None
     
+    def is_isolated(self):
+        return self.in_arrow == None and self.out_arrow == None
+
     def reverse(self):
-        self.in_edge, self.out_edge = self.out_edge, self.in_edge
+        self.in_arrow, self.out_arrow = self.out_arrow, self.in_arrow
 
     def swallow(self, other, palette):
         """
@@ -782,44 +1028,44 @@ class Vertex:
         """
         if not self.is_endpoint() or not other.is_endpoint():
             raise ValueError
-        if self.in_edge is not None:
-            if other.in_edge is not None:
+        if self.in_arrow is not None:
+            if other.in_arrow is not None:
                 other.reverse_path()
             if self.color != other.color:
                 palette.recycle(self.color)
                 self.color = other.color
                 self.recolor_incoming(color = other.color)
-            self.out_edge = other.out_edge
-            self.out_edge.set_start(self)
-        elif self.out_edge is not None:
-            if other.out_edge is not None:
+            self.out_arrow = other.out_arrow
+            self.out_arrow.set_start(self)
+        elif self.out_arrow is not None:
+            if other.out_arrow is not None:
                 other.reverse_path()
             if self.color != other.color:
                 palette.recycle(other.color)
                 other.recolor_incoming(color = self.color)
-            self.in_edge = other.in_edge
-            self.in_edge.set_end(self)
+            self.in_arrow = other.in_arrow
+            self.in_arrow.set_end(self)
         other.erase()
             
-    def reverse_path(self):
+    def reverse_path(self, crossings=[]):
         """
-        Reverse all vertices and edges of this vertex's component.
+        Reverse all vertices and arrows of this vertex's component.
         """
         v = self
         while True:
-            e = v.in_edge
+            e = v.in_arrow
             v.reverse()
             if not e: break
-            e.reverse()
+            e.reverse(crossings)
             v = e.end
             if v == self: return
         self.reverse()
         v = self
         while True:
-            e = v.out_edge
+            e = v.out_arrow
             v.reverse()
             if not e: break
-            e.reverse()
+            e.reverse(crossings)
             v = e.start
             if v == self: return
 
@@ -830,7 +1076,7 @@ class Vertex:
         """
         v = self
         while True:
-            e = v.in_edge
+            e = v.in_arrow
             if not e:
                 break
             v = e.start
@@ -841,43 +1087,44 @@ class Vertex:
         #print color
         v = self
         while True:
-            e = v.in_edge
+            e = v.in_arrow
             if not e:
                 break
             e.set_color(color)
             v = e.start
             v.set_color(color)
         
-    def update_edges(self):
-        if self.in_edge: self.in_edge.vectorize()
-        if self.out_edge: self.out_edge.vectorize()
+    def update_arrows(self):
+        if self.in_arrow: self.in_arrow.vectorize()
+        if self.out_arrow: self.out_arrow.vectorize()
 
     def erase(self):
         """
         Prepare the vertex for the garbage collector.
         """
-        self.in_edge = None
-        self.out_edge = None
+        self.in_arrow = None
+        self.out_arrow = None
         self.hide()
 
-class Edge:
+class Arrow:
     """
-    An edge in a PL link diagram.
+    An arrow in a PL link diagram.
     """
     epsilon = 12
     
-    def __init__(self, start, end, canvas, hidden=False, color='black'):
+    def __init__(self, start, end, canvas=None, hidden=False, color='black'):
         self.start, self.end = start, end
-        self.start.out_edge = self
-        self.end.in_edge = self
         self.canvas = canvas
         self.color = color
         self.hidden = hidden
         self.frozen = False
         self.lines = []
         self.cross_params = []
-        self.vectorize()
-        self.draw()
+        if self.start != self.end:
+            self.start.out_arrow = self
+            self.end.in_arrow = self
+            self.vectorize()
+            self.draw()
         
     def __repr__(self):
         return '%s-->%s'%(self.start, self.end)
@@ -903,10 +1150,10 @@ class Edge:
         self.dy = float(self.end.y - self.start.y)
         self.length = sqrt(self.dx*self.dx + self.dy*self.dy) 
 
-    def reverse(self):
+    def reverse(self, crossings=[]):
         self.end, self.start = self.start, self.end
         self.vectorize()
-        self.draw()
+        self.draw(crossings)
 
     def hide(self):
         for line in self.lines:
@@ -932,9 +1179,9 @@ class Edge:
             self.canvas.delete(line)
         self.lines = []
         cross_params = []
-        over_edges = [c.over for c in crossings if c.under == self]
-        for edge in over_edges: 
-            t = self ^ edge
+        over_arrows = [c.over for c in crossings if c.under == self]
+        for arrow in over_arrows: 
+            t = self ^ arrow
             if t:
                 cross_params.append(t)
         cross_params.sort()
@@ -949,12 +1196,12 @@ class Edge:
         x1, y1 = self.end.point()
         self.lines.append(self.canvas.create_line(
                 x0, y0, x1, y1,
-                arrow=Tkinter.LAST,
+                arrow=Tk_.LAST,
                 width=3, fill=self.color))
         if recurse:
-            under_edges = [c.under for c in crossings if c.over == self]
-            for edge in under_edges:
-                edge.draw(crossings, recurse=False)
+            under_arrows = [c.under for c in crossings if c.over == self]
+            for arrow in under_arrows:
+                arrow.draw(crossings, recurse=False)
 
     def set_start(self, vertex, crossings=[]):
         self.start = vertex
@@ -975,7 +1222,7 @@ class Edge:
             
     def erase(self):
         """
-        Prepare the edge for the garbage collector.
+        Prepare the arrow for the garbage collector.
         """
         self.start = None
         self.end = None
@@ -985,41 +1232,42 @@ class Edge:
         if vertex == self.start or vertex == self.end:
             return False
         try:
-            e = Edge.epsilon
+            e = Arrow.epsilon
             Dx = vertex.x - self.start.x
             Dy = vertex.y - self.start.y
             comp1 = (Dx*self.dx + Dy*self.dy)/self.length
             comp2 = (Dy*self.dx - Dx*self.dy)/self.length
             return -e < comp1 < self.length + e and -e < comp2 < e
         except:
-            print vertex
+            #print vertex
             return False
 
 class Crossing:
     """
-    A pair of crossing edges in a PL link diagram.
+    A pair of crossing arrows in a PL link diagram.
     """
     def __init__(self, over, under):
         self.over = over
         self.under = under
         self.locked = False
-        self.KLP = {}
-        # See the SnapPea file link_projection.h
+        self.KLP = {}    # See the SnapPea file link_projection.h
+        self.hit1 = None # For computing DT codes
+        self.hit2 = None
 
     def __repr__(self):
         return '%s over %s at (%d,%d)'%(self.over, self.under, self.x, self.y)
 
     def __eq__(self, other):
         """
-        Crossings are equivalent if they involve the same edges.
+        Crossings are equivalent if they involve the same arrows.
         """
         if self.over in other and self.under in other:
             return True
         else:
             return False
         
-    def __contains__(self, edge):
-        if edge == None or edge == self.over or edge == self.under:
+    def __contains__(self, arrow):
+        if arrow == None or arrow == self.over or arrow == self.under:
             return True
         else:
             return False
@@ -1040,12 +1288,12 @@ class Crossing:
         except:
             return 0
 
-    def strand(self, edge):
+    def strand(self, arrow):
         sign = self.sign()
-        if edge not in self:
+        if arrow not in self:
             return None
-        elif ( (edge == self.over and sign == 'RH') or
-               (edge == self.under and sign =='LH') ):
+        elif ( (arrow == self.over and sign == 'RH') or
+               (arrow == self.under and sign =='LH') ):
             return 'X'
         else:
             return 'Y'
@@ -1053,27 +1301,47 @@ class Crossing:
     def reverse(self):
         self.over, self.under = self.under, self.over
 
-    def height(self, edge):
-        if edge == self.under:
+    def height(self, arrow):
+        if arrow == self.under:
             return self.under ^ self.over
-        elif edge == self.over:
+        elif arrow == self.over:
             return self.over ^ self.under
         else:
             return None
 
+    def hit(self, count):
+        if self.hit1 is None:
+            self.hit1 = count
+        elif self.hit2 is None:
+            self.hit2 = count
+        else:
+            raise ValueError('Too many hits!')
+
+    def clear_hits(self):
+        self.hit1, self.hit2 = None, None
+
+
 class ECrossing:
     """
-    A pair: (Crossing, Edge).
+    A pair: (Crossing, Arrow), where the Arrow is involved in the Crossing.
+    The ECrossings correspond 1-1 with edges of the link diagram.
     """ 
-    def __init__(self, crossing, edge):
-        if edge not in crossing:
+    def __init__(self, crossing, arrow):
+        if arrow not in crossing:
             raise ValueError
         self.crossing = crossing
-        self.edge = edge
-        self.strand = self.crossing.strand(self.edge)
+        self.arrow = arrow
+        self.strand = self.crossing.strand(self.arrow)
 
     def pair(self):
-        return (self.crossing, self.edge)
+        return (self.crossing, self.arrow)
+
+    def goes_over(self):
+        if self.arrow == self.crossing.over:
+            return True
+        return False
+
+DT_alphabet = '_abcdefghijklmnopqrstuvwxyzZYXWVUTSRQPONMLKJIHGFEDCBA'
 
 class Palette:
     """
@@ -1111,20 +1379,20 @@ class InfoDialog(tkSimpleDialog.Dialog):
     def __init__(self, parent, title, content=''):
         self.parent = parent
         self.content = content
-        Tkinter.Toplevel.__init__(self, parent)
-        NW = Tkinter.N+Tkinter.W
+        Tk_.Toplevel.__init__(self, parent)
+        NW = Tk_.N+Tk_.W
         if title:
             self.title(title)
 #        self.icon = PhotoImage(data=icon_string)
-        canvas = Tkinter.Canvas(self, width=58, height=58)
+        canvas = Tk_.Canvas(self, width=58, height=58)
 #        canvas.create_image(10, 10, anchor=NW, image=self.icon)
         canvas.grid(row=0, column=0, sticky=NW)
-        text = Tkinter.Text(self, font='Helvetica 14',
+        text = Tk_.Text(self, font='Helvetica 14',
                     width=50, height=16, padx=10)
-        text.insert(Tkinter.END, self.content)
+        text.insert(Tk_.END, self.content)
         text.grid(row=0, column=1, sticky=NW,
                   padx=10, pady=10)
-        text.config(state=Tkinter.DISABLED)
+        text.config(state=Tk_.DISABLED)
         self.buttonbox()
         self.grab_set()
         self.protocol('WM_DELETE_WINDOW', self.ok)
@@ -1132,10 +1400,10 @@ class InfoDialog(tkSimpleDialog.Dialog):
         self.wait_window(self)
 
     def buttonbox(self):
-        box = Tkinter.Frame(self)
-        w = Tkinter.Button(box, text="OK", width=10, command=self.ok,
-                   default=Tkinter.ACTIVE)
-        w.pack(side=Tkinter.LEFT, padx=5, pady=5)
+        box = Tk_.Frame(self)
+        w = Tk_.Button(box, text="OK", width=10, command=self.ok,
+                   default=Tk_.ACTIVE)
+        w.pack(side=Tk_.LEFT, padx=5, pady=5)
         self.bind("<Return>", self.ok)
         self.bind("<Escape>", self.ok)
         box.grid(row=1, columnspan=2)
@@ -1145,21 +1413,26 @@ class InfoDialog(tkSimpleDialog.Dialog):
         self.app = None
         self.destroy()
 
-About = """PLink version 1.0
+try:
+    import version
+except ImportError: # Python 3
+    from . import version
+
+About = """PLink version %s
 
 PLink draws piecewise linear links.
 
-Written in Python by Marc Culler.
+Written in Python by Marc Culler and Nathan Dunfield.
 
-Comments to: culler@math.uic.edu
-Download at http://www.math.uic.edu/~t3m/plink
+Comments to: culler@math.uic.edu, nmd@illinois.edu
+Download at http://www.math.uic.edu/~t3m
 Distributed under the GNU General Public License.
 
 Development supported by the National Science Foundation.
 
-Inspired by SnapPea, by Jeff Weeks, and LinkSmith by
-Jim Hoste and Morwen Thistlethwaite.
-"""
+Inspired by SnapPea (written by Jeff Weeks) and
+LinkSmith (written by Jim Hoste and Morwen Thistlethwaite).
+""" % version.version
 
 if __name__ == '__main__':
     LE = LinkEditor()
