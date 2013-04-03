@@ -1,0 +1,163 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Installing and running PLink &mdash; PLink v1.1 documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '1.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="PLink v1.1 documentation" href="index.html" />
+    <link rel="next" title="plink – A Python/Tk link editor" href="plink.html" />
+    <link rel="prev" title="How to use PLink" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="plink.html" title="plink – A Python/Tk link editor"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="How to use PLink"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">PLink v1.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="installing-and-running-plink">
+<h1>Installing and running PLink<a class="headerlink" href="#installing-and-running-plink" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="mac-os-x">
+<h2>Mac OS X<a class="headerlink" href="#mac-os-x" title="Permalink to this headline">¶</a></h2>
+<p>Simply download <a class="reference external" href="http://math.uic.edu/t3m/plink/PLink.dmg">PLink.dmg</a>
+and copy PLink.app to the Applications folder.  Double-click to start
+it, just like any other application.</p>
+</div>
+<div class="section" id="windows">
+<h2>Windows<a class="headerlink" href="#windows" title="Permalink to this headline">¶</a></h2>
+<p>To be improved, but for now the following works: Install <a class="reference external" href="http://python.org">Python</a>, and then get the source code below and expand
+it.  Then double-click the file:</p>
+<div class="highlight-python"><pre>plink\plink\__init__.py</pre>
+</div>
+</div>
+<div class="section" id="linux-and-other-unixes">
+<h2>Linux and other Unixes<a class="headerlink" href="#linux-and-other-unixes" title="Permalink to this headline">¶</a></h2>
+<p>You will need to have Python (&gt; 2.4), Tk (&gt;= 8.4), and Tkinter
+installed to run plink; for instance, if you are using Debian or
+Ubuntu, just install the package &#8220;python-tk&#8221;.</p>
+<p>If you have root privileges and <a class="reference external" href="http://peak.telecommunity.com/DevCenter/setuptools">setuptools</a> installed (the
+Linux package is usually called &#8220;python-setuptools&#8221;), simply do:</p>
+<div class="highlight-python"><pre>sudo python -m easy_install -f http://math.uic.edu/t3m/plink plink</pre>
+</div>
+<p>This installs a shell-command called &#8220;plink&#8221; which starts PLink.</p>
+<p>If you don&#8217;t have root privileges, download the source-code below and do:</p>
+<div class="highlight-python"><pre>tar xfz plink.tar.gz
+cd plink
+python -m plink.app</pre>
+</div>
+<p>to start PLink.</p>
+</div>
+<div class="section" id="source-code">
+<h2>Source code<a class="headerlink" href="#source-code" title="Permalink to this headline">¶</a></h2>
+<p>The complete source code for all platforms: <a class="reference external" href="http://math.uic.edu/t3m/plink.tar.gz">plink.tar.gz</a></p>
+<p>You can also get it straight from the <a class="reference external" href="www.selenic.com/mercurial">Mercurial</a> repository:</p>
+<div class="highlight-python"><pre>hg clone static-http://math.uic.edu/t3m/hg/plink</pre>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Installing and running PLink</a><ul>
+<li><a class="reference internal" href="#mac-os-x">Mac OS X</a></li>
+<li><a class="reference internal" href="#windows">Windows</a></li>
+<li><a class="reference internal" href="#linux-and-other-unixes">Linux and other Unixes</a></li>
+<li><a class="reference internal" href="#source-code">Source code</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">How to use PLink</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="plink.html"
+                        title="next chapter">plink &#8211; A Python/Tk link editor</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/installing.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="plink.html" title="plink – A Python/Tk link editor"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="How to use PLink"
+             >previous</a> |</li>
+        <li><a href="index.html">PLink v1.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2009, Marc Culler, Nathan Dunfield and others.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.4.
+    </div>
+  </body>
+</html>

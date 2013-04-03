@@ -6,14 +6,14 @@ the Free Software Foundation.  See the file GPL.txt for details.
 The URL for this program is
   http://www.math.uic.edu/~t3m/plink
 A copy of the license file may be found at:
-  http://www.gnu.org/licenses/gpl-3.0.txt
+  http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 
 The development of this program was partially supported by
 the National Science Foundation under grants DMS0608567,
 DMS0504975and DMS0204142.
 
 This program requires a Python interpreter and the Tkinter module.
-It was tested with Python 2.4.
+It was tested with Python 2.6.
 
 Installation Instructions:
 

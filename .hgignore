@@ -1,0 +1,8 @@
+build
+dist
+doc-source/_build
+.DS_Store
+
+syntax: glob
+*~
+*.pyc
