@@ -134,8 +134,8 @@ class LinkEditor:
         menubar.add_cascade(label='File', menu=file_menu)
         info_menu = Tk_.Menu(menubar, tearoff=0)
         export_menu = Tk_.Menu(menubar, tearoff=0)
-        info_menu.add_command(label='DT code', command=self.dt_normal)
-        info_menu.add_command(label='DT for Snap', command=self.dt_snap)
+        info_menu.add_command(label='DT code', command=self.DT_normal)
+        info_menu.add_command(label='DT for Snap', command=self.DT_snap)
         info_menu.add_command(label='Gauss code', command=self.not_done)
         info_menu.add_command(label='PD code', command=self.not_done)
         menubar.add_cascade(label='Info', menu=info_menu)
@@ -746,29 +746,35 @@ class LinkEditor:
         KLP_crossings = [crossing.KLP for crossing in self.Crossings]
         return num_crossings, num_free_loops, num_components, KLP_crossings
 
-    def dt_code(self, snap_style=False):
+    def DT_code(self, alpha=False):
         """
-        Returns the Dowker-Thistlethwaite code as a list of even integers
-        and a list of the number of crossings in each component.
+        Returns the Dowker-Thistlethwaite code as a list of tuples of
+        even integers.
 
-        If snap_style is set to True, it returns the alphabetical
-        Dowker-Thistlethwaite code as used by Oliver Goodman's Snap.
+        If alpha is set to True, it returns the alphabetical
+        Dowker-Thistlethwaite code as used in Oliver Goodman's Snap
+        and the tabulations by Hoste and Thistlethwaite.
         """
         components = self.crossing_components()
-        component_sizes = [len(self.Crossings)<<1, len(components)<<1]
         for crossing in self.Crossings:
             crossing.clear_hits()
         count = 1
+        chunks = []
+        prefix_ints = [len(self.Crossings), len(components)]
         while len(components) > 0:
             this_component = components.pop()
-            component_sizes.append(len(this_component))
+            odd_count = 0
             for ecrossing in this_component:
+                crossing = ecrossing.crossing
                 if count%2 == 0 and ecrossing.goes_over():
-                    ecrossing.crossing.hit(-count)
+                    crossing.hit(-count)
                 else:
-                    ecrossing.crossing.hit(count)
+                    crossing.hit(count)
+                if count%2 == 1:
+                    odd_count += 1
                 count += 1
-            # look for a component that has been hit
+            chunks.append(odd_count)
+            # Jump to the next component; look for one that has been hit
             for component in components:
                 hits = [x for x in component if x.crossing.hit1 is not None]
                 if len(hits) > 0:
@@ -783,36 +789,39 @@ class LinkEditor:
                     components.append(component)
                     break
         # build the Dowker-Thistlethwaite code
-        code = [None for crossing in self.Crossings]
+        even_codes = [None]*len(self.Crossings)
         for crossing in self.Crossings:
-            if crossing.hit1%2:
-                code[(crossing.hit1 - 1)//2] = crossing.hit2
+            if crossing.hit1%2 != 0:
+                even_codes[(crossing.hit1 - 1)//2] = crossing.hit2
             else:
-                code[(crossing.hit2 - 1)//2] = crossing.hit1
-
-        if not snap_style:
-            return code, component_sizes
+                even_codes[(crossing.hit2 - 1)//2] = crossing.hit1
+        if not alpha:
+            result = []
+            for chunk in chunks:
+                result.append(tuple(even_codes[:chunk]))
+                even_codes = even_codes[chunk:]
+            return result
         else:
-            alphacode = ''.join(tuple([DT_alphabet[x>>1] for x in code]))
-            if component_sizes[0] > 52:
+            alphacode = ''.join(tuple([DT_alphabet[x>>1] for x in even_codes]))
+            prefix_ints += chunks
+            if prefix_ints[0] > 26:
                 raise ValueError('Too many crossings!')
-            prefix = ''.join(tuple([DT_alphabet[n>>1] for n in component_sizes]))
+            prefix = ''.join(tuple([DT_alphabet[n] for n in prefix_ints]))
             return prefix + alphacode
 
-    def dt_normal(self):
+    def DT_normal(self):
         """
         Displays the standard Dowker-Thistlethwaite code as a sequence
         of signed even integers. (Ignores free loops.)
         """
-        code, component_sizes = self.dt_code()
-        self.write_text('DT code:  ' + str(code).replace(', ', ','))
+        self.write_text('DT code:  ' + str(self.DT_code()))
 
-    def dt_snap(self):
+    def DT_snap(self):
         """
         Displays the alphabetical Dowker-Thistlethwaite code as used
         by Oliver Goodman's Snap.
         """
-        self.write_text('DT code:  ' +  self.dt_code(snap_style=True))
+        self.write_text('DT code:  ' +  self.DT_code(alpha=True))
 
     def SnapPea_projection_file(self):
         """
