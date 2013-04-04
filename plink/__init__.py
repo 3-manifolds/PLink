@@ -49,6 +49,22 @@ def asksaveasfile(mode='w',**options):
 
     return tkFileDialog.asksaveasfile(mode=mode, **options)
 
+if sys.platform == 'linux2':
+    def askopenfile():
+        return tkFileDialog.askopenfile(
+            mode='r',
+            title='Open SnapPea Projection File')
+else:
+    def askopenfile():
+        return tkFileDialog.askopenfile(
+            mode='r',
+            title='Open SnapPea Projection File',
+            defaultextension = ".lnk",
+            filetypes = [
+                ("Link and text files", "*.lnk *.txt", "TEXT"),
+                ("All text files", "", "TEXT"),
+                ("All files", "")],
+            )
 
 class LinkEditor:
     """
@@ -67,9 +83,14 @@ class LinkEditor:
         self.colors = []
         self.color_keys = []
         if root is None:
-            self.window = Tk_.Tk()
+            self.window = root = Tk_.Tk(className='plink')
         else:
             self.window = Tk_.Toplevel(root)
+        if sys.platform == 'linux2':
+            root.tk.call('namespace', 'import', '::tk::dialog::file::')
+            root.tk.call('set', '::tk::dialog::file::showHiddenBtn',  '1')
+            root.tk.call('set', '::tk::dialog::file::showHiddenVar',  '0')
+
         self.window.title(title)
         self.palette = Palette()
         # Frame and Canvas
@@ -116,6 +137,7 @@ class LinkEditor:
     
     # Subclasses may want to overide this method.
     def build_menus(self):
+        self.show_DT_var = Tk_.IntVar(self.window)
         menubar = Tk_.Menu(self.window)
         file_menu = Tk_.Menu(menubar, tearoff=0)
         file_menu.add_command(label='Open File ...', command=self.load)
@@ -136,6 +158,8 @@ class LinkEditor:
         export_menu = Tk_.Menu(menubar, tearoff=0)
         info_menu.add_command(label='DT code', command=self.DT_normal)
         info_menu.add_command(label='DT for Snap', command=self.DT_snap)
+        info_menu.add_checkbutton(label='DT labels', var=self.show_DT_var,
+                                  command = self.DT_labels)
         info_menu.add_command(label='Gauss code', command=self.not_done)
         info_menu.add_command(label='PD code', command=self.not_done)
         menubar.add_cascade(label='Info', menu=info_menu)
@@ -159,6 +183,7 @@ class LinkEditor:
         self.LiveArrow1 = None
         self.LiveArrow2 = None
         self.ActiveVertex = None
+        self.DTlabels = []
 
     def warn_arcs(self):
         if self.no_arcs:
@@ -402,6 +427,8 @@ class LinkEditor:
                     last_arrow.erase()
                     for arrow in self.Arrows:
                         arrow.draw(self.Crossings)
+                    self.DT_labels()
+
                 if not self.ActiveVertex.in_arrow:
                     self.Vertices.remove(self.ActiveVertex)
                     self.ActiveVertex.erase()
@@ -429,6 +456,7 @@ class LinkEditor:
         for arrow in self.Arrows:
             if arrow.too_close(vertex):
                 arrow.end.reverse_path(self.Crossings)
+                self.DT_labels()
                 return True
         return False
 
@@ -451,9 +479,11 @@ class LinkEditor:
             arrow.draw(self.Crossings)
         self.canvas.config(cursor='')
         self.show_color_keys()
+        self.DT_labels()
         self.state = 'start_state'
 
     def goto_drawing_state(self, x1,y1):
+        self.show_DT_var.set(0)
         self.ActiveVertex.hidden = False
         self.ActiveVertex.draw()
         x0, y0 = self.ActiveVertex.point()
@@ -671,12 +701,14 @@ class LinkEditor:
             crossing.locked = False
         for arrow in self.Arrows:
             arrow.draw(self.Crossings)
+        self.DT_labels()
 
     def reflect(self):
         for crossing in self.Crossings:
             crossing.reverse()
         for arrow in self.Arrows:
             arrow.draw(self.Crossings)
+        self.DT_labels()
 
     def clear(self):
         for arrow in self.Arrows:
@@ -686,6 +718,7 @@ class LinkEditor:
         self.canvas.delete('all')
         self.palette.reset()
         self.initialize()
+        self.show_DT_var.set(0)
         self.goto_start_state()
 
     def SnapPea_KLPProjection(self):
@@ -756,13 +789,15 @@ class LinkEditor:
         and the tabulations by Hoste and Thistlethwaite.
         """
         components = self.crossing_components()
+        # This sort is unnecessary but makes some DT code happier 
+        components.sort(key=lambda x: -len(x))
         for crossing in self.Crossings:
             crossing.clear_hits()
         count = 1
         chunks = []
         prefix_ints = [len(self.Crossings), len(components)]
         while len(components) > 0:
-            this_component = components.pop()
+            this_component = components.pop(0)
             odd_count = 0
             for ecrossing in this_component:
                 crossing = ecrossing.crossing
@@ -778,7 +813,7 @@ class LinkEditor:
             for component in components:
                 hits = [x for x in component if x.crossing.hit1 is not None]
                 if len(hits) > 0:
-                    # reorder its crossings
+                    # reorder its crossings to ensure even-oddness
                     components.remove(component)
                     first = hits[0]
                     n = component.index(first)
@@ -786,8 +821,9 @@ class LinkEditor:
                         component = component[n-1:]+component[:n-1]
                     else:
                         component = component[n:]+component[:n]
-                    components.append(component)
+                    components.insert(0,component)
                     break
+
         # build the Dowker-Thistlethwaite code
         even_codes = [None]*len(self.Crossings)
         for crossing in self.Crossings:
@@ -823,6 +859,39 @@ class LinkEditor:
         """
         self.write_text('DT code:  ' +  self.DT_code(alpha=True))
 
+    def DT_labels(self):
+        self.hide_DT()
+        if self.show_DT_var.get():
+            self.show_DT()
+
+    def show_DT(self):
+        """
+        Display the DT code numbers on each crossing.
+        """
+        try:
+            self.DT_code()
+        except:
+            return
+        for crossing in self.Crossings:
+            crossing.locate()
+            self.DTlabels.append(self.canvas.create_text(
+                    (crossing.x - 10, crossing.y),
+                    anchor=Tk_.E,
+                    text=str(crossing.hit1)
+                    ))
+            self.DTlabels.append(self.canvas.create_text(
+                    (crossing.x + 10, crossing.y),
+                    anchor=Tk_.W,
+                    text=str(crossing.hit2)
+                    ))
+            crossing.clear_hits()
+
+    def hide_DT(self):
+        for text_item in self.DTlabels:
+            self.canvas.delete(text_item)
+        self.DTlabels = []
+                                         
+                                         
     def SnapPea_projection_file(self):
         """
         Returns a string containing the contents of a SnapPea link
@@ -888,15 +957,7 @@ class LinkEditor:
         if file_name:
             loadfile = open(file_name, "r")
         else:
-            loadfile = tkFileDialog.askopenfile(
-                mode='r',
-                title='Open SnapPea Projection File',
-                defaultextension = ".lnk",
-                filetypes = [
-                ("Link and text files", "*.lnk *.txt", "TEXT"),
-                ("All text files", "", "TEXT"),
-                ("All files", "")],
-                )
+            loadfile = askopenfile()
         if loadfile:
             lines = [line for line in loadfile.readlines() if len(line) > 1]
             num_lines = len(lines)
@@ -1202,7 +1263,7 @@ class Arrow:
             under_arrows = [c.under for c in crossings if c.over == self]
             for arrow in under_arrows:
                 arrow.draw(crossings, recurse=False)
-
+    
     def set_start(self, vertex, crossings=[]):
         self.start = vertex
         if self.end:
@@ -1319,7 +1380,6 @@ class Crossing:
 
     def clear_hits(self):
         self.hit1, self.hit2 = None, None
-
 
 class ECrossing:
     """
