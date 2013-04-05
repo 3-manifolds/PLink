@@ -966,6 +966,7 @@ class LinkEditor:
                     'Bad file',
                     'This is not a SnapPea link projection file')
             else:
+                self.clear()
                 try:
                     num_components = int(lines.pop(0))
                     for n in range(num_components):
