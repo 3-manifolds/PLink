@@ -664,6 +664,7 @@ class LinkEditor:
 
     def clear_text(self):
         self.infotext.delete(0, Tk_.END)
+        self.window.focus_set()
 
     def write_text(self, string):
         self.infotext.delete(0, Tk_.END)
