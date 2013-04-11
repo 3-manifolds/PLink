@@ -127,9 +127,9 @@ class LinkEditor:
         self.canvas.bind('<Motion>', self.mouse_moved)
         self.window.bind('<Key>', self.key_press)
         self.infotext.bind('<<Copy>>', lambda event : None)
-        self.infotext.bind('<Key>', lambda event : 'break')
-        self.infotext.bind('<Up>', self.key_press)
-        self.infotext.bind('<Down>', self.key_press)
+        self.infotext.bind('<Key>', self.infotext_key_press)
+#        self.infotext.bind('<Up>', self.key_press)
+#        self.infotext.bind('<Down>', self.key_press)
         self.window.protocol("WM_DELETE_WINDOW", self.done)
         # Go
         self.flipcheck = None
@@ -403,6 +403,10 @@ class LinkEditor:
                 x0,y0,x1,y1 = self.canvas.coords(self.LiveArrow2)
                 self.canvas.coords(self.LiveArrow2, x0, y0, x, y)
 
+    def infotext_key_press(self, event):
+        self.window.focus_set()
+        return 'break'
+
     def key_press(self, event):
         """
         Handler for keypress events.
@@ -490,7 +494,7 @@ class LinkEditor:
         self.LiveArrow1 = self.canvas.create_line(x0,y0,x1,y1,fill='red')
         self.state = 'drawing_state'
         self.canvas.config(cursor='pencil')
-        self.infotext.delete(0, Tk_.END)
+        self.clear_text()
 
     def verify_drag(self):
         self.ActiveVertex.update_arrows()
@@ -968,6 +972,7 @@ class LinkEditor:
                     'This is not a SnapPea link projection file')
             else:
                 self.clear()
+                self.clear_text()
                 try:
                     num_components = int(lines.pop(0))
                     for n in range(num_components):
