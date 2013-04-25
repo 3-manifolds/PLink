@@ -742,10 +742,10 @@ class LinkEditor:
         main convention:
 
         If you view a crossing (from above) so that the strands go in the
-        direction of the postive x- and y-axes, then the strand going in
+        direction of the positive x- and y-axes, then the strand going in
         the x-direction is the KLPStrandX, and the strand going in the
         y-direction is the KLPStrandY.  Note that this definition does not
-        depend on which is the overstrand and which is the understrand::
+        depend on which is the overstrand and which is the understrand:
         
                                    KLPStrandY
                                        ^
@@ -797,6 +797,11 @@ class LinkEditor:
         and the tabulations by Hoste and Thistlethwaite.
         """
         components = self.crossing_components()
+        # REMOVE THIS
+        # We want the components to remain in the order described by
+        # the digits on the plink screen, so people know how to do
+        # dehn filling.  This is only here to cope with Morwen's old
+        # DT code.
         # Sort the components by increasing length.
         components.sort(key=lambda x: len(x))
         for crossing in self.Crossings:
