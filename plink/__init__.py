@@ -787,7 +787,7 @@ class LinkEditor:
         KLP_crossings = [crossing.KLP for crossing in self.Crossings]
         return num_crossings, num_free_loops, num_components, KLP_crossings
 
-    def DT_code(self, alpha=False):
+    def DT_code(self, alpha=False, signed=True):
         """
         Return the Dowker-Thistlethwaite code as a list of tuples of
         even integers.
@@ -797,13 +797,6 @@ class LinkEditor:
         and the tabulations by Hoste and Thistlethwaite.
         """
         components = self.crossing_components()
-        # REMOVE THIS
-        # We want the components to remain in the order described by
-        # the digits on the plink screen, so people know how to do
-        # dehn filling.  This is only here to cope with Morwen's old
-        # DT code.
-        # Sort the components by increasing length.
-        components.sort(key=lambda x: len(x))
         for crossing in self.Crossings:
             crossing.clear_hits()
             crossing.clear_components()
@@ -833,10 +826,7 @@ class LinkEditor:
             for ecrossing in this_component:
                 crossing = ecrossing.crossing
                 these_crossings.add(crossing)
-                if count%2 == 0 and ecrossing.goes_over():
-                    crossing.hit(-count)
-                else:
-                    crossing.hit(count)
+                crossing.hit(count, ecrossing.goes_over())
                 if count%2 == 1:
                     odd_count += 1
                 count += 1
@@ -858,39 +848,47 @@ class LinkEditor:
                 components.insert(0, next_component)
         # Now build the Dowker-Thistlethwaite code
         even_codes = [None]*len(self.Crossings)
+        flips = [None]*len(self.Crossings)
         for crossing in self.Crossings:
             if crossing.hit1%2 != 0:
-                even_codes[(crossing.hit1 - 1)//2] = crossing.hit2
+                n = (crossing.hit1 - 1)//2
+                even_codes[n] = crossing.hit2
             else:
-                even_codes[(crossing.hit2 - 1)//2] = crossing.hit1
+                n = (crossing.hit2 - 1)//2
+                even_codes[n] = crossing.hit1
+            flips[n] = int(crossing.flipped)
         if not alpha:
             result = []
             for chunk in chunks:
                 result.append(tuple(even_codes[:chunk]))
                 even_codes = even_codes[chunk:]
-            return result
+            if signed:
+                return result, flips
+            else:
+                return result
         else:
             alphacode = ''.join(tuple([DT_alphabet[x>>1] for x in even_codes]))
             prefix_ints += chunks
             if prefix_ints[0] > 26:
                 raise ValueError('Too many crossings!')
             prefix = ''.join(tuple([DT_alphabet[n] for n in prefix_ints]))
+            if signed:
+                alphacode += '.' + ''.join([str(f) for f in flips])
             return prefix + alphacode
-
 
     def DT_normal(self):
         """
         Displays the standard Dowker-Thistlethwaite code as a list of
         tuples of signed even integers. (Ignores free loops.)
         """
-        self.write_text('DT code:  ' + str(self.DT_code()))
+        self.write_text('DT:  %s,   %s'%self.DT_code())
 
     def DT_snap(self):
         """
         Displays an alphabetical Dowker-Thistlethwaite code as used
         in the knot tabulations.
         """
-        self.write_text('DT code:  ' +  self.DT_code(alpha=True))
+        self.write_text('DT:  %s'%self.DT_code(alpha=True))
 
     def DT_labels(self):
         self.hide_DT()
@@ -907,15 +905,21 @@ class LinkEditor:
             return
         for crossing in self.Crossings:
             crossing.locate()
+            yshift = 0
+            for arrow in crossing.over, crossing.under:
+                arrow.vectorize()
+                if abs(arrow.dy) < .3*abs(arrow.dx):
+                    yshift = 8
+            flip = ' *' if crossing.flipped else ''
             self.DTlabels.append(self.canvas.create_text(
-                    (crossing.x - 10, crossing.y),
+                    (crossing.x - 10, crossing.y - yshift),
                     anchor=Tk_.E,
                     text=str(crossing.hit1)
                     ))
             self.DTlabels.append(self.canvas.create_text(
-                    (crossing.x + 10, crossing.y),
+                    (crossing.x + 10, crossing.y - yshift),
                     anchor=Tk_.W,
-                    text=str(crossing.hit2)
+                    text=str(crossing.hit2) + flip
                     ))
             crossing.clear_hits()
 
@@ -1351,6 +1355,7 @@ class Crossing:
         self.hit2 = None
         self.comp1 = None
         self.comp2 = None
+        self.flipped = None
 
     def __repr__(self):
         return '%s over %s at (%d,%d)'%(self.over, self.under, self.x, self.y)
@@ -1411,16 +1416,21 @@ class Crossing:
         else:
             return None
 
-    def hit(self, count):
+    def hit(self, count, over):
+        if count%2 == 0 and over:
+            count = -count
         if self.hit1 is None:
             self.hit1 = count
+            sign = self.sign()
+            if sign:
+                self.flipped = over ^ (sign == 'RH')
         elif self.hit2 is None:
             self.hit2 = count
         else:
             raise ValueError('Too many hits!')
 
     def clear_hits(self):
-        self.hit1, self.hit2 = None, None
+        self.hit1, self.hit2, self.flipped = None, None, None
 
     def mark_component(self, component):
         if self.comp1 is None:
