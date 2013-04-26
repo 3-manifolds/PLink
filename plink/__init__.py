@@ -160,7 +160,7 @@ class LinkEditor:
         info_menu.add_command(label='Alphabetical DT', command=self.DT_snap)
         info_menu.add_checkbutton(label='DT labels', var=self.show_DT_var,
                                   command = self.DT_labels)
-        info_menu.add_command(label='Gauss code', command=self.not_done)
+        info_menu.add_command(label='Gauss code', command=self.Gauss_info)
         info_menu.add_command(label='PD code', command=self.not_done)
         menubar.add_cascade(label='Info', menu=info_menu)
         tools_menu = Tk_.Menu(menubar, tearoff=0)
@@ -787,6 +787,33 @@ class LinkEditor:
         KLP_crossings = [crossing.KLP for crossing in self.Crossings]
         return num_crossings, num_free_loops, num_components, KLP_crossings
 
+    def Gauss_code(self):
+        """
+        Return a Gauss code for the link, using the same ordering
+        of crossings as are used for the DT code.
+        """
+        # convert DT to Gauss, so we use the same labels.
+        dt = self.DT_code(signed=False)
+        evens = [y for x in dt for y in x]
+        size = 2*len(evens)
+        counts = [None]*size
+        for odd, N in zip(range(1, size, 2), evens):
+            even = abs(N)
+            if even < odd:
+                counts[even-1] = -N
+                counts[odd-1] = N 
+            else:
+                O = odd if even < 0 else -odd
+                counts[even-1] = -O
+                counts[odd-1] = O
+        gauss = []
+        start = 0
+        for L in [len(c) for c in self.crossing_components()]:
+            end = start + L
+            gauss.append(tuple(counts[start:end]))
+            start = end
+        return gauss
+        
     def DT_code(self, alpha=False, signed=True):
         """
         Return the Dowker-Thistlethwaite code as a list of tuples of
@@ -826,7 +853,7 @@ class LinkEditor:
             for ecrossing in this_component:
                 crossing = ecrossing.crossing
                 these_crossings.add(crossing)
-                crossing.hit(count, ecrossing.goes_over())
+                crossing.DT_hit(count, ecrossing.goes_over())
                 if count%2 == 1:
                     odd_count += 1
                 count += 1
@@ -878,17 +905,24 @@ class LinkEditor:
 
     def DT_normal(self):
         """
-        Displays the standard Dowker-Thistlethwaite code as a list of
-        tuples of signed even integers. (Ignores free loops.)
+        Displays a Dowker-Thistlethwaite code as a list of tuples of
+        signed even integers. (Ignores free loops.)
         """
         self.write_text('DT:  %s,   %s'%self.DT_code())
 
     def DT_snap(self):
         """
-        Displays an alphabetical Dowker-Thistlethwaite code as used
-        in the knot tabulations.
+        Displays an alphabetical Dowker-Thistlethwaite code as used in
+        the knot tabulations.
         """
         self.write_text('DT:  %s'%self.DT_code(alpha=True))
+
+    def Gauss_info(self):
+        """
+        Displays a Gauss code as a list of tuples of signed
+        integers. (Ignores free loops.)
+        """
+        self.write_text('Gauss:  %s'%self.Gauss_code())
 
     def DT_labels(self):
         self.hide_DT()
@@ -1416,7 +1450,7 @@ class Crossing:
         else:
             return None
 
-    def hit(self, count, over):
+    def DT_hit(self, count, over):
         if count%2 == 0 and over:
             count = -count
         if self.hit1 is None:
@@ -1429,6 +1463,9 @@ class Crossing:
         else:
             raise ValueError('Too many hits!')
 
+    def Gauss_hit(self, N):
+        self.hit1 = N
+        
     def clear_hits(self):
         self.hit1, self.hit2, self.flipped = None, None, None
 
