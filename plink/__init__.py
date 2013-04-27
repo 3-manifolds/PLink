@@ -1470,9 +1470,6 @@ class Crossing:
         else:
             raise ValueError('Too many hits!')
 
-    def Gauss_hit(self, N):
-        self.hit1 = N
-        
     def clear_hits(self):
         self.hit1, self.hit2, self.flipped = None, None, None
 
