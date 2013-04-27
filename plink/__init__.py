@@ -607,17 +607,17 @@ class LinkEditor:
                 continue
             component = [first_arrow]
             while component[-1].end != component[0].start:
-                next = component[-1].end.out_arrow
-                if next == None:
+                next_arrow = component[-1].end.out_arrow
+                if next_arrow == None:
                     break
-                pool.remove(next)
-                component.append(next)
+                pool.remove(next_arrow)
+                component.append(next_arrow)
             result.append(component)
         if include_isolated_vertices:
             for vertex in [v for v in self.Vertices if v.is_isolated()]:
                 result.append([Arrow(vertex, vertex, color=vertex.color)])
 
-        # We want adding components to not change their numeric labels
+        # We want adding components to not change the numeric labels
         # on components, so we'll sort them by age of oldest vertex.
         def oldest_vertex(component):
             def oldest(arrow):
@@ -637,6 +637,10 @@ class LinkEditor:
         """
         for vertex in self.Vertices:
             if vertex.is_endpoint():
+                self.show_DT_var.set(0)
+                tkMessageBox.showwarning(
+                    'Error',
+                    'All components must be closed to use this tool.')
                 raise ValueError
         result = []
         arrow_components = self.arrow_components()
@@ -684,11 +688,10 @@ class LinkEditor:
         try:
             crossing_components = self.crossing_components()
         except ValueError:
-            tkMessageBox.showwarning(
-                'Error',
-                'All components must be closed to use this tool.')
             return
         for component in crossing_components:
+            if len(component) == 0:
+                continue
             cross0, arrow0 = component[0].pair()
             for ecrossing in component[1:]:
                 cross, arrow = ecrossing.pair()
@@ -792,10 +795,13 @@ class LinkEditor:
     def Gauss_code(self):
         """
         Return a Gauss code for the link, using the same ordering
-        of crossings as are used for the DT code.
+        of crossings as are used for the DT code.  Requires that
+        all components are closed.
         """
         # convert DT to Gauss, so we use the same labels.
         dt = self.DT_code(signed=False)
+        if dt is None:
+            return None
         # we use the component sizes computed by the DT_code method
         evens = [y for x in dt for y in x]
         size = 2*len(evens)
@@ -820,16 +826,19 @@ class LinkEditor:
     def DT_code(self, alpha=False, signed=True):
         """
         Return the Dowker-Thistlethwaite code as a list of tuples of
-        even integers.
+        even integers.  Requires that all components be closed.
 
-        If alpha is set to True, it returns the alphabetical
+        If alpha is set to True, this method returns the alphabetical
         Dowker-Thistlethwaite code as used in Oliver Goodman's Snap
         and the tabulations by Hoste and Thistlethwaite.
 
         As a side effect, computes the number of crossings per
         component, in the same order as the DT code.
         """
-        components = self.crossing_components()
+        try:
+            components = self.crossing_components()
+        except ValueError:
+            return None
         self.component_sizes = []
         for crossing in self.Crossings:
             crossing.clear_hits()
@@ -916,21 +925,27 @@ class LinkEditor:
         Displays a Dowker-Thistlethwaite code as a list of tuples of
         signed even integers. (Ignores free loops.)
         """
-        self.write_text('DT:  %s,   %s'%self.DT_code())
+        code = self.DT_code()
+        if code:
+            self.write_text('DT:  %s,   %s'%self.DT_code())
 
     def DT_snap(self):
         """
         Displays an alphabetical Dowker-Thistlethwaite code as used in
         the knot tabulations.
         """
-        self.write_text('DT:  %s'%self.DT_code(alpha=True))
+        code = self.DT_code()
+        if code:
+            self.write_text('DT:  %s'%self.DT_code(alpha=True))
 
     def Gauss_info(self):
         """
         Displays a Gauss code as a list of tuples of signed
         integers. (Ignores free loops.)
         """
-        self.write_text('Gauss:  %s'%self.Gauss_code())
+        code = self.DT_code()
+        if code:
+            self.write_text('Gauss:  %s'%self.Gauss_code())
 
     def DT_labels(self):
         self.hide_DT()
@@ -941,9 +956,7 @@ class LinkEditor:
         """
         Display the DT code numbers on each crossing.
         """
-        try:
-            self.DT_code()
-        except:
+        if not self.DT_code():
             return
         for crossing in self.Crossings:
             crossing.locate()
