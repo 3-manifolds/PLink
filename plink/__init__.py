@@ -133,6 +133,7 @@ class LinkEditor:
         self.window.protocol("WM_DELETE_WINDOW", self.done)
         # Go
         self.flipcheck = None
+        self.component_sizes = []
         self.state='start_state'
     
     # Subclasses may want to overide this method.
@@ -794,6 +795,7 @@ class LinkEditor:
         """
         # convert DT to Gauss, so we use the same labels.
         dt = self.DT_code(signed=False)
+        # we use the component sizes computed by the DT_code method
         evens = [y for x in dt for y in x]
         size = 2*len(evens)
         counts = [None]*size
@@ -803,13 +805,13 @@ class LinkEditor:
                 counts[even-1] = -N
                 counts[odd-1] = N 
             else:
-                O = odd if even < 0 else -odd
+                O = odd if N > 0 else -odd
                 counts[even-1] = -O
                 counts[odd-1] = O
         gauss = []
         start = 0
-        for L in [len(c) for c in self.crossing_components()]:
-            end = start + L
+        for size in self.component_sizes:
+            end = start + size
             gauss.append(tuple(counts[start:end]))
             start = end
         return gauss
@@ -822,8 +824,12 @@ class LinkEditor:
         If alpha is set to True, it returns the alphabetical
         Dowker-Thistlethwaite code as used in Oliver Goodman's Snap
         and the tabulations by Hoste and Thistlethwaite.
+
+        As a side effect, computes the number of crossings per
+        component, in the same order as the DT code.
         """
         components = self.crossing_components()
+        self.component_sizes = []
         for crossing in self.Crossings:
             crossing.clear_hits()
             crossing.clear_components()
@@ -836,6 +842,7 @@ class LinkEditor:
         prefix_ints = [len(self.Crossings), len(components)]
         while len(components) > 0:
             this_component = components.pop(0)
+            self.component_sizes.append(len(this_component))
             # Choose the first crossing, by Morwen's rules:
             # If any crossings on this component have been hit,
             # find the first one with an odd label and then
@@ -1369,9 +1376,9 @@ class Arrow:
             e = Arrow.epsilon
             Dx = vertex.x - self.start.x
             Dy = vertex.y - self.start.y
-            comp1 = (Dx*self.dx + Dy*self.dy)/self.length
-            comp2 = (Dy*self.dx - Dx*self.dy)/self.length
-            return -e < comp1 < self.length + e and -e < comp2 < e
+            A = (Dx*self.dx + Dy*self.dy)/self.length
+            B = (Dy*self.dx - Dx*self.dy)/self.length
+            return -e < A < self.length + e and -e < B < e
         except:
             #print vertex
             return False
