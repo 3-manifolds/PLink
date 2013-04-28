@@ -134,7 +134,6 @@ class LinkEditor:
         self.window.protocol("WM_DELETE_WINDOW", self.done)
         # Go
         self.flipcheck = None
-        self.component_sizes = []
         self.state='start_state'
     
     # Subclasses may want to overide this method.
@@ -159,9 +158,9 @@ class LinkEditor:
         info_menu = Tk_.Menu(menubar, tearoff=0)
         export_menu = Tk_.Menu(menubar, tearoff=0)
         info_menu.add_command(label='DT code', command=self.DT_normal)
-        info_menu.add_command(label='Alphabetical DT', command=self.DT_snap)
+        info_menu.add_command(label='Alphabetical DT', command=self.DT_alpha)
         info_menu.add_checkbutton(label='DT labels', var=self.show_DT_var,
-                                  command = self.DT_labels)
+                                  command = self.DT_update)
         info_menu.add_command(label='Gauss code', command=self.Gauss_info)
         info_menu.add_command(label='PD code', command=self.not_done)
         menubar.add_cascade(label='Info', menu=info_menu)
@@ -229,6 +228,7 @@ class LinkEditor:
             if start_vertex in self.Vertices:
                 #print 'single click on a vertex'
                 self.state = 'dragging_state'
+                self.hide_DT()
                 self.canvas.config(cursor='circle')
                 self.ActiveVertex = self.Vertices[self.Vertices.index(start_vertex)]
                 self.ActiveVertex.freeze()
@@ -250,6 +250,7 @@ class LinkEditor:
                 crossing.reverse()
                 crossing.under.draw(self.Crossings)
                 crossing.over.draw(self.Crossings)
+                self.DT_update()
                 return
             elif self.clicked_on_arrow(start_vertex):
                 #print 'clicked on an arrow.'
@@ -433,7 +434,6 @@ class LinkEditor:
                     last_arrow.erase()
                     for arrow in self.Arrows:
                         arrow.draw(self.Crossings)
-                    self.DT_labels()
 
                 if not self.ActiveVertex.in_arrow:
                     self.Vertices.remove(self.ActiveVertex)
@@ -462,7 +462,7 @@ class LinkEditor:
         for arrow in self.Arrows:
             if arrow.too_close(vertex):
                 arrow.end.reverse_path(self.Crossings)
-                self.DT_labels()
+                self.DT_update()
                 return True
         return False
 
@@ -479,23 +479,23 @@ class LinkEditor:
         self.LiveArrow2 = None
         self.ActiveVertex = None
         self.update_crosspoints()
+        self.state = 'start_state'
+        self.DT_update()
         for vertex in self.Vertices:
             vertex.draw()
         for arrow in self.Arrows: 
             arrow.draw(self.Crossings)
-        self.canvas.config(cursor='')
         self.show_color_keys()
-        self.DT_labels()
-        self.state = 'start_state'
+        self.canvas.config(cursor='')
 
     def goto_drawing_state(self, x1,y1):
-        self.show_DT_var.set(0)
         self.ActiveVertex.hidden = False
         self.ActiveVertex.draw()
         x0, y0 = self.ActiveVertex.point()
         self.LiveArrow1 = self.canvas.create_line(x0,y0,x1,y1,fill='red')
         self.state = 'drawing_state'
         self.canvas.config(cursor='pencil')
+        self.hide_DT()
         self.clear_text()
 
     def verify_drag(self):
@@ -637,11 +637,7 @@ class LinkEditor:
         """
         for vertex in self.Vertices:
             if vertex.is_endpoint():
-                self.show_DT_var.set(0)
-                tkMessageBox.showwarning(
-                    'Error',
-                    'All components must be closed to use this tool.')
-                raise ValueError
+                raise ValueError('All components must be closed.')
         result = []
         arrow_components = self.arrow_components()
         for component in arrow_components:
@@ -688,7 +684,9 @@ class LinkEditor:
         try:
             crossing_components = self.crossing_components()
         except ValueError:
-            return
+            tkMessageBox.showwarning(
+                'Error',
+                'Please close up all components first.')
         for component in crossing_components:
             if len(component) == 0:
                 continue
@@ -709,18 +707,18 @@ class LinkEditor:
                 ecrossing.crossing.locked = True
         for crossing in self.Crossings:
             crossing.locked = False
+        self.clear_text()
+        self.DT_update()
         for arrow in self.Arrows:
             arrow.draw(self.Crossings)
-        self.clear_text()
-        self.DT_labels()
 
     def reflect(self):
         for crossing in self.Crossings:
             crossing.reverse()
+        self.clear_text()
+        self.DT_update()
         for arrow in self.Arrows:
             arrow.draw(self.Crossings)
-        self.clear_text()
-        self.DT_labels()
 
     def clear(self):
         for arrow in self.Arrows:
@@ -792,48 +790,16 @@ class LinkEditor:
         KLP_crossings = [crossing.KLP for crossing in self.Crossings]
         return num_crossings, num_free_loops, num_components, KLP_crossings
 
-    def Gauss_code(self):
+    def sorted_components(self):
         """
-        Return a Gauss code for the link, using the same ordering
-        of crossings as are used for the DT code.  Requires that
-        all components are closed.
-        """
-        # convert DT to Gauss, so we use the same labels.
-        dt = self.DT_code(signed=False)
-        if dt is None:
-            return None
-        # we use the component sizes computed by the DT_code method
-        evens = [y for x in dt for y in x]
-        size = 2*len(evens)
-        counts = [None]*size
-        for odd, N in zip(range(1, size, 2), evens):
-            even = abs(N)
-            if even < odd:
-                counts[even-1] = -N
-                counts[odd-1] = N 
-            else:
-                O = odd if N > 0 else -odd
-                counts[even-1] = -O
-                counts[odd-1] = O
-        gauss = []
-        start = 0
-        for size in self.component_sizes:
-            end = start + size
-            gauss.append(tuple(counts[start:end]))
-            start = end
-        return gauss
-        
-    def DT_code(self, alpha=False, signed=True):
-        """
-        Return the Dowker-Thistlethwaite code as a list of tuples of
-        even integers.  Requires that all components be closed.
+        Returns a list of crossing components which have been sorted
+        and cyclically permuted, following the scheme used in "standard"
+        DT codes.
 
-        If alpha is set to True, this method returns the alphabetical
-        Dowker-Thistlethwaite code as used in Oliver Goodman's Snap
-        and the tabulations by Hoste and Thistlethwaite.
+        The sorting process also sets the hit counters on all
+        crossings, for use in computing DT and Gauss codes.
 
-        As a side effect, computes the number of crossings per
-        component, in the same order as the DT code.
+        Requires that all components be closed.
         """
         try:
             components = self.crossing_components()
@@ -851,18 +817,18 @@ class LinkEditor:
         while len(components) > 0:
             this_component = components.pop()
             sorted_components.append(this_component)
-            # Choose the first crossing, by Morwen's rules:
-            # If any crossings on this component have been hit,
-            # find the first one with an odd label and then
-            # start at its predecessor.
-            odd_hits = [ec for ec in this_component if
-                        ec.crossing.hit1%2 == 1]
+            # Choose the first crossing on this component by Morwen's
+            # rule: If any crossings on this component have been hit,
+            # find the first one with an odd label and then start at
+            # its predecessor.
+            odd_hits = [ec for ec in this_component if ec.crossing.hit1%2 == 1]
             if len(odd_hits) > 0:
                 odd_hits.sort(key=lambda x : x.crossing.hit1)
                 n = this_component.index(odd_hits[0])
                 this_component = this_component[n-1:] + this_component[:n-1]
-            # Label the crossings on this component and look for
-            # crossings shared with unfinished components.
+            # Count the crossings on this component and remember any
+            # odd-numbered crossings which are shared with an
+            # unfinished component.
             odd_shared = []
             for ec in this_component:
                 if ec.crossing.DT_hit(count, ec):
@@ -881,11 +847,27 @@ class LinkEditor:
                     next_component = first.comp1
                 components.remove(next_component)
                 components.append(next_component)
+        return sorted_components
 
-        self.component_sizes = [len(c) for c in sorted_components]
-        chunks, S = [], 0
-        for size in self.component_sizes:
-            chunks.append((size+1)//2 if S%2 != 0 else size//2)
+    def DT_code(self, alpha=False, signed=True, return_sizes=False):
+        """
+        Return the Dowker-Thistlethwaite code as a list of tuples of
+        even integers.  Requires that all components be closed.
+
+        If alpha is set to True, this method returns the alphabetical
+        Dowker-Thistlethwaite code as used in Oliver Goodman's Snap
+        and in the tabulations by Jim Hoste and Morwen Thistlethwaite.
+
+        If return_sizes is set to True, a list of the number of crossings
+        in each component is returned (this is for use by Gauss_code).
+        """
+        sorted_components = self.sorted_components()
+        if sorted_components is None:
+            return (None, None) if return_sizes else None
+        component_sizes = [len(c) for c in sorted_components]
+        DT_chunks, S = [], 0
+        for size in component_sizes:
+            DT_chunks.append((size+1)//2 if S%2 != 0 else size//2)
             S += size
         # Now build the Dowker-Thistlethwaite code
         even_codes = [None]*len(self.Crossings)
@@ -899,63 +881,114 @@ class LinkEditor:
                 even_codes[n] = crossing.hit1
             flips[n] = int(crossing.flipped)
         if not alpha:
-            result = []
-            for chunk in chunks:
-                result.append(tuple(even_codes[:chunk]))
+            dt = []
+            for chunk in DT_chunks:
+                dt.append(tuple(even_codes[:chunk]))
                 even_codes = even_codes[chunk:]
+            result = [dt]
             if signed:
-                return result, flips
-            else:
-                return result
+                result.append(flips)
         else:
             prefix_ints = [len(self.Crossings), len(sorted_components)]
-            prefix_ints += chunks
+            prefix_ints += DT_chunks
             alphacode = ''.join(tuple([DT_alphabet[x>>1] for x in even_codes]))
             if prefix_ints[0] > 26:
-                raise ValueError('Too many crossings!')
+                tkMessageBox.showwarning(
+                    'Error',
+                    'Alphabetical DT codes require fewer than 26 crossings.')
+                return None
             prefix = ''.join(tuple([DT_alphabet[n] for n in prefix_ints]))
             if signed:
                 alphacode += '.' + ''.join([str(f) for f in flips])
-            return prefix + alphacode
+            result=[prefix + alphacode]
+        if return_sizes:
+            result.append(component_sizes)
+        return tuple(result)
 
+    def Gauss_code(self):
+        """
+        Return a Gauss code for the link.  The Gauss code is computed
+        from a DT code, so the Gauss code will use the same indexing
+        of crossings as is used for the DT code.  Requires that all
+        components be closed.
+        """
+        dt, sizes = self.DT_code(signed=False, return_sizes=True)
+        if dt is None:
+            return None
+        evens = [y for x in dt for y in x]
+        size = 2*len(evens)
+        counts = [None]*size
+        for odd, N in zip(range(1, size, 2), evens):
+            even = abs(N)
+            if even < odd:
+                counts[even-1] = -N
+                counts[odd-1] = N 
+            else:
+                O = odd if N > 0 else -odd
+                counts[even-1] = -O
+                counts[odd-1] = O
+        gauss = []
+        start = 0
+        for size in sizes:
+            end = start + size
+            gauss.append(tuple(counts[start:end]))
+            start = end
+        return gauss
+        
     def DT_normal(self):
         """
         Displays a Dowker-Thistlethwaite code as a list of tuples of
-        signed even integers. (Ignores free loops.)
+        signed even integers.
         """
         code = self.DT_code()
         if code:
             self.write_text('DT:  %s,   %s'%self.DT_code())
+        else:
+            tkMessageBox.showwarning(
+                'Error',
+                'All components must be closed to compute a DT code.')
 
-    def DT_snap(self):
+
+    def DT_alpha(self):
         """
-        Displays an alphabetical Dowker-Thistlethwaite code as used in
+        Displays an alphabetical Dowker-Thistlethwaite code, as used in
         the knot tabulations.
         """
         code = self.DT_code()
         if code:
             self.write_text('DT:  %s'%self.DT_code(alpha=True))
+        else:
+            tkMessageBox.showwarning(
+                'Error',
+                'All components must be closed to compute a DT code.')
 
     def Gauss_info(self):
         """
         Displays a Gauss code as a list of tuples of signed
-        integers. (Ignores free loops.)
+        integers.
         """
         code = self.DT_code()
         if code:
             self.write_text('Gauss:  %s'%self.Gauss_code())
+        else:
+            tkMessageBox.showwarning(
+                'Error',
+                'All components must be closed to compute a Gauss code.')
 
-    def DT_labels(self):
+    def DT_update(self):
         self.hide_DT()
-        if self.show_DT_var.get():
+        if self.state != 'start_state':
+            return
+        dt = self.DT_code()
+        if dt is not None and self.show_DT_var.get():
             self.show_DT()
 
     def show_DT(self):
         """
-        Display the DT code numbers on each crossing.
+        Display the DT hit counters next to each crossing.  Crossings
+        that need to be flipped for the planar embedding have an
+        asterisk.
         """
-        if not self.DT_code():
-            return
         for crossing in self.Crossings:
             crossing.locate()
             yshift = 0
@@ -979,7 +1012,6 @@ class LinkEditor:
         for text_item in self.DTlabels:
             self.canvas.delete(text_item)
         self.DTlabels = []
-                                         
                                          
     def SnapPea_projection_file(self):
         """
