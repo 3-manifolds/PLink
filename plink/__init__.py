@@ -837,59 +837,56 @@ class LinkEditor:
         """
         try:
             components = self.crossing_components()
+            components.sort(key=lambda x:len(x))
         except ValueError:
             return None
-        self.component_sizes = []
         for crossing in self.Crossings:
-            crossing.clear_hits()
-            crossing.clear_components()
+            crossing.clear_marks()
         # Mark which components each crossing belongs to.
         for component in components:
             for ecrossing in component:
                 ecrossing.crossing.mark_component(component)
+        sorted_components = []
         count = 1
-        chunks = []
-        prefix_ints = [len(self.Crossings), len(components)]
         while len(components) > 0:
-            this_component = components.pop(0)
-            self.component_sizes.append(len(this_component))
+            this_component = components.pop()
+            sorted_components.append(this_component)
             # Choose the first crossing, by Morwen's rules:
             # If any crossings on this component have been hit,
             # find the first one with an odd label and then
             # start at its predecessor.
             odd_hits = [ec for ec in this_component if
-                        ec.crossing.hit1 is not None and
                         ec.crossing.hit1%2 == 1]
             if len(odd_hits) > 0:
                 odd_hits.sort(key=lambda x : x.crossing.hit1)
                 n = this_component.index(odd_hits[0])
                 this_component = this_component[n-1:] + this_component[:n-1]
-            # Label the crossings on this component
-            odd_count = 0
-            these_crossings = set()
-            for ecrossing in this_component:
-                crossing = ecrossing.crossing
-                these_crossings.add(crossing)
-                crossing.DT_hit(count, ecrossing.goes_over())
-                if count%2 == 1:
-                    odd_count += 1
+            # Label the crossings on this component and look for
+            # crossings shared with unfinished components.
+            odd_shared = []
+            for ec in this_component:
+                if ec.crossing.DT_hit(count, ec):
+                    odd_shared.append(ec.crossing)
                 count += 1
-            chunks.append(odd_count)
-            # Look for crossings shared with unfinished components.
-            odd_shared = [c for c in self.Crossings if
-                          c.hit1 != None and
-                          c.hit1%2 == 1 and 
-                          c.comp1 != c.comp2 and 
-                          c.comp2 in components]
+            # Choose the next component, by Morwen's rule: Use the
+            # component containing the partner of the first
+            # odd-numbered crossing that is shared with another
+            # commponent (if there are any shared crossings).
             if len(odd_shared) > 0:
-                # Choose the next component, by Morwen's rules:
-                # Use the component containing the partner of the
-                # first odd-numbered crossing that is shared with
-                # another commponent (if there are any).
                 odd_shared.sort(key=lambda x : x.hit1)
-                next_component = odd_shared[0].comp2
+                first = odd_shared[0]
+                if first.comp2 != this_component:
+                    next_component = first.comp2
+                else:
+                    next_component = first.comp1
                 components.remove(next_component)
-                components.insert(0, next_component)
+                components.append(next_component)
+
+        self.component_sizes = [len(c) for c in sorted_components]
+        chunks, S = [], 0
+        for size in self.component_sizes:
+            chunks.append((size+1)//2 if S%2 != 0 else size//2)
+            S += size
         # Now build the Dowker-Thistlethwaite code
         even_codes = [None]*len(self.Crossings)
         flips = [None]*len(self.Crossings)
@@ -911,8 +908,9 @@ class LinkEditor:
             else:
                 return result
         else:
-            alphacode = ''.join(tuple([DT_alphabet[x>>1] for x in even_codes]))
+            prefix_ints = [len(self.Crossings), len(sorted_components)]
             prefix_ints += chunks
+            alphacode = ''.join(tuple([DT_alphabet[x>>1] for x in even_codes]))
             if prefix_ints[0] > 26:
                 raise ValueError('Too many crossings!')
             prefix = ''.join(tuple([DT_alphabet[n] for n in prefix_ints]))
@@ -976,7 +974,6 @@ class LinkEditor:
                     anchor=Tk_.W,
                     text=str(crossing.hit2) + flip
                     ))
-            crossing.clear_hits()
 
     def hide_DT(self):
         for text_item in self.DTlabels:
@@ -1471,21 +1468,21 @@ class Crossing:
         else:
             return None
 
-    def DT_hit(self, count, over):
+    def DT_hit(self, count, ecrossing):
+        over = ecrossing.goes_over()
         if count%2 == 0 and over:
             count = -count
-        if self.hit1 is None:
+        if self.hit1 == 0:
             self.hit1 = count
             sign = self.sign()
             if sign:
                 self.flipped = over ^ (sign == 'RH')
-        elif self.hit2 is None:
+            if count%2 != 0 and self.comp1 != self.comp2:
+                return True
+        elif self.hit2 == 0:
             self.hit2 = count
         else:
             raise ValueError('Too many hits!')
-
-    def clear_hits(self):
-        self.hit1, self.hit2, self.flipped = None, None, None
 
     def mark_component(self, component):
         if self.comp1 is None:
@@ -1495,8 +1492,9 @@ class Crossing:
         else:
             raise ValueError('Too many component hits!')
 
-    def clear_components(self):
-        self.comp1, self.comp2 = None, None
+    def clear_marks(self):
+        self.hit1= self.hit2 = 0
+        self.flipped = self.comp1 = self.comp2 = None
 
 class ECrossing:
     """
