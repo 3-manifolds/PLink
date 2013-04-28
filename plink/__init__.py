@@ -758,15 +758,15 @@ class LinkEditor:
                                        |
         """
         try:
-            crossing_components = self.crossing_components()
+            sorted_components = self.sorted_components()
         except ValueError:
             return None
         num_crossings = len(self.Crossings)
         num_free_loops = 0
-        num_components = len(crossing_components)
+        num_components = len(sorted_components)
         id = lambda x: self.Crossings.index(x.crossing)
-        for component in crossing_components:
-            this_component = crossing_components.index(component)
+        for component in sorted_components:
+            this_component = sorted_components.index(component)
             N = len(component)
             for n in range(N):
                 this = component[n]
@@ -797,7 +797,9 @@ class LinkEditor:
         DT codes.
 
         The sorting process also sets the hit counters on all
-        crossings, for use in computing DT and Gauss codes.
+        crossings, for use in computing DT and Gauss codes, and
+        sets the component attribute of each arrow in each
+        component.
 
         Requires that all components be closed.
         """
@@ -847,6 +849,15 @@ class LinkEditor:
                     next_component = first.comp1
                 components.remove(next_component)
                 components.append(next_component)
+        for arrow in self.Arrows:
+            arrow.component = None
+        for n, component in enumerate(sorted_components):
+            arrow = first_arrow = component[0].arrow
+            while True:
+                arrow.component = n
+                arrow = arrow.end.out_arrow
+                if arrow == first_arrow:
+                    break
         return sorted_components
 
     def DT_code(self, alpha=False, signed=True, return_sizes=False):
@@ -1300,6 +1311,7 @@ class Arrow:
         self.start, self.end = start, end
         self.canvas = canvas
         self.color = color
+        self.component = None
         self.hidden = hidden
         self.frozen = False
         self.lines = []
