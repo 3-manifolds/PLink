@@ -186,6 +186,13 @@ class LinkEditor:
         self.ActiveVertex = None
         self.DTlabels = []
 
+    def alert(self):
+        background = self.canvas.cget('bg')
+        def reset_bg():
+            self.canvas.config(bg=background)
+        self.canvas.config(bg='#ffffff')
+        self.canvas.after(100, reset_bg)
+
     def warn_arcs(self):
         if self.no_arcs:
             for vertex in self.Vertices:
@@ -259,7 +266,7 @@ class LinkEditor:
                 #print 'creating a new vertex'
                 if not self.generic_vertex(start_vertex):
                     start_vertex.erase()
-                    self.window.bell()
+                    self.alert()
                     return
             x1, y1 = start_vertex.point()
             start_vertex.set_color(self.palette.new())
@@ -294,7 +301,7 @@ class LinkEditor:
             if next_vertex in [v for v in self.Vertices if v.is_endpoint()]:
                 #print 'melding vertices'
                 if not self.generic_arrow(next_arrow):
-                    self.window.bell()
+                    self.alert()
                     return
                 next_vertex.erase()
                 next_vertex = self.Vertices[self.Vertices.index(next_vertex)]
@@ -314,7 +321,7 @@ class LinkEditor:
             self.update_crosspoints()
             if not (self.generic_vertex(next_vertex) and
                     self.generic_arrow(next_arrow) ):
-                self.window.bell()
+                self.alert()
                 return
             next_arrow.expose(self.Crossings)
             self.Vertices.append(next_vertex)
@@ -326,7 +333,7 @@ class LinkEditor:
             try:
                 self.end_dragging_state()
             except ValueError:
-                self.window.bell()
+                self.alert()
 
     def double_click(self, event):
         """
@@ -454,7 +461,7 @@ class LinkEditor:
                 vertex.y += dy
             self.update_crosspoints()
             self.canvas.move('all', dx, dy)
-            self.show_color_keys()
+            self.adjust_colors()
         event.x, event.y = self.cursorx, self.cursory
         self.mouse_moved(event)
 
@@ -481,7 +488,7 @@ class LinkEditor:
         self.update_crosspoints()
         self.state = 'start_state'
         self.DT_update()
-        self.show_color_keys()
+        self.adjust_colors()
         for vertex in self.Vertices:
             vertex.draw()
 #        for arrow in self.Arrows: 
@@ -651,10 +658,10 @@ class LinkEditor:
             result.append([ECrossing(c[1],c[2]) for c in crosses]) 
         return result
 
-    def show_color_keys(self):
+    def adjust_colors(self):
         """
-        Recolors all components in DT order and displays a legend
-        linking colors to cusp indices.
+        Recolors and redraws all components, in DT order, and displays
+        the legend linking colors to cusp indices.
         """
         components = self.arrow_components(include_isolated_vertices=True)
         self.colors = []
@@ -666,8 +673,10 @@ class LinkEditor:
         for component in components:
             color = self.palette.new()
             self.colors.append(color)
+            component[0].start.color = color
             for arrow in component:
                 arrow.color = color
+                arrow.end.color = color
                 arrow.draw(self.Crossings)
             self.color_keys.append(
                 self.canvas.create_text(x, y,
@@ -676,6 +685,8 @@ class LinkEditor:
                                         anchor=Tk_.SW,
                                         font='Helvetica 16 bold'))
             x, n = x+16, n+1
+        for vertex in self.Vertices:
+            vertex.draw()
 
     def clear_text(self):
         self.infotext.delete(0, Tk_.END)
@@ -842,6 +853,7 @@ class LinkEditor:
         component.
 
         Requires that all components be closed.
+
         """
         try:
             components = self.crossing_components()
@@ -871,27 +883,29 @@ class LinkEditor:
             # Count the crossings on this component and remember any
             # odd-numbered crossings which are shared with an
             # unfinished component.
-            odd_shared = []
+            touching = []
             for ec in this_component:
-                if ec.crossing.DT_hit(count, ec):
-                    odd_shared.append(ec.crossing)
+                crossing = ec.crossing
+                if crossing.DT_hit(count, ec):
+                    if crossing.comp2 in components:
+                        touching.append((crossing, crossing.comp2))
+                    elif crossing.comp1 in components:
+                        touching.append((crossing, crossing.comp1))
                 count += 1
             # Choose the next component, by Morwen's rule: Use the
             # component containing the partner of the first
             # odd-numbered crossing that is shared with another
             # commponent (if there are any shared crossings).
-            if len(odd_shared) > 0:
-                odd_shared.sort(key=lambda x : x.hit1)
-                first = odd_shared[0]
-                if first.comp2 != this_component:
-                    next_component = first.comp2
-                else:
-                    next_component = first.comp1
+            if len(touching) > 0:
+                touching.sort(key=lambda x : x[0].hit1)
+                next_component = touching[0][1]
                 components.remove(next_component)
                 components.append(next_component)
         for arrow in self.Arrows:
             arrow.component = None
         for n, component in enumerate(sorted_components):
+            if len(component) == 0:
+                continue
             arrow = first_arrow = component[0].arrow
             while True:
                 arrow.component = n
@@ -1565,6 +1579,12 @@ class Crossing:
             return None
 
     def DT_hit(self, count, ecrossing):
+        """
+        Count the crossing, using DT conventions.  Return True on the
+        first hit if the count is odd and the crossing is shared by
+        two components of the diagram.  As a side effect, set the
+        flipped attribute on the first hit.
+        """
         over = ecrossing.goes_over()
         if count%2 == 0 and over:
             count = -count
