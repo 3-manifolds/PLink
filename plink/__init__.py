@@ -162,7 +162,7 @@ class LinkEditor:
         info_menu.add_checkbutton(label='DT labels', var=self.show_DT_var,
                                   command = self.DT_update)
         info_menu.add_command(label='Gauss code', command=self.Gauss_info)
-        info_menu.add_command(label='PD code', command=self.not_done)
+        info_menu.add_command(label='PD code', command=self.PD_info)
         menubar.add_cascade(label='Info', menu=info_menu)
         tools_menu = Tk_.Menu(menubar, tearoff=0)
         tools_menu.add_command(label='Make alternating',
@@ -799,6 +799,37 @@ class LinkEditor:
         KLP_crossings = [crossing.KLP for crossing in self.Crossings]
         return num_crossings, num_free_loops, num_components, KLP_crossings
 
+    def PD_code(self):
+        """
+        Return the PD (Planar Diagram) code for the link projection,
+        as a list of 4-tuples.
+        """
+        # We view an ecrossing as corresponding to the outgoing arc
+        # of the diagram at the ecrossing.crossing.
+        try:
+            sorted_components = self.sorted_components()
+        except ValueError:
+            return None
+        ecrossings = [ ec for component in sorted_components
+                       for ec in component ]
+        counter = dict( (ec, k+1) for k, ec in enumerate(ecrossings) )
+        over_dict, under_dict = {}, {}
+        for component in sorted_components:
+            N = len(component)
+            for n, ec in enumerate(component):
+                incoming = counter[component[n-1]]
+                outgoing = counter[component[n]]
+                D = over_dict if ec.goes_over() else under_dict
+                D[ec.crossing] = (incoming, outgoing)
+        PD = []
+        for crossing in self.Crossings:
+            under, over = under_dict[crossing], over_dict[crossing]
+            if crossing.sign() =='RH':
+                PD.append( (under[0], over[1], under[1], over[0]) )
+            else:
+                PD.append( (under[0], over[0], under[1], over[1]) )
+        return PD
+
     def sorted_components(self):
         """
         Returns a list of crossing components which have been sorted
@@ -962,7 +993,7 @@ class LinkEditor:
         """
         code = self.DT_code()
         if code:
-            self.write_text('DT:  %s,   %s'%self.DT_code())
+            self.write_text(('DT:  %s,   %s'%code).replace(', ',','))
         else:
             tkMessageBox.showwarning(
                 'Error',
@@ -974,9 +1005,9 @@ class LinkEditor:
         Displays an alphabetical Dowker-Thistlethwaite code, as used in
         the knot tabulations.
         """
-        code = self.DT_code()
+        code = self.DT_code(alpha=True)
         if code:
-            self.write_text('DT:  %s'%self.DT_code(alpha=True))
+            self.write_text(('DT:  %s'%code).replace(', ',','))
         else:
             tkMessageBox.showwarning(
                 'Error',
@@ -987,13 +1018,25 @@ class LinkEditor:
         Displays a Gauss code as a list of tuples of signed
         integers.
         """
-        code = self.DT_code()
+        code = self.Gauss_code()
         if code:
-            self.write_text('Gauss:  %s'%self.Gauss_code())
+            self.write_text(('Gauss:  %s'%code).replace(', ',','))
         else:
             tkMessageBox.showwarning(
                 'Error',
                 'All components must be closed to compute a Gauss code.')
+
+    def PD_info(self):
+        """
+        Displays a PD code as a list of 4-tuples.
+        """
+        code = self.PD_code()
+        if code:
+            self.write_text(('PD:  %s'%code).replace(', ',','))
+        else:
+            tkMessageBox.showwarning(
+                'Error',
+                'All components must be closed to compute a PD code.')
 
     def DT_update(self):
         self.hide_DT()
