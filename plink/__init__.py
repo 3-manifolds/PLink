@@ -163,6 +163,7 @@ class LinkEditor:
                                   command = self.DT_update)
         info_menu.add_command(label='Gauss code', command=self.Gauss_info)
         info_menu.add_command(label='PD code', command=self.PD_info)
+        info_menu.add_command(label='BB framing', command=self.BB_info)
         menubar.add_cascade(label='Info', menu=info_menu)
         tools_menu = Tk_.Menu(menubar, tearoff=0)
         tools_menu.add_command(label='Make alternating',
@@ -752,6 +753,80 @@ class LinkEditor:
         self.clear_text()
         self.goto_start_state()
 
+
+    def sorted_components(self):
+        """
+        Returns a list of crossing components which have been sorted
+        and cyclically permuted, following the scheme used in "standard"
+        DT codes.
+
+        The sorting process also sets the hit counters on all
+        crossings, for use in computing DT and Gauss codes, and
+        sets the component attribute of each arrow in each
+        component.
+
+        Requires that all components be closed.
+
+        """
+        try:
+            components = self.crossing_components()
+            components.sort(key=lambda x:len(x))
+        except ValueError:
+            return None
+        for crossing in self.Crossings:
+            crossing.clear_marks()
+        # Mark which components each crossing belongs to.
+        for component in components:
+            for ecrossing in component:
+                ecrossing.crossing.mark_component(component)
+        sorted_components = []
+        count = 1
+        while len(components) > 0:
+            this_component = components.pop()
+            sorted_components.append(this_component)
+            # Choose the first crossing on this component by Morwen's
+            # rule: If any crossings on this component have been hit,
+            # find the first one with an odd label and then start at
+            # its predecessor.
+            odd_hits = [ec for ec in this_component if ec.crossing.hit1%2 == 1]
+            if len(odd_hits) > 0:
+                odd_hits.sort(key=lambda x : x.crossing.hit1)
+                n = this_component.index(odd_hits[0])
+                this_component = this_component[n-1:] + this_component[:n-1]
+            # Count the crossings on this component and remember any
+            # odd-numbered crossings which are shared with an
+            # unfinished component.
+            touching = []
+            for ec in this_component:
+                crossing = ec.crossing
+                if crossing.DT_hit(count, ec):
+                    if crossing.comp2 in components:
+                        touching.append((crossing, crossing.comp2))
+                    elif crossing.comp1 in components:
+                        touching.append((crossing, crossing.comp1))
+                count += 1
+            # Choose the next component, by Morwen's rule: Use the
+            # component containing the partner of the first
+            # odd-numbered crossing that is shared with another
+            # commponent (if there are any shared crossings).
+            if len(touching) > 0:
+                touching.sort(key=lambda x : x[0].hit1)
+                next_component = touching[0][1]
+                components.remove(next_component)
+                components.append(next_component)
+        for arrow in self.Arrows:
+            arrow.component = None
+        for n, component in enumerate(sorted_components):
+            if len(component) == 0:
+                continue
+            arrow = first_arrow = component[0].arrow
+            while True:
+                arrow.component = n
+                arrow = arrow.end.out_arrow
+                if arrow == first_arrow:
+                    break
+        return sorted_components
+
     def SnapPea_KLPProjection(self):
         """
         Constructs a python simulation of a SnapPea KLPProjection
@@ -841,79 +916,6 @@ class LinkEditor:
                 PD.append( (under[0], over[0], under[1], over[1]) )
         return PD
 
-    def sorted_components(self):
-        """
-        Returns a list of crossing components which have been sorted
-        and cyclically permuted, following the scheme used in "standard"
-        DT codes.
-
-        The sorting process also sets the hit counters on all
-        crossings, for use in computing DT and Gauss codes, and
-        sets the component attribute of each arrow in each
-        component.
-
-        Requires that all components be closed.
-
-        """
-        try:
-            components = self.crossing_components()
-            components.sort(key=lambda x:len(x))
-        except ValueError:
-            return None
-        for crossing in self.Crossings:
-            crossing.clear_marks()
-        # Mark which components each crossing belongs to.
-        for component in components:
-            for ecrossing in component:
-                ecrossing.crossing.mark_component(component)
-        sorted_components = []
-        count = 1
-        while len(components) > 0:
-            this_component = components.pop()
-            sorted_components.append(this_component)
-            # Choose the first crossing on this component by Morwen's
-            # rule: If any crossings on this component have been hit,
-            # find the first one with an odd label and then start at
-            # its predecessor.
-            odd_hits = [ec for ec in this_component if ec.crossing.hit1%2 == 1]
-            if len(odd_hits) > 0:
-                odd_hits.sort(key=lambda x : x.crossing.hit1)
-                n = this_component.index(odd_hits[0])
-                this_component = this_component[n-1:] + this_component[:n-1]
-            # Count the crossings on this component and remember any
-            # odd-numbered crossings which are shared with an
-            # unfinished component.
-            touching = []
-            for ec in this_component:
-                crossing = ec.crossing
-                if crossing.DT_hit(count, ec):
-                    if crossing.comp2 in components:
-                        touching.append((crossing, crossing.comp2))
-                    elif crossing.comp1 in components:
-                        touching.append((crossing, crossing.comp1))
-                count += 1
-            # Choose the next component, by Morwen's rule: Use the
-            # component containing the partner of the first
-            # odd-numbered crossing that is shared with another
-            # commponent (if there are any shared crossings).
-            if len(touching) > 0:
-                touching.sort(key=lambda x : x[0].hit1)
-                next_component = touching[0][1]
-                components.remove(next_component)
-                components.append(next_component)
-        for arrow in self.Arrows:
-            arrow.component = None
-        for n, component in enumerate(sorted_components):
-            if len(component) == 0:
-                continue
-            arrow = first_arrow = component[0].arrow
-            while True:
-                arrow.component = n
-                arrow = arrow.end.out_arrow
-                if arrow == first_arrow:
-                    break
-        return sorted_components
-
     def DT_code(self, alpha=False, signed=True, return_sizes=False):
         """
         Return the Dowker-Thistlethwaite code as a list of tuples of
@@ -999,6 +1001,31 @@ class LinkEditor:
             gauss.append(tuple(counts[start:end]))
             start = end
         return gauss
+                                         
+    def BB_framing(self):
+        """
+        Return the standard meridian-longitude coordinates of the
+        blackboard longitude (i.e. the peripheral element obtained
+        by following the top of a tubular neighborhood of the knot).
+        """
+        try:
+            components = self.sorted_components()
+        except ValueError:
+            return None
+        framing = []
+        for component in components:
+            m = 0
+            for ec in component:
+                crossing = ec.crossing
+                # Only consider self crossings
+                if crossing.comp1 == crossing.comp2 == component:
+                    if ec.crossing.sign() == 'RH':
+                        m += 1
+                    elif ec.crossing.sign() == 'LH':
+                        m -= 1
+            # Each crossing got counted twice.
+            framing.append( (m/2, 1) )
+        return framing
         
     def DT_normal(self):
         """
@@ -1052,6 +1079,19 @@ class LinkEditor:
                 'Error',
                 'All components must be closed to compute a PD code.')
 
+    def BB_info(self):
+        """
+        Displays the meridian-longitude coordinates of the blackboard
+        longitudes of the components of the link
+        """
+        framing = self.BB_framing()
+        if framing:
+            self.write_text(('BB framing:  %s'%framing).replace(', ',','))
+        else:
+            tkMessageBox.showwarning(
+                'Error',
+                'All components must be closed to compute a framing.')
+
     def DT_update(self):
         self.hide_DT()
         if self.state != 'start_state':
@@ -1089,7 +1129,7 @@ class LinkEditor:
         for text_item in self.DTlabels:
             self.canvas.delete(text_item)
         self.DTlabels = []
-                                         
+
     def SnapPea_projection_file(self):
         """
         Returns a string containing the contents of a SnapPea link
