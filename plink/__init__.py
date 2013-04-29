@@ -481,11 +481,11 @@ class LinkEditor:
         self.update_crosspoints()
         self.state = 'start_state'
         self.DT_update()
+        self.show_color_keys()
         for vertex in self.Vertices:
             vertex.draw()
-        for arrow in self.Arrows: 
-            arrow.draw(self.Crossings)
-        self.show_color_keys()
+#        for arrow in self.Arrows: 
+#            arrow.draw(self.Crossings)
         self.canvas.config(cursor='')
 
     def goto_drawing_state(self, x1,y1):
@@ -604,7 +604,7 @@ class LinkEditor:
         pool += [v.out_arrow  for v in self.Vertices if v.in_arrow is not None]
         closed, nonclosed = [], []
         while len(pool):
-            first_arrow = pool.pop()
+            first_arrow = pool.pop(0)
             if first_arrow == None:
                 continue
             component = [first_arrow]
@@ -614,10 +614,10 @@ class LinkEditor:
                     break
                 pool.remove(next_arrow)
                 component.append(next_arrow)
-            if next_arrow is not None:
-                closed.append(component)
-            else:
+            if next_arrow is None:
                 nonclosed.append(component)
+            else:
+                closed.append(component)
         if include_isolated_vertices:
             for vertex in [v for v in self.Vertices if v.is_isolated()]:
                 nonclosed.append([Arrow(vertex, vertex, color=vertex.color)])
