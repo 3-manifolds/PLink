@@ -248,9 +248,9 @@ class LinkEditor:
                 #print 'single click on a crossing'
                 crossing = self.Crossings[self.CrossPoints.index(start_vertex)]
                 crossing.reverse()
+                self.DT_update()
                 crossing.under.draw(self.Crossings)
                 crossing.over.draw(self.Crossings)
-                self.DT_update()
                 return
             elif self.clicked_on_arrow(start_vertex):
                 #print 'clicked on an arrow.'
@@ -596,11 +596,13 @@ class LinkEditor:
 
     def arrow_components(self, include_isolated_vertices=False):
         """
-        Returns a list of lists of arrows, one per component of the diagram.
+        Returns a list of components, given as lists of arrows.
+        The closed components are sorted in DT order if they have
+        been marked.  The others are sorted by age.
         """
-        pool = [v.out_arrow  for v in self.Vertices if not v.is_endpoint()]
-        pool += [v.out_arrow for v in self.Vertices if v.in_arrow == None]
-        result = []
+        pool = [v.out_arrow for v in self.Vertices if v.in_arrow is None]
+        pool += [v.out_arrow  for v in self.Vertices if v.in_arrow is not None]
+        closed, nonclosed = [], []
         while len(pool):
             first_arrow = pool.pop()
             if first_arrow == None:
@@ -608,26 +610,25 @@ class LinkEditor:
             component = [first_arrow]
             while component[-1].end != component[0].start:
                 next_arrow = component[-1].end.out_arrow
-                if next_arrow == None:
+                if next_arrow is None:
                     break
                 pool.remove(next_arrow)
                 component.append(next_arrow)
-            result.append(component)
+            if next_arrow is not None:
+                closed.append(component)
+            else:
+                nonclosed.append(component)
         if include_isolated_vertices:
             for vertex in [v for v in self.Vertices if v.is_isolated()]:
-                result.append([Arrow(vertex, vertex, color=vertex.color)])
-
-        # We want adding components to not change the numeric labels
-        # on components, so we'll sort them by age of oldest vertex.
+                nonclosed.append([Arrow(vertex, vertex, color=vertex.color)])
         def oldest_vertex(component):
             def oldest(arrow):
                 return min([self.Vertices.index(v)
                             for v in [arrow.start, arrow.end] if v])
             return min( [len(self.Vertices)] +  [oldest(a) for a in component])
-        def component_key(comp):
-            return oldest_vertex(comp)
-        result.sort(key=component_key)
-        return result
+        closed.sort(key=lambda x : (x[0].component, oldest_vertex(x)))
+        nonclosed.sort(key=oldest_vertex)
+        return closed + nonclosed
 
     def crossing_components(self):
         """
@@ -651,15 +652,23 @@ class LinkEditor:
         return result
 
     def show_color_keys(self):
+        """
+        Recolors all components in DT order and displays a legend
+        linking colors to cusp indices.
+        """
         components = self.arrow_components(include_isolated_vertices=True)
         self.colors = []
         for key in self.color_keys:
             self.canvas.delete(key)
         self.color_keys = []
         x, y, n = 10, 24, 0
+        self.palette.reset()
         for component in components:
-            color = component[0].color
+            color = self.palette.new()
             self.colors.append(color)
+            for arrow in component:
+                arrow.color = color
+                arrow.draw(self.Crossings)
             self.color_keys.append(
                 self.canvas.create_text(x, y,
                                         text=str(n),
