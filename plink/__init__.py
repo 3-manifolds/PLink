@@ -958,12 +958,12 @@ class LinkEditor:
         else:
             prefix_ints = [len(self.Crossings), len(sorted_components)]
             prefix_ints += DT_chunks
-            alphacode = ''.join(tuple([DT_alphabet[x>>1] for x in even_codes]))
             if prefix_ints[0] > 26:
                 tkMessageBox.showwarning(
                     'Error',
                     'Alphabetical DT codes require fewer than 26 crossings.')
                 return None
+            alphacode = ''.join(tuple([DT_alphabet[n>>1] for n in even_codes]))
             prefix = ''.join(tuple([DT_alphabet[n] for n in prefix_ints]))
             if signed:
                 alphacode += '.' + ''.join([str(f) for f in flips])
@@ -1034,7 +1034,7 @@ class LinkEditor:
         """
         code = self.DT_code()
         if code:
-            self.write_text(('DT:  %s,   %s'%code).replace(', ',','))
+            self.write_text(('DT: %s,  %s'%code).replace(', ',','))
         else:
             tkMessageBox.showwarning(
                 'Error',
@@ -1048,7 +1048,7 @@ class LinkEditor:
         """
         code = self.DT_code(alpha=True)
         if code:
-            self.write_text(('DT:  %s'%code).replace(', ',','))
+            self.write_text('DT: %s'%code)
         else:
             tkMessageBox.showwarning(
                 'Error',
@@ -1061,7 +1061,7 @@ class LinkEditor:
         """
         code = self.Gauss_code()
         if code:
-            self.write_text(('Gauss:  %s'%code).replace(', ',','))
+            self.write_text(('Gauss: %s'%code).replace(', ',','))
         else:
             tkMessageBox.showwarning(
                 'Error',
@@ -1073,7 +1073,7 @@ class LinkEditor:
         """
         code = self.PD_code()
         if code:
-            self.write_text(('PD:  %s'%code).replace(', ',','))
+            self.write_text(('PD: %s'%code).replace(', ',','))
         else:
             tkMessageBox.showwarning(
                 'Error',
