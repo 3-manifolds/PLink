@@ -708,6 +708,7 @@ class LinkEditor:
             tkMessageBox.showwarning(
                 'Error',
                 'Please close up all components first.')
+            return
         for component in crossing_components:
             if len(component) == 0:
                 continue
