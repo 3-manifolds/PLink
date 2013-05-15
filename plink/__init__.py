@@ -845,12 +845,12 @@ class LinkEditor:
         y-direction is the KLPStrandY.  Note that this definition does not
         depend on which is the overstrand and which is the understrand:
         
-                                   KLPStrandY
-                                       ^
-                                       |
-                                   ----+---> KLPStrandX
-                                       |
-                                       |
+        |                           KLPStrandY
+        |                               ^
+        |                               |
+        |                           ----+---> KLPStrandX
+        |                               |
+        |                               |
         """
         try:
             sorted_components = self.sorted_components()

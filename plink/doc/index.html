@@ -108,19 +108,24 @@ projections, and the arrow keys can be used to slide the projection
 around in order to make more room on one side or another.</p>
 <p>The &#8220;Tools&#8221; menu can be used to make the projection alternating
 (provided that all components are circles), or to clear the screen,
-or to reflect the projection in the xy-plane, changing all crossings.</p>
+or to reflect the projection in the xy-plane, changing all crossings.
+When used within SnapPy, this menu includes the &#8220;send to SnapPy&#8221; command.</p>
 <p>The &#8220;File&#8221; menu can be used to save the projection as a SnapPea
 link projection file.  (This can be done from the drawing state as
 well, in which case the &#8220;hot vertex&#8221; is remembered in the file!).  The
 &#8220;File-&gt;Open File&#8221; command will read a SnapPea link projection file,
-and restart drawing if the projection was saved while drawing.  The
-&#8220;Info&#8221; menu allows an encoding of the link projection to be printed
-in the info line at the bottom.  Various encoding schemes for link
-projections are supported.  Cutting and pasting from the info line
-is possible.</p>
-<p>If you are running PLink from inside SnapPy, closing the
-window or exiting the program will pass your projection to SnapPy to
-have its complement triangulated.</p>
+and restart drawing if the projection was saved while drawing.</p>
+<p>The &#8220;Info&#8221; menu selects information about the link projection to be
+displayed in the info line at the bottom.  Various encoding schemes
+for link projections are supported, as well as the blackboard framing
+curves, expressed in meridian-longitude coordinates.  Cutting and
+pasting from the info line is supported.  The numerical and
+alphabetical Dowker-Thistlethwaite codes are displayed in an extended
+form which includes a full description of the planar embedding.  The
+string printed in the info line is also accepted as input to SnapPy&#8217;s
+Manifold constructor.  Paste the DT code between the apostrophes in
+Manifold(&#8216;&#8217;).  The &#8220;DT labels&#8221; option displays the indexing used in
+computing the Dowker-Thistlethwaite codes.</p>
 </div>
 </div>
 <div class="section" id="credits">
@@ -204,7 +209,7 @@ have its complement triangulated.</p>
     </div>
     <div class="footer">
         &copy; Copyright 2009, Marc Culler, Nathan Dunfield and others.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.2.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
     </div>
   </body>
 </html>

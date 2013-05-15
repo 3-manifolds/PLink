@@ -60,32 +60,78 @@ interest only to Marc, Nathan, or similar folks.</p>
 <dd><p>A graphical link drawing tool based on the one embedded in Jeff Weeks&#8217;
 original SnapPea program.</p>
 <dl class="method">
-<dt id="plink.LinkEditor.DT_code">
-<tt class="descname">DT_code</tt><big>(</big><em>alpha=False</em><big>)</big><a class="headerlink" href="#plink.LinkEditor.DT_code" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns the Dowker-Thistlethwaite code as a list of tuples of
-even integers.</p>
-<p>If alpha is set to True, it returns the alphabetical
-Dowker-Thistlethwaite code as used in Oliver Goodman&#8217;s Snap
-and the tabulations by Hoste and Thistlethwaite.</p>
+<dt id="plink.LinkEditor.BB_framing">
+<tt class="descname">BB_framing</tt><big>(</big><big>)</big><a class="headerlink" href="#plink.LinkEditor.BB_framing" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the standard meridian-longitude coordinates of the
+blackboard longitude (i.e. the peripheral element obtained
+by following the top of a tubular neighborhood of the knot).</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="plink.LinkEditor.DT_labels">
-<tt class="descname">DT_labels</tt><big>(</big><big>)</big><a class="headerlink" href="#plink.LinkEditor.DT_labels" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dt id="plink.LinkEditor.BB_info">
+<tt class="descname">BB_info</tt><big>(</big><big>)</big><a class="headerlink" href="#plink.LinkEditor.BB_info" title="Permalink to this definition">¶</a></dt>
+<dd><p>Displays the meridian-longitude coordinates of the blackboard
+longitudes of the components of the link</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="plink.LinkEditor.DT_alpha">
+<tt class="descname">DT_alpha</tt><big>(</big><big>)</big><a class="headerlink" href="#plink.LinkEditor.DT_alpha" title="Permalink to this definition">¶</a></dt>
+<dd><p>Displays an alphabetical Dowker-Thistlethwaite code, as used in
+the knot tabulations.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="plink.LinkEditor.DT_code">
+<tt class="descname">DT_code</tt><big>(</big><em>alpha=False</em>, <em>signed=True</em>, <em>return_sizes=False</em><big>)</big><a class="headerlink" href="#plink.LinkEditor.DT_code" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the Dowker-Thistlethwaite code as a list of tuples of
+even integers.  Requires that all components be closed.</p>
+<p>If alpha is set to True, this method returns the alphabetical
+Dowker-Thistlethwaite code as used in Oliver Goodman&#8217;s Snap
+and in the tabulations by Jim Hoste and Morwen Thistlethwaite.</p>
+<p>If return_sizes is set to True, a list of the number of crossings
+in each component is returned (this is for use by Gauss_code).</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="plink.LinkEditor.DT_normal">
 <tt class="descname">DT_normal</tt><big>(</big><big>)</big><a class="headerlink" href="#plink.LinkEditor.DT_normal" title="Permalink to this definition">¶</a></dt>
-<dd><p>Displays the standard Dowker-Thistlethwaite code as a sequence
-of signed even integers. (Ignores free loops.)</p>
+<dd><p>Displays a Dowker-Thistlethwaite code as a list of tuples of
+signed even integers.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="plink.LinkEditor.DT_snap">
-<tt class="descname">DT_snap</tt><big>(</big><big>)</big><a class="headerlink" href="#plink.LinkEditor.DT_snap" title="Permalink to this definition">¶</a></dt>
-<dd><p>Displays the alphabetical Dowker-Thistlethwaite code as used
-by Oliver Goodman&#8217;s Snap.</p>
+<dt id="plink.LinkEditor.DT_update">
+<tt class="descname">DT_update</tt><big>(</big><big>)</big><a class="headerlink" href="#plink.LinkEditor.DT_update" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="plink.LinkEditor.Gauss_code">
+<tt class="descname">Gauss_code</tt><big>(</big><big>)</big><a class="headerlink" href="#plink.LinkEditor.Gauss_code" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a Gauss code for the link.  The Gauss code is computed
+from a DT code, so the Gauss code will use the same indexing
+of crossings as is used for the DT code.  Requires that all
+components be closed.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="plink.LinkEditor.Gauss_info">
+<tt class="descname">Gauss_info</tt><big>(</big><big>)</big><a class="headerlink" href="#plink.LinkEditor.Gauss_info" title="Permalink to this definition">¶</a></dt>
+<dd><p>Displays a Gauss code as a list of tuples of signed
+integers.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="plink.LinkEditor.PD_code">
+<tt class="descname">PD_code</tt><big>(</big><big>)</big><a class="headerlink" href="#plink.LinkEditor.PD_code" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the PD (Planar Diagram) code for the link projection,
+as a list of 4-tuples.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="plink.LinkEditor.PD_info">
+<tt class="descname">PD_info</tt><big>(</big><big>)</big><a class="headerlink" href="#plink.LinkEditor.PD_info" title="Permalink to this definition">¶</a></dt>
+<dd><p>Displays a PD code as a list of 4-tuples.</p>
 </dd></dl>
 
 <dl class="method">
@@ -100,17 +146,22 @@ of all crossings are updated.</p>
 <p>The following excerpt from link_projection.h describes the
 main convention:</p>
 <p>If you view a crossing (from above) so that the strands go in the
-direction of the postive x- and y-axes, then the strand going in
+direction of the positive x- and y-axes, then the strand going in
 the x-direction is the KLPStrandX, and the strand going in the
 y-direction is the KLPStrandY.  Note that this definition does not
 depend on which is the overstrand and which is the understrand:</p>
-<div class="highlight-python"><pre>KLPStrandY
-    ^
-    |
-----+---&gt; KLPStrandX
-    |
-    |</pre>
+<blockquote>
+<div><dl class="docutils">
+<dt>KLPStrandY</dt>
+<dd></dd>
+<dt>&#8212;-+&#8212;&gt; KLPStrandX</dt>
+<dd><div class="first last line-block">
+<div class="line"><br /></div>
+<div class="line"><br /></div>
 </div>
+</dd>
+</dl>
+</div></blockquote>
 </dd></dl>
 
 <dl class="method">
@@ -126,9 +177,23 @@ projection file.</p>
 <dd></dd></dl>
 
 <dl class="method">
+<dt id="plink.LinkEditor.adjust_colors">
+<tt class="descname">adjust_colors</tt><big>(</big><big>)</big><a class="headerlink" href="#plink.LinkEditor.adjust_colors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Recolors and redraws all components, in DT order, and displays
+the legend linking colors to cusp indices.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="plink.LinkEditor.alert">
+<tt class="descname">alert</tt><big>(</big><big>)</big><a class="headerlink" href="#plink.LinkEditor.alert" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
 <dt id="plink.LinkEditor.arrow_components">
 <tt class="descname">arrow_components</tt><big>(</big><em>include_isolated_vertices=False</em><big>)</big><a class="headerlink" href="#plink.LinkEditor.arrow_components" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns a list of lists of arrows, one per component of the diagram.</p>
+<dd><p>Returns a list of components, given as lists of arrows.
+The closed components are sorted in DT order if they have
+been marked.  The others are sorted by age.</p>
 </dd></dl>
 
 <dl class="method">
@@ -226,6 +291,11 @@ through the component.  Requires that all components be closed.</p>
 <dd></dd></dl>
 
 <dl class="method">
+<dt id="plink.LinkEditor.infotext_key_press">
+<tt class="descname">infotext_key_press</tt><big>(</big><em>event</em><big>)</big><a class="headerlink" href="#plink.LinkEditor.infotext_key_press" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
 <dt id="plink.LinkEditor.initialize">
 <tt class="descname">initialize</tt><big>(</big><big>)</big><a class="headerlink" href="#plink.LinkEditor.initialize" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
@@ -282,18 +352,28 @@ Requires that all components be closed.</p>
 <dl class="method">
 <dt id="plink.LinkEditor.show_DT">
 <tt class="descname">show_DT</tt><big>(</big><big>)</big><a class="headerlink" href="#plink.LinkEditor.show_DT" title="Permalink to this definition">¶</a></dt>
-<dd><p>Display the DT code numbers on each crossing.</p>
+<dd><p>Display the DT hit counters next to each crossing.  Crossings
+that need to be flipped for the planar embedding have an
+asterisk.</p>
 </dd></dl>
-
-<dl class="method">
-<dt id="plink.LinkEditor.show_color_keys">
-<tt class="descname">show_color_keys</tt><big>(</big><big>)</big><a class="headerlink" href="#plink.LinkEditor.show_color_keys" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
 
 <dl class="method">
 <dt id="plink.LinkEditor.single_click">
 <tt class="descname">single_click</tt><big>(</big><em>event</em><big>)</big><a class="headerlink" href="#plink.LinkEditor.single_click" title="Permalink to this definition">¶</a></dt>
 <dd><p>Event handler for mouse clicks.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="plink.LinkEditor.sorted_components">
+<tt class="descname">sorted_components</tt><big>(</big><big>)</big><a class="headerlink" href="#plink.LinkEditor.sorted_components" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a list of crossing components which have been sorted
+and cyclically permuted, following the scheme used in &#8220;standard&#8221;
+DT codes.</p>
+<p>The sorting process also sets the hit counters on all
+crossings, for use in computing DT and Gauss codes, and
+sets the component attribute of each arrow in each
+component.</p>
+<p>Requires that all components be closed.</p>
 </dd></dl>
 
 <dl class="method">
@@ -395,8 +475,17 @@ Requires that all components be closed.</p>
 <em class="property">class </em><tt class="descclassname">plink.</tt><tt class="descname">Crossing</tt><big>(</big><em>over</em>, <em>under</em><big>)</big><a class="headerlink" href="#plink.Crossing" title="Permalink to this definition">¶</a></dt>
 <dd><p>A pair of crossing arrows in a PL link diagram.</p>
 <dl class="method">
-<dt id="plink.Crossing.clear_hits">
-<tt class="descname">clear_hits</tt><big>(</big><big>)</big><a class="headerlink" href="#plink.Crossing.clear_hits" title="Permalink to this definition">¶</a></dt>
+<dt id="plink.Crossing.DT_hit">
+<tt class="descname">DT_hit</tt><big>(</big><em>count</em>, <em>ecrossing</em><big>)</big><a class="headerlink" href="#plink.Crossing.DT_hit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Count the crossing, using DT conventions.  Return True on the
+first hit if the count is odd and the crossing is shared by
+two components of the diagram.  As a side effect, set the
+flipped attribute on the first hit.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="plink.Crossing.clear_marks">
+<tt class="descname">clear_marks</tt><big>(</big><big>)</big><a class="headerlink" href="#plink.Crossing.clear_marks" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -405,13 +494,13 @@ Requires that all components be closed.</p>
 <dd></dd></dl>
 
 <dl class="method">
-<dt id="plink.Crossing.hit">
-<tt class="descname">hit</tt><big>(</big><em>count</em><big>)</big><a class="headerlink" href="#plink.Crossing.hit" title="Permalink to this definition">¶</a></dt>
+<dt id="plink.Crossing.locate">
+<tt class="descname">locate</tt><big>(</big><big>)</big><a class="headerlink" href="#plink.Crossing.locate" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
-<dt id="plink.Crossing.locate">
-<tt class="descname">locate</tt><big>(</big><big>)</big><a class="headerlink" href="#plink.Crossing.locate" title="Permalink to this definition">¶</a></dt>
+<dt id="plink.Crossing.mark_component">
+<tt class="descname">mark_component</tt><big>(</big><em>component</em><big>)</big><a class="headerlink" href="#plink.Crossing.mark_component" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -498,7 +587,7 @@ The ECrossings correspond 1-1 with edges of the link diagram.</p>
     </div>
     <div class="footer">
         &copy; Copyright 2009, Marc Culler, Nathan Dunfield and others.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.2.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
     </div>
   </body>
 </html>
