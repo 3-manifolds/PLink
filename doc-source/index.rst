@@ -76,20 +76,25 @@ around in order to make more room on one side or another.
 The "Tools" menu can be used to make the projection alternating
 (provided that all components are circles), or to clear the screen,
 or to reflect the projection in the xy-plane, changing all crossings.
+When used within SnapPy, this menu includes the "send to SnapPy" command.
 
 The "File" menu can be used to save the projection as a SnapPea
 link projection file.  (This can be done from the drawing state as
 well, in which case the "hot vertex" is remembered in the file!).  The
 "File->Open File" command will read a SnapPea link projection file,
-and restart drawing if the projection was saved while drawing.  The
-"Info" menu allows an encoding of the link projection to be printed
-in the info line at the bottom.  Various encoding schemes for link
-projections are supported.  Cutting and pasting from the info line
-is possible.
+and restart drawing if the projection was saved while drawing.
 
-If you are running PLink from inside SnapPy, closing the
-window or exiting the program will pass your projection to SnapPy to
-have its complement triangulated.
+The "Info" menu selects information about the link projection to be
+displayed in the info line at the bottom.  Various encoding schemes
+for link projections are supported, as well as the blackboard framing
+curves, expressed in meridian-longitude coordinates.  Cutting and
+pasting from the info line is supported.  The numerical and
+alphabetical Dowker-Thistlethwaite codes are displayed in an extended
+form which includes a full description of the planar embedding.  The
+string printed in the info line is also accepted as input to SnapPy's
+Manifold constructor.  Paste the DT code between the apostrophes in
+Manifold('').  The "DT labels" option displays the indexing used in
+computing the Dowker-Thistlethwaite codes.
 
 Credits
 =============
