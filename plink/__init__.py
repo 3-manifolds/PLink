@@ -120,6 +120,9 @@ class LinkEditor:
         self.frame.pack(padx=0, pady=0, fill=Tk_.BOTH, expand=Tk_.YES)
         self.canvas.pack(padx=0, pady=0, fill=Tk_.BOTH, expand=Tk_.YES)
         self.infotext.pack(padx=5, pady=0, fill=Tk_.X, expand=Tk_.NO)
+        self.show_DT_var = Tk_.IntVar(self.window)
+        self.info_var = Tk_.IntVar(self.window)
+        self.current_info = 0
         # Menus
         self.build_menus()
         # Event bindings
@@ -138,7 +141,6 @@ class LinkEditor:
     
     # Subclasses may want to overide this method.
     def build_menus(self):
-        self.show_DT_var = Tk_.IntVar(self.window)
         menubar = Tk_.Menu(self.window)
         file_menu = Tk_.Menu(menubar, tearoff=0)
         file_menu.add_command(label='Open File ...', command=self.load)
@@ -155,15 +157,21 @@ class LinkEditor:
         else:
             file_menu.add_command(label='Exit', command=self.done)
         menubar.add_cascade(label='File', menu=file_menu)
-        info_menu = Tk_.Menu(menubar, tearoff=0)
         export_menu = Tk_.Menu(menubar, tearoff=0)
-        info_menu.add_command(label='DT code', command=self.DT_normal)
-        info_menu.add_command(label='Alphabetical DT', command=self.DT_alpha)
+        info_menu = Tk_.Menu(menubar, tearoff=0)
+        info_menu.add_radiobutton(label='DT code', var=self.info_var,
+                                  command=self.set_info, value=1)
+        info_menu.add_radiobutton(label='Alphabetical DT', var=self.info_var,
+                                  command=self.set_info, value=2)
+        info_menu.add_radiobutton(label='Gauss code', var=self.info_var,
+                                  command=self.set_info, value=3)
+        info_menu.add_radiobutton(label='PD code', var=self.info_var,
+                                  command=self.set_info, value=4)
+        info_menu.add_radiobutton(label='BB framing', var=self.info_var,
+                                  command=self.set_info, value=5)
+        info_menu.add_separator()
         info_menu.add_checkbutton(label='DT labels', var=self.show_DT_var,
-                                  command = self.DT_update)
-        info_menu.add_command(label='Gauss code', command=self.Gauss_info)
-        info_menu.add_command(label='PD code', command=self.PD_info)
-        info_menu.add_command(label='BB framing', command=self.BB_info)
+                                  command = self.update_info)
         menubar.add_cascade(label='Info', menu=info_menu)
         tools_menu = Tk_.Menu(menubar, tearoff=0)
         tools_menu.add_command(label='Make alternating',
@@ -238,7 +246,8 @@ class LinkEditor:
                 self.state = 'dragging_state'
                 self.hide_DT()
                 self.canvas.config(cursor='circle')
-                self.ActiveVertex = self.Vertices[self.Vertices.index(start_vertex)]
+                self.ActiveVertex = self.Vertices[
+                    self.Vertices.index(start_vertex)]
                 self.ActiveVertex.freeze()
                 x1, y1 = self.ActiveVertex.point()
                 if self.ActiveVertex.in_arrow:
@@ -256,7 +265,7 @@ class LinkEditor:
                 #print 'single click on a crossing'
                 crossing = self.Crossings[self.CrossPoints.index(start_vertex)]
                 crossing.reverse()
-                self.DT_update()
+                self.update_info()
                 crossing.under.draw(self.Crossings)
                 crossing.over.draw(self.Crossings)
                 return
@@ -470,7 +479,7 @@ class LinkEditor:
         for arrow in self.Arrows:
             if arrow.too_close(vertex):
                 arrow.end.reverse_path(self.Crossings)
-                self.DT_update()
+                self.update_info()
                 return True
         return False
 
@@ -488,7 +497,7 @@ class LinkEditor:
         self.ActiveVertex = None
         self.update_crosspoints()
         self.state = 'start_state'
-        self.DT_update()
+        self.update_info()
         self.adjust_colors()
         for vertex in self.Vertices:
             vertex.draw()
@@ -689,6 +698,17 @@ class LinkEditor:
         for vertex in self.Vertices:
             vertex.draw()
 
+    def set_info(self):
+        self.clear_text()
+        which_info = self.info_var.get()
+        if which_info == self.current_info:
+            # toggle
+            self.info_var.set(0)
+            self.current_info = 0
+        else:
+            self.current_info = which_info
+            self.update_info()
+
     def clear_text(self):
         self.infotext.delete(0, Tk_.END)
         self.window.focus_set()
@@ -730,7 +750,7 @@ class LinkEditor:
         for crossing in self.Crossings:
             crossing.locked = False
         self.clear_text()
-        self.DT_update()
+        self.update_info()
         for arrow in self.Arrows:
             arrow.draw(self.Crossings)
 
@@ -738,7 +758,7 @@ class LinkEditor:
         for crossing in self.Crossings:
             crossing.reverse()
         self.clear_text()
-        self.DT_update()
+        self.update_info()
         for arrow in self.Arrows:
             arrow.draw(self.Crossings)
 
@@ -751,9 +771,31 @@ class LinkEditor:
         self.palette.reset()
         self.initialize()
         self.show_DT_var.set(0)
+        self.info_var.set(0)
         self.clear_text()
         self.goto_start_state()
 
+
+    def update_info(self):
+        self.hide_DT()
+        self.clear_text()
+        if self.state != 'start_state':
+            return
+        if self.show_DT_var.get():
+            dt = self.DT_code()
+            if dt is not None:
+                self.show_DT()
+        info_value = self.info_var.get()
+        if info_value == 1:
+            self.DT_normal()
+        elif info_value == 2:
+            self.DT_alpha()
+        elif info_value == 3:
+            self.Gauss_info()
+        elif info_value == 4:
+            self.PD_info()
+        elif info_value == 5:
+            self.BB_info()
 
     def sorted_components(self):
         """
@@ -934,7 +976,7 @@ class LinkEditor:
         in each component is returned (this is for use by Gauss_code).
         """
         sorted_components = self.sorted_components()
-        if sorted_components is None:
+        if sorted_components is None or len(sorted_components) == 0:
             return (None, None) if return_sizes else None
         component_sizes = [len(c) for c in sorted_components]
         DT_chunks, S = [], 0
@@ -1040,11 +1082,6 @@ class LinkEditor:
         code = self.DT_code()
         if code:
             self.write_text(('DT: %s,  %s'%code).replace(', ',','))
-        else:
-            tkMessageBox.showwarning(
-                'Error',
-                'All components must be closed to compute a DT code.')
-
 
     def DT_alpha(self):
         """
@@ -1054,10 +1091,6 @@ class LinkEditor:
         code = self.DT_code(alpha=True)
         if code:
             self.write_text('DT: %s'%code)
-        else:
-            tkMessageBox.showwarning(
-                'Error',
-                'All components must be closed to compute a DT code.')
 
     def Gauss_info(self):
         """
@@ -1067,10 +1100,6 @@ class LinkEditor:
         code = self.Gauss_code()
         if code:
             self.write_text(('Gauss: %s'%code).replace(', ',','))
-        else:
-            tkMessageBox.showwarning(
-                'Error',
-                'All components must be closed to compute a Gauss code.')
 
     def PD_info(self):
         """
@@ -1079,10 +1108,6 @@ class LinkEditor:
         code = self.PD_code()
         if code:
             self.write_text(('PD: %s'%code).replace(', ',','))
-        else:
-            tkMessageBox.showwarning(
-                'Error',
-                'All components must be closed to compute a PD code.')
 
     def BB_info(self):
         """
@@ -1092,18 +1117,6 @@ class LinkEditor:
         framing = self.BB_framing()
         if framing:
             self.write_text(('BB framing:  %s'%framing).replace(', ',','))
-        else:
-            tkMessageBox.showwarning(
-                'Error',
-                'All components must be closed to compute a framing.')
-
-    def DT_update(self):
-        self.hide_DT()
-        if self.state != 'start_state':
-            return
-        dt = self.DT_code()
-        if dt is not None and self.show_DT_var.get():
-            self.show_DT()
 
     def show_DT(self):
         """
