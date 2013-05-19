@@ -107,14 +107,19 @@ class LinkEditor:
         self.infoframe = Tk_.Frame(self.window, 
                                    borderwidth=2,
                                    relief=Tk_.FLAT,
-                                   background='#dcecff')
+                                   background='#ffffff')
+        self.infotext_contents = Tk_.StringVar()
         self.infotext = Tk_.Entry(self.infoframe,
-                                  font="Helvetica 16",
+                                  state='readonly',
+                                  font='Helvetica 16',
+                                  textvariable=self.infotext_contents,
+                                  readonlybackground='#ffffff',
+                                  relief=Tk_.FLAT,
                                   highlightthickness=0)
-        spacer = Tk_.Frame(self.window,
-                           height=16,
-                           background='#dcecff')
-        spacer.pack(side=Tk_.BOTTOM)
+        #spacer = Tk_.Frame(self.window,
+        #                   height=16,
+        #                   background='#dcecff')
+        #spacer.pack(side=Tk_.BOTTOM)
         self.infoframe.pack(padx=0, pady=0, fill=Tk_.X, expand=Tk_.NO,
                             side=Tk_.BOTTOM)
         self.frame.pack(padx=0, pady=0, fill=Tk_.BOTH, expand=Tk_.YES)
@@ -131,9 +136,6 @@ class LinkEditor:
         self.canvas.bind('<Motion>', self.mouse_moved)
         self.window.bind('<Key>', self.key_press)
         self.infotext.bind('<<Copy>>', lambda event : None)
-        self.infotext.bind('<Key>', self.infotext_key_press)
-#        self.infotext.bind('<Up>', self.key_press)
-#        self.infotext.bind('<Down>', self.key_press)
         self.window.protocol("WM_DELETE_WINDOW", self.done)
         # Go
         self.flipcheck = None
@@ -423,10 +425,6 @@ class LinkEditor:
                 x0,y0,x1,y1 = self.canvas.coords(self.LiveArrow2)
                 self.canvas.coords(self.LiveArrow2, x0, y0, x, y)
 
-    def infotext_key_press(self, event):
-        self.window.focus_set()
-        return 'break'
-
     def key_press(self, event):
         """
         Handler for keypress events.
@@ -710,12 +708,11 @@ class LinkEditor:
             self.update_info()
 
     def clear_text(self):
-        self.infotext.delete(0, Tk_.END)
+        self.infotext_contents.set('')
         self.window.focus_set()
 
     def write_text(self, string):
-        self.infotext.delete(0, Tk_.END)
-        self.infotext.insert(Tk_.END, string)
+        self.infotext_contents.set(string)
 
     def make_alternating(self):
         """
