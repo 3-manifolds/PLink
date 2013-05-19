@@ -128,7 +128,7 @@ class LinkEditor:
         self.show_DT_var = Tk_.IntVar(self.window)
         self.info_var = Tk_.IntVar(self.window)
         self.current_info = 0
-        self.has_focus = False
+        self.has_focus = True
         # Menus
         self.build_menus()
         # Event bindings
