@@ -128,12 +128,15 @@ class LinkEditor:
         self.show_DT_var = Tk_.IntVar(self.window)
         self.info_var = Tk_.IntVar(self.window)
         self.current_info = 0
+        self.has_focus = True
         # Menus
         self.build_menus()
         # Event bindings
         self.canvas.bind('<Button-1>', self.single_click)
         self.canvas.bind('<Double-Button-1>', self.double_click)
         self.canvas.bind('<Motion>', self.mouse_moved)
+        self.window.bind('<FocusIn>', self.focus_in)
+        self.window.bind('<FocusOut>', self.focus_out)
         self.window.bind('<Key>', self.key_press)
         self.infotext.bind('<<Copy>>', lambda event : None)
         self.window.protocol("WM_DELETE_WINDOW", self.done)
@@ -234,10 +237,21 @@ class LinkEditor:
     def reopen(self):
         self.window.deiconify()
 
+    def focus_in(self, event):
+        self.window.after(100, self.notice_focus) 
+    
+    def notice_focus(self):
+        self.has_focus = True
+               
+    def focus_out(self, event):
+        self.has_focus = False
+
     def single_click(self, event):
         """
         Event handler for mouse clicks.
         """
+        if not self.has_focus:
+            return
         x = self.canvas.canvasx(event.x)
         y = self.canvas.canvasy(event.y)
         self.clear_text()
