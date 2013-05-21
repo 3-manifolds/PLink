@@ -250,8 +250,11 @@ class LinkEditor:
         """
         Event handler for mouse clicks.
         """
-        if not self.has_focus:
-            return
+        if self.state == 'start_state':
+            if not self.has_focus:
+                return
+        else:
+            self.has_focus = True
         x = self.canvas.canvasx(event.x)
         y = self.canvas.canvasy(event.y)
         self.clear_text()
