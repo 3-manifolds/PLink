@@ -40,3 +40,5 @@ setup(name='plink',
       cmdclass =  {'clean' : clean},
      )
 
+with open('version.txt', 'w') as output:
+    output.write(version)
