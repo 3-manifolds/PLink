@@ -6,3 +6,4 @@ doc-source/_build
 syntax: glob
 *~
 *.pyc
+plink-app/*.egg/
