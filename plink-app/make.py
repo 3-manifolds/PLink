@@ -2,7 +2,7 @@
 """
 This script builds everything, except the Windows binary, for the
 PLink project.  It should be run under OS X with a Framework version
-of Python 2.5 and Python 2.6 installed.
+of Python 2.7 installed.
 """
 import os, sys, re, glob
 
@@ -11,8 +11,8 @@ import os, sys, re, glob
 
 def build_module_and_eggs():
     os.chdir("../")
-    os.system("python2.6 setup.py clean")
-    os.system("python2.6 setup.py install")
+    os.system("python2.7 setup.py clean")
+    os.system("python2.7 setup.py install")
     os.chdir("doc-source")
     os.system("make install")
     os.chdir("../")
@@ -21,7 +21,7 @@ def build_module_and_eggs():
 
 def build_app():
     os.chdir("plink-app")
-    os.system("python2.6 setup.py clean py2app")
+    os.system("python2.7 setup.py clean py2app")
     # Make things a little smaller.
     os.system("rm -rf dist/PLink.app/Contents/Frameworks/Tcl.framework/Versions/8.4/Resources/English.lproj/ActiveTcl-8.4")
     os.system("rm -rf dist/PLink.app/Contents/Frameworks/Tk.framework/Versions/8.4/Resources/Scripts/demos")
