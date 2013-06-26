@@ -73,7 +73,7 @@ class LinkEditor:
     original SnapPea program.
     """
     def __init__(self, root=None, no_arcs=False, callback=None, cb_menu='',
-                 title='PLink Editor'):
+                 file_name=None, title='PLink Editor'):
         self.no_arcs = no_arcs
         self.callback = callback
         self.cb_menu = cb_menu
@@ -143,6 +143,8 @@ class LinkEditor:
         # Go
         self.flipcheck = None
         self.state='start_state'
+        if file_name:
+            self.load(file_name=file_name)
     
     # Subclasses may want to overide this method.
     def build_menus(self):

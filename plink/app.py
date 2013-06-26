@@ -34,10 +34,14 @@ MC 2009-05-6 This is now handled by plink.  Fourth line commented out.
 
 
 from . import LinkEditor
+import sys
 
 def main():
-    LE = LinkEditor()
-    #LE.window.tk.call('console', 'hide')  # Gets rid of the silly console Window.  
+    if len(sys.argv) > 1:
+        for file_name in sys.argv[1:]:
+            LE = LinkEditor(file_name=file_name)
+    else:
+        LE = LinkEditor()
     LE.window.mainloop()
 
 if __name__ == "__main__":
