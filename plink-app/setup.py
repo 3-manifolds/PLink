@@ -11,25 +11,20 @@ import os
 APP = ['PLink.py']
 DATA_FILES = []
 OPTIONS = {
-    'argv_emulation': True,
+    'argv_emulation': False,
     'iconfile': 'plink.icns',
-    'semi_standalone' : False,
     'packages' : 'plink',
     }
 
 class clean(Command):
     user_options = []
-
     def initialize_options(self):
-        pass
-        
+        pass 
     def finalize_options(self):
         pass
-    
     def run(self):
-        os.system("rm -rf build dist")
-    
-    
+        os.system("rm -rf build dist *.pyc")
+
 setup(
     app=APP,
     data_files=DATA_FILES,
