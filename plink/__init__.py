@@ -1359,7 +1359,7 @@ class Vertex:
     epsilon = 8
 
     def __init__(self, x, y, canvas, hidden=False,color='black'):
-        self.x, self.y = x, y
+        self.x, self.y = float(x), float(y)
         self.in_arrow = None
         self.out_arrow = None
         self.canvas = canvas
@@ -1370,7 +1370,7 @@ class Vertex:
         self.draw()
 
     def __repr__(self):
-        return '(%d,%d)'%(int(self.x), int(self.y))
+        return '(%s,%s)'%(self.x, self.y)
 
     def __eq__(self, other):
         """
@@ -1657,6 +1657,7 @@ class Crossing:
         self.flipped = None
 
     def __repr__(self):
+        self.locate()
         return '%s over %s at (%d,%d)'%(self.over, self.under, self.x, self.y)
 
     def __eq__(self, other):
