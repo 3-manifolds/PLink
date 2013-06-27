@@ -184,6 +184,11 @@ class LinkEditor:
         tools_menu.add_command(label='Make alternating',
                        command=self.make_alternating)
         tools_menu.add_command(label='Reflect', command=self.reflect)
+        zoom_menu = Tk_.Menu(tools_menu, tearoff=0)
+        zoom_menu.add_command(label='Zoom in', command=self.zoom_in)
+        zoom_menu.add_command(label='Zoom out', command=self.zoom_out)
+        zoom_menu.add_command(label='Zoom to fit', command=self.zoom_to_fit)
+        tools_menu.add_cascade(label='Zoom', menu=zoom_menu)
         tools_menu.add_command(label='Clear', command=self.clear)
         menubar.add_cascade(label='Tools', menu=tools_menu)
         help_menu = Tk_.Menu(menubar, tearoff=0)
@@ -435,8 +440,8 @@ class LinkEditor:
         elif self.state == 'dragging_state':
             x = self.canvas.canvasx(event.x)
             y = self.canvas.canvasy(event.y)
-            self.ActiveVertex.x, self.ActiveVertex.y = x, y
-            self.ActiveVertex.draw()
+#            self.ActiveVertex.x, self.ActiveVertex.y = x, y
+#            self.ActiveVertex.draw()
             if self.LiveArrow1:
                 x0,y0,x1,y1 = self.canvas.coords(self.LiveArrow1)
                 self.canvas.coords(self.LiveArrow1, x0, y0, x, y)
@@ -448,6 +453,7 @@ class LinkEditor:
         """
         Handler for keypress events.
         """
+        dx, dy = 0, 0
         if event.keysym == 'Delete' or event.keysym == 'BackSpace':
             if self.state == 'drawing_state':
                 last_arrow = self.ActiveVertex.in_arrow
@@ -468,13 +474,17 @@ class LinkEditor:
                     last_arrow.erase()
                     for arrow in self.Arrows:
                         arrow.draw(self.Crossings)
-
                 if not self.ActiveVertex.in_arrow:
                     self.Vertices.remove(self.ActiveVertex)
                     self.ActiveVertex.erase()
                     self.goto_start_state()
-        dx, dy = 0, 0
-        if event.keysym == 'Down':
+        elif event.char in ('+','='):
+            self.zoom_in()
+        elif event.char in ('-','_'):
+            self.zoom_out()
+        elif event.char == '0':
+            self.zoom_to_fit()
+        elif event.keysym == 'Down':
             dx, dy = 0, 5
         elif event.keysym == 'Up':
             dx, dy = 0, -5
@@ -483,12 +493,13 @@ class LinkEditor:
         elif event.keysym == 'Left':
             dx, dy = -5, 0
         if dx or dy:
-            for vertex in self.Vertices:
-                vertex.x += dx
-                vertex.y += dy
-            self.update_crosspoints()
-            self.canvas.move('all', dx, dy)
-            self.adjust_colors()
+            self._shift(dx, dy)
+#            for vertex in self.Vertices:
+#                vertex.x += dx
+#                vertex.y += dy
+#            self.update_crosspoints()
+#            self.canvas.move('all', dx, dy)
+#            self.adjust_colors()
         event.x, event.y = self.cursorx, self.cursory
         self.mouse_moved(event)
 
@@ -543,6 +554,7 @@ class LinkEditor:
     def end_dragging_state(self):
         if not self.verify_drag():
             raise ValueError
+        self.ActiveVertex.x, self.ActiveVertex.y = self.cursorx, self.cursory
         endpoint = None
         if self.ActiveVertex.is_endpoint():
             other_ends = [v for v in self.Vertices if
@@ -595,6 +607,8 @@ class LinkEditor:
         self.Crossings = [c for c in self.Crossings if arrow not in c]
 
     def update_crosspoints(self):
+        for arrow in self.Arrows:
+            arrow.vectorize()
         for c in self.Crossings:
             c.locate()
         self.CrossPoints = [Vertex(c.x, c.y, self.canvas, hidden=True)
@@ -791,6 +805,52 @@ class LinkEditor:
         self.clear_text()
         self.goto_start_state()
 
+    def _shift(self, dx, dy):
+        for vertex in self.Vertices:
+            vertex.x += dx
+            vertex.y += dy
+        self.canvas.move('transformable', dx, dy)
+        for livearrow in (self.LiveArrow1, self.LiveArrow2):
+            if livearrow:
+                x0,y0,x1,y1 = self.canvas.coords(livearrow)
+                x0 += dx
+                y0 += dy
+                self.canvas.coords(livearrow, x0, y0, x1, y1)
+
+    def _zoom(self, xfactor, yfactor):
+        ulx, uly, lrx, lry = self.canvas.bbox('transformable')
+        # this scales the frozen arrows.  We redraw the rest again.
+        #self.canvas.scale('transformable', ulx, uly, xfactor, yfactor)
+        for vertex in self.Vertices:
+            vertex.x = ulx + xfactor*(vertex.x - ulx)
+            vertex.y = uly + yfactor*(vertex.y - uly)
+        self.update_crosspoints()
+        for arrow in self.Arrows:
+#            self.update_crossings(arrow)
+            arrow.draw(self.Crossings, skip_frozen=False)
+        for vertex in self.Vertices:
+            vertex.draw(skip_frozen=False)
+        for livearrow in (self.LiveArrow1, self.LiveArrow2):
+            if livearrow:
+                x0,y0,x1,y1 = self.canvas.coords(livearrow)
+                x0 = ulx + xfactor*(x0 - ulx)
+                y0 = uly + yfactor*(y0 - uly)
+                self.canvas.coords(livearrow, x0, y0, x1, y1)
+
+    def zoom_in(self):
+        self._zoom(1.2, 1.2)
+
+    def zoom_out(self):
+        self._zoom(0.8, 0.8)
+
+    def zoom_to_fit(self):
+        W, H = self.canvas.winfo_width(), self.canvas.winfo_height()
+        x0, y0, x1, y1 = self.canvas.bbox('transformable')
+        w, h = float(x1-x0), float(y1-y0)
+        factor = min( (W-40)/w, (H-40)/h )
+        self._shift( (W - factor*w)/2 - x0,
+                     (H - factor*h)/2 - y0 )
+        self._zoom(factor, factor)
 
     def update_info(self):
         self.hide_DT()
@@ -1247,7 +1307,7 @@ class LinkEditor:
                     num_vertices = int(lines.pop(0))
                     for n in range(num_vertices):
                         x, y = lines.pop(0).split()
-                        X, Y = int(x), int(y)
+                        X, Y = float(x), float(y)
                         self.Vertices.append(Vertex(X, Y, self.canvas))
                     num_arrows = int(lines.pop(0))
                     for n in range(num_arrows):
@@ -1296,10 +1356,10 @@ class Vertex:
     """
     A vertex in a PL link diagram.
     """
-    epsilon = 6
+    epsilon = 8
 
     def __init__(self, x, y, canvas, hidden=False,color='black'):
-        self.x, self.y = int(x), int(y)
+        self.x, self.y = x, y
         self.in_arrow = None
         self.out_arrow = None
         self.canvas = canvas
@@ -1310,7 +1370,7 @@ class Vertex:
         self.draw()
 
     def __repr__(self):
-        return '(%d,%d)'%(self.x, self.y)
+        return '(%d,%d)'%(int(self.x), int(self.y))
 
     def __eq__(self, other):
         """
@@ -1334,16 +1394,18 @@ class Vertex:
     def point(self):
         return self.x, self.y
 
-    def draw(self):
-        if self.hidden or self.frozen:
+    def draw(self, skip_frozen=False):
+        if self.hidden or (self.frozen and skip_frozen):
             return
+        color = 'gray' if self.frozen else self.color
         delta = 2
         x, y = self.point()
         if self.dot:
             self.canvas.delete(self.dot)
         self.dot = self.canvas.create_oval(x-delta , y-delta, x+delta, y+delta,
-                                           outline=self.color,
-                                           fill=self.color)
+                                           outline=color,
+                                           fill=color,
+                                           tags='transformable')
     def set_color(self, color):
         self.color = color
         self.canvas.itemconfig(self.dot, fill=color, outline=color)
@@ -1469,7 +1531,7 @@ class Arrow:
         """
         Returns the barycentric coordinate at which self crosses other.
         """
-        D = float(other.dx*self.dy - self.dx*other.dy)
+        D = other.dx*self.dy - self.dx*other.dy
         if D == 0:
             return None
         xx = other.start.x - self.start.x
@@ -1482,8 +1544,8 @@ class Arrow:
             return None
 
     def vectorize(self):
-        self.dx = float(self.end.x - self.start.x)
-        self.dy = float(self.end.y - self.start.y)
+        self.dx = self.end.x - self.start.x
+        self.dy = self.end.y - self.start.y
         self.length = sqrt(self.dx*self.dx + self.dy*self.dy) 
 
     def reverse(self, crossings=[]):
@@ -1506,9 +1568,10 @@ class Arrow:
         self.frozen = False
         self.draw(crossings)
 
-    def draw(self, crossings=[], recurse=True):
-        if self.hidden or self.frozen:
+    def draw(self, crossings=[], recurse=True, skip_frozen=True):
+        if self.hidden or (self.frozen and skip_frozen):
             return
+        color = 'gray' if self.frozen else self.color
         self.vectorize()
         gap = 9.0/self.length
         for line in self.lines:
@@ -1527,13 +1590,13 @@ class Arrow:
             y1 = y00 + (s-gap)*self.dy
             self.lines.append(self.canvas.create_line(
                     x0, y0, x1, y1,
-                    width=3, fill=self.color))
+                    width=3, fill=color, tags='transformable'))
             x0, y0 = x1 + 2*gap*self.dx, y1 + 2*gap*self.dy
         x1, y1 = self.end.point()
         self.lines.append(self.canvas.create_line(
                 x0, y0, x1, y1,
                 arrow=Tk_.LAST,
-                width=3, fill=self.color))
+                width=3, fill=color, tags='transformable'))
         if recurse:
             under_arrows = [c.under for c in crossings if c.over == self]
             for arrow in under_arrows:
@@ -1618,8 +1681,8 @@ class Crossing:
     def locate(self):
         t = self.over ^ self.under
         if t:
-            self.x = int(self.over.start.x + t*self.over.dx)
-            self.y = int(self.over.start.y + t*self.over.dy)
+            self.x = self.over.start.x + t*self.over.dx
+            self.y = self.over.start.y + t*self.over.dy
         else:
             self.x, self.y = None, None
 
