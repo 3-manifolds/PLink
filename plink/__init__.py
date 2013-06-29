@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
 #
 #   Copyright (C) 2007-2009 Marc Culler, Nathan Dunfield and others.
 #
@@ -66,6 +68,13 @@ else:
                 ("All text files", "", "TEXT"),
                 ("All files", "")],
             )
+
+# Keyboard shortcuts
+scut = {
+    'Left'   : '←',
+    'Up'     : '↑',
+    'Right'  : '→',
+    'Down'   : '↓'}
 
 class LinkEditor:
     """
@@ -185,10 +194,23 @@ class LinkEditor:
                        command=self.make_alternating)
         tools_menu.add_command(label='Reflect', command=self.reflect)
         zoom_menu = Tk_.Menu(tools_menu, tearoff=0)
-        zoom_menu.add_command(label='Zoom in', command=self.zoom_in)
-        zoom_menu.add_command(label='Zoom out', command=self.zoom_out)
-        zoom_menu.add_command(label='Zoom to fit', command=self.zoom_to_fit)
+        zoom_menu.add_command(label='Zoom in', accelerator='+',
+                              command=self.zoom_in)
+        zoom_menu.add_command(label='Zoom out', accelerator='-',
+                              command=self.zoom_out)
+        zoom_menu.add_command(label='Zoom to fit', accelerator='0',
+                              command=self.zoom_to_fit)
         tools_menu.add_cascade(label='Zoom', menu=zoom_menu)
+        pan_menu = Tk_.Menu(tools_menu, tearoff=0)
+        pan_menu.add_command(label='Left', accelerator=scut['Left'],
+            command=lambda : self._shift(-5,0))
+        pan_menu.add_command(label='Up', accelerator=scut['Up'],
+            command=lambda : self._shift(0,-5))
+        pan_menu.add_command(label='Right', accelerator=scut['Right'],
+            command=lambda : self._shift(5,0))
+        pan_menu.add_command(label='Down', accelerator=scut['Down'],
+            command=lambda : self._shift(0,5))
+        tools_menu.add_cascade(label='Pan', menu=pan_menu)
         tools_menu.add_command(label='Clear', command=self.clear)
         menubar.add_cascade(label='Tools', menu=tools_menu)
         help_menu = Tk_.Menu(menubar, tearoff=0)
@@ -494,12 +516,6 @@ class LinkEditor:
             dx, dy = -5, 0
         if dx or dy:
             self._shift(dx, dy)
-#            for vertex in self.Vertices:
-#                vertex.x += dx
-#                vertex.y += dy
-#            self.update_crosspoints()
-#            self.canvas.move('all', dx, dy)
-#            self.adjust_colors()
         event.x, event.y = self.cursorx, self.cursory
         self.mouse_moved(event)
 
