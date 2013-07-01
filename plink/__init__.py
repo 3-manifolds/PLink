@@ -707,14 +707,17 @@ class LinkEditor:
         """
         result = []
         self.update_crosspoints()
+        segments = {}
         for arrow in self.Arrows:
             self.update_crossings(arrow)
-            arrow.find_segments(self.Crossings)
+            segments[arrow] = arrow.find_segments(
+                self.Crossings,
+                split_at_overcrossings=True)
         for component in self.arrow_components():
             polylines = []
-            polyline = component[0].segments[0]
+            polyline = segments[component[0]][0]
             for arrow in component[1:]:
-                for segment in arrow.segments:
+                for segment in segments[arrow]:
                     if segment[:2] == polyline[-2:]:
                         polyline += segment[2:]
                     else:
@@ -1568,7 +1571,6 @@ class Arrow:
         self.component = None
         self.hidden = hidden
         self.frozen = False
-        self.segments = []
         self.lines = []
         self.cross_params = []
         if self.start != self.end:
@@ -1621,46 +1623,54 @@ class Arrow:
         self.frozen = False
         self.draw(crossings)
 
-    def find_segments(self, crossings):
+
+    def find_segments(self, crossings, split_at_overcrossings=False):
         """
-        Construct a list of segments that make up this arrow, each
+        Return a list of segments that make up this arrow, each
         segment being a list of 4 coordinates [x0,y0,x1,y1].  The
-        first segment starts at the start vertex, and the last one ends at the
-        end qvertex.  Otherwise, segments start and end near crossings
-        where this arrow goes under, leaving a gap between the endpoint
-        and the crossing point.
+        first segment starts at the start vertex, and the last one
+        ends at the end qvertex.  Otherwise, endpoints are either near
+        crossings where this arrow goes under, leaving a gap between
+        the endpoint and the crossing point.  If the
+        split_at_overcrossings flag is True, then the segments are
+        also split at overcrossings, with no gap.
         """
-        self.segments = []
+        segments = []
         self.vectorize()
-        gap = 9.0/self.length # rethink this
+        gapsize = 9.0/self.length # rethink this
         cross_params = []
-        over_arrows = [c.over for c in crossings if c.under == self]
-        for arrow in over_arrows: 
-            t = self ^ arrow
-            if t:
-                cross_params.append(t)
+        for c in crossings:
+            if c.under == self:
+                t = self ^ c.over
+                if t:
+                    cross_params.append((t,gapsize))
+            if c.over == self and split_at_overcrossings:
+                t = self ^ c.under
+                if t:
+                    cross_params.append((t,0))
         cross_params.sort()
         x0, y0 = x00, y00 = self.start.point()
-        for s in cross_params:
+        for s, gap in cross_params:
             x1 = x00 + (s-gap)*self.dx 
             y1 = y00 + (s-gap)*self.dy
-            self.segments.append([x0,y0,x1,y1])
+            segments.append([x0,y0,x1,y1])
             x0, y0 = x1 + 2*gap*self.dx, y1 + 2*gap*self.dy
         x1, y1 = self.end.point()
-        self.segments.append([x0,y0,x1,y1])
+        segments.append([x0,y0,x1,y1])
+        return segments
 
     def draw(self, crossings=[], recurse=True, skip_frozen=True):
         if self.hidden or (self.frozen and skip_frozen):
             return
         color = 'gray' if self.frozen else self.color
-        self.find_segments(crossings)
+        segments = self.find_segments(crossings)
         for line in self.lines:
             self.canvas.delete(line)
-        for x0, y0, x1, y1 in self.segments[:-1]:
+        for x0, y0, x1, y1 in segments[:-1]:
             self.lines.append(self.canvas.create_line(
                     x0, y0, x1, y1,
                     width=3, fill=color, tags='transformable'))
-        x0, y0, x1, y1 = self.segments[-1]
+        x0, y0, x1, y1 = segments[-1]
         self.lines.append(self.canvas.create_line(
                 x0, y0, x1, y1,
                 arrow=Tk_.LAST,
