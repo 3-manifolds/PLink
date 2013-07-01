@@ -403,7 +403,11 @@ class LinkEditor:
         vertex = Vertex(x, y, self.canvas, hidden=True)
         #print 'double-click in %s'%self.state
         if self.state == 'dragging_state':
-            self.end_dragging_state()
+            try:
+                self.end_dragging_state()
+            except ValueError:
+                self.alert()
+                return
             # The first click on a vertex put us in dragging state.
             if vertex in [v for v in self.Vertices if v.is_endpoint()]:
                 #print 'double-clicked on an endpoint'
@@ -693,6 +697,34 @@ class LinkEditor:
         closed.sort(key=lambda x : (x[0].component, oldest_vertex(x)))
         nonclosed.sort(key=oldest_vertex)
         return closed + nonclosed
+
+    def polylines(self):
+        """
+        Returns a list of lists of polylines, one per component, that
+        make up the drawing of the link diagram.  Each polyline is a
+        list of coordinates [x0,y0,x1,y1,...]  Isolated vertices are
+        ignored.
+        """
+        result = []
+        self.update_crosspoints()
+        for arrow in self.Arrows:
+            self.update_crossings(arrow)
+            arrow.find_segments(self.Crossings)
+        for component in self.arrow_components():
+            polylines = []
+            polyline = component[0].segments[0]
+            for arrow in component[1:]:
+                for segment in arrow.segments:
+                    if segment[:2] == polyline[-2:]:
+                        polyline += segment[2:]
+                    else:
+                        polylines.append(polyline)
+                        polyline = segment
+            polylines.append(polyline)
+            if polylines[0][:2] == polylines[-1][-2:]:
+                polylines[0] = polylines.pop()[:-2] + polylines[0]
+            result.append(polylines)
+        return result
 
     def crossing_components(self):
         """
@@ -1536,6 +1568,7 @@ class Arrow:
         self.component = None
         self.hidden = hidden
         self.frozen = False
+        self.segments = []
         self.lines = []
         self.cross_params = []
         if self.start != self.end:
@@ -1588,15 +1621,18 @@ class Arrow:
         self.frozen = False
         self.draw(crossings)
 
-    def draw(self, crossings=[], recurse=True, skip_frozen=True):
-        if self.hidden or (self.frozen and skip_frozen):
-            return
-        color = 'gray' if self.frozen else self.color
+    def find_segments(self, crossings):
+        """
+        Construct a list of segments that make up this arrow, each
+        segment being a list of 4 coordinates [x0,y0,x1,y1].  The
+        first segment starts at the start vertex, and the last one ends at the
+        end qvertex.  Otherwise, segments start and end near crossings
+        where this arrow goes under, leaving a gap between the endpoint
+        and the crossing point.
+        """
+        self.segments = []
         self.vectorize()
-        gap = 9.0/self.length
-        for line in self.lines:
-            self.canvas.delete(line)
-        self.lines = []
+        gap = 9.0/self.length # rethink this
         cross_params = []
         over_arrows = [c.over for c in crossings if c.under == self]
         for arrow in over_arrows: 
@@ -1608,11 +1644,23 @@ class Arrow:
         for s in cross_params:
             x1 = x00 + (s-gap)*self.dx 
             y1 = y00 + (s-gap)*self.dy
+            self.segments.append([x0,y0,x1,y1])
+            x0, y0 = x1 + 2*gap*self.dx, y1 + 2*gap*self.dy
+        x1, y1 = self.end.point()
+        self.segments.append([x0,y0,x1,y1])
+
+    def draw(self, crossings=[], recurse=True, skip_frozen=True):
+        if self.hidden or (self.frozen and skip_frozen):
+            return
+        color = 'gray' if self.frozen else self.color
+        self.find_segments(crossings)
+        for line in self.lines:
+            self.canvas.delete(line)
+        for x0, y0, x1, y1 in self.segments[:-1]:
             self.lines.append(self.canvas.create_line(
                     x0, y0, x1, y1,
                     width=3, fill=color, tags='transformable'))
-            x0, y0 = x1 + 2*gap*self.dx, y1 + 2*gap*self.dy
-        x1, y1 = self.end.point()
+        x0, y0, x1, y1 = self.segments[-1]
         self.lines.append(self.canvas.create_line(
                 x0, y0, x1, y1,
                 arrow=Tk_.LAST,
