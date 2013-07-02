@@ -212,6 +212,8 @@ class LinkEditor:
             command=lambda : self._shift(0,5))
         tools_menu.add_cascade(label='Pan', menu=pan_menu)
         tools_menu.add_command(label='Clear', command=self.clear)
+        tools_menu.add_command(label='Smooth',
+                               command=lambda : SmoothLink(self.polylines()))
         menubar.add_cascade(label='Tools', menu=tools_menu)
         help_menu = Tk_.Menu(menubar, tearoff=0)
         help_menu.add_command(label='About PLink...', command=self.about)
@@ -714,19 +716,23 @@ class LinkEditor:
                 self.Crossings,
                 split_at_overcrossings=True)
         for component in self.arrow_components():
+            color = component[0].color
             polylines = []
-            polyline = segments[component[0]][0]
-            for arrow in component[1:]:
+            polyline = []
+            for arrow in component:
                 for segment in segments[arrow]:
-                    if segment[:2] == polyline[-2:]:
+                    if len(polyline) == 0:
+                        polyline = segment
+                    elif segment[:2] == polyline[-2:]:
                         polyline += segment[2:]
                     else:
                         polylines.append(polyline)
                         polyline = segment
             polylines.append(polyline)
             if polylines[0][:2] == polylines[-1][-2:]:
-                polylines[0] = polylines.pop()[:-2] + polylines[0]
-            result.append(polylines)
+                if len(polylines) > 1:
+                    polylines[0] = polylines.pop()[:-2] + polylines[0]
+            result.append((polylines, color))
         return result
 
     def crossing_components(self):
@@ -1943,6 +1949,55 @@ class InfoDialog(tkSimpleDialog.Dialog):
         self.parent.focus_set()
         self.app = None
         self.destroy()
+
+class SmoothLink:
+    def __init__(self, polylines, tightness=0.9, end_tightness=0.9):
+        self.window = Tk_.Toplevel()
+        self.canvas = Tk_.Canvas(self.window, width=500, height=500,
+                             background='white')
+        self.canvas.pack()
+        for polyline, color in polylines:
+            if len(polyline) == 1 and polyline[0][:2] == polyline[0][-2:]:
+                self.draw_loop(polyline[0], color, tightness, end_tightness)
+            else:
+                for arc in polyline:
+                    self.draw_arc(arc, color, tightness, end_tightness)
+        
+    def draw_arc(self, points, color, t, s):
+#        self.canvas.create_line(*points, width=1, fill='black')
+        x0, y0 = points[:2]
+        x1, y1 = points[2:4]
+        XY = [x0, y0, x0 +s*(x1-x0), y0 + s*(y1-y0)]
+        for n in xrange(2,len(points)-2,2):
+            x0, y0 = points[n:n+2]
+            x1, y1 = points[n+2:n+4]
+            x, y = (x0+x1)/2, (y0+y1)/2
+            XY += [x+t*(x0-x), y+t*(y0-y), x, y, x+t*(x1-x),y+t*(y1-y)]
+        x1, y1 = points[-4:-2]
+        x0, y0 = points[-2:]
+        XY += [x0+s*(x1-x0), y0+s*(y1-y0), x0, y0]
+#        self.canvas.create_line(*XY, width=1, fill='blue')
+        self.canvas.create_line(*XY, smooth='raw', width=5,
+                                fill=color, splinesteps=100)
+
+    def draw_loop(self, points, color, t, s):
+#        self.canvas.create_line(*points, width=1, fill='black')
+        x0, y0 = points[:2]
+        x1, y1 = points[2:4]
+        x, y = (x0+x1)/2, (y0+y1)/2
+        XY = [x, y, x+t*(x1-x),y+t*(y1-y)]
+        for n in xrange(2,len(points)-2,2):
+            x0, y0 = points[n:n+2]
+            x1, y1 = points[n+2:n+4]
+            x, y = (x0+x1)/2, (y0+y1)/2
+            XY += [x+t*(x0-x), y+t*(y0-y), x, y, x+t*(x1-x),y+t*(y1-y)]
+        x1, y1 = points[-2:]
+        x0, y0 = points[:2]
+        XY += [x0+s*(x1-x0), y0+s*(y1-y0)] + XY[:2]
+#        self.canvas.create_line(*XY, width=1, fill='blue')
+        self.canvas.create_line(*XY, smooth='raw', width=5,
+                                fill=color, splinesteps=100)
+
 
 try:
     import version
