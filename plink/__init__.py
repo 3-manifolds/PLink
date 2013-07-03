@@ -212,8 +212,13 @@ class LinkEditor:
             command=lambda : self._shift(0,5))
         tools_menu.add_cascade(label='Pan', menu=pan_menu)
         tools_menu.add_command(label='Clear', command=self.clear)
-        tools_menu.add_command(label='Smooth',
-                               command=lambda : SmoothLink(self.polylines()))
+        tools_menu.add_command(
+            label='Smooth',
+            command=lambda : SmoothLink(
+                self.polylines(),
+                width = self.canvas.winfo_width(),
+                height = self.canvas.winfo_height() )
+            )
         menubar.add_cascade(label='Tools', menu=tools_menu)
         help_menu = Tk_.Menu(menubar, tearoff=0)
         help_menu.add_command(label='About PLink...', command=self.about)
@@ -712,8 +717,10 @@ class LinkEditor:
         segments = {}
         for arrow in self.Arrows:
             self.update_crossings(arrow)
-            arrows_segments = arrow.find_segments(self.Crossings, split_at_overcrossings=True)
-            segments[arrow] = [ [(x0, y0), (x1, y1)] for x0, y0, x1, y1 in arrows_segments]
+            arrows_segments = arrow.find_segments(
+                self.Crossings, split_at_overcrossings=True)
+            segments[arrow] = [ [(x0, y0), (x1, y1)]
+                                for x0, y0, x1, y1 in arrows_segments]
         for component in self.arrow_components():
             color = component[0].color
             polylines = []
@@ -1950,9 +1957,11 @@ class InfoDialog(tkSimpleDialog.Dialog):
         self.destroy()
 
 class SmoothLink:
-    def __init__(self, polylines, tightness=0.9, end_tightness=0.9):
+    def __init__(self, polylines, width=500, height=500,
+                 tightness=0.8, end_tightness=0.8):
         self.window = Tk_.Toplevel()
-        self.canvas = Tk_.Canvas(self.window, width=500, height=500,
+        self.window.title('PLink viewer')
+        self.canvas = Tk_.Canvas(self.window, width=width, height=height,
                              background='white')
         self.canvas.pack()
         for polyline, color in polylines:
@@ -1996,7 +2005,6 @@ class SmoothLink:
 #        self.canvas.create_line(*XY, width=1, fill='blue')
         self.canvas.create_line(*XY, smooth='raw', width=5,
                                 fill=color, splinesteps=100)
-
 
 try:
     import version
