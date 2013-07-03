@@ -71,12 +71,17 @@ Miscellaneous Features
 
 The window can be resized to allow for different sizes of link
 projections, and the arrow keys can be used to slide the projection
-around in order to make more room on one side or another.
+around in order to make more room on one side or another.  The keys
+'+', '-', and '0' can be used to zoom in, zoom out, or resize the
+diagram to fit the size of the window.
 
 The "Tools" menu can be used to make the projection alternating
-(provided that all components are circles), or to clear the screen,
-or to reflect the projection in the xy-plane, changing all crossings.
-When used within SnapPy, this menu includes the "send to SnapPy" command.
+(provided that all components are circles), or to clear the screen, or
+to reflect the projection in the xy-plane, changing all crossings.
+There also are menu options for zooming or panning the diagram.  The
+"Smooth" option opens a new window with a smooth version of the
+diagram, rendered with cubic Bezier splines.  When used within SnapPy,
+this menu includes the "send to SnapPy" command.
 
 The "File" menu can be used to save the projection as a SnapPea
 link projection file.  (This can be done from the drawing state as

@@ -56,7 +56,7 @@
 interest only to Marc, Nathan, or similar folks.</p>
 <span class="target" id="module-plink"></span><dl class="class">
 <dt id="plink.LinkEditor">
-<em class="property">class </em><tt class="descclassname">plink.</tt><tt class="descname">LinkEditor</tt><big>(</big><em>root=None</em>, <em>no_arcs=False</em>, <em>callback=None</em>, <em>cb_menu=''</em>, <em>title='PLink Editor'</em><big>)</big><a class="headerlink" href="#plink.LinkEditor" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">plink.</tt><tt class="descname">LinkEditor</tt><big>(</big><em>root=None</em>, <em>no_arcs=False</em>, <em>callback=None</em>, <em>cb_menu=u''</em>, <em>file_name=None</em>, <em>title=u'PLink Editor'</em><big>)</big><a class="headerlink" href="#plink.LinkEditor" title="Permalink to this definition">¶</a></dt>
 <dd><p>A graphical link drawing tool based on the one embedded in Jeff Weeks&#8217;
 original SnapPea program.</p>
 <dl class="method">
@@ -331,6 +331,15 @@ Requires that all components be closed.</p>
 <dd></dd></dl>
 
 <dl class="method">
+<dt id="plink.LinkEditor.polylines">
+<tt class="descname">polylines</tt><big>(</big><big>)</big><a class="headerlink" href="#plink.LinkEditor.polylines" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a list of lists of polylines, one per component, that
+make up the drawing of the link diagram.  Each polyline is a
+list of coordinates [(x0,y0), (x1,y1), ...]  Isolated vertices are
+ignored.</p>
+</dd></dl>
+
+<dl class="method">
 <dt id="plink.LinkEditor.reflect">
 <tt class="descname">reflect</tt><big>(</big><big>)</big><a class="headerlink" href="#plink.LinkEditor.reflect" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
@@ -347,7 +356,7 @@ Requires that all components be closed.</p>
 
 <dl class="method">
 <dt id="plink.LinkEditor.save_image">
-<tt class="descname">save_image</tt><big>(</big><em>color_mode='color'</em><big>)</big><a class="headerlink" href="#plink.LinkEditor.save_image" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">save_image</tt><big>(</big><em>color_mode=u'color'</em><big>)</big><a class="headerlink" href="#plink.LinkEditor.save_image" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -412,15 +421,30 @@ component.</p>
 <tt class="descname">write_text</tt><big>(</big><em>string</em><big>)</big><a class="headerlink" href="#plink.LinkEditor.write_text" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
+<dl class="method">
+<dt id="plink.LinkEditor.zoom_in">
+<tt class="descname">zoom_in</tt><big>(</big><big>)</big><a class="headerlink" href="#plink.LinkEditor.zoom_in" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="plink.LinkEditor.zoom_out">
+<tt class="descname">zoom_out</tt><big>(</big><big>)</big><a class="headerlink" href="#plink.LinkEditor.zoom_out" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="plink.LinkEditor.zoom_to_fit">
+<tt class="descname">zoom_to_fit</tt><big>(</big><big>)</big><a class="headerlink" href="#plink.LinkEditor.zoom_to_fit" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 </dd></dl>
 
 <dl class="class">
 <dt id="plink.Arrow">
-<em class="property">class </em><tt class="descclassname">plink.</tt><tt class="descname">Arrow</tt><big>(</big><em>start</em>, <em>end</em>, <em>canvas=None</em>, <em>hidden=False</em>, <em>color='black'</em><big>)</big><a class="headerlink" href="#plink.Arrow" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">plink.</tt><tt class="descname">Arrow</tt><big>(</big><em>start</em>, <em>end</em>, <em>canvas=None</em>, <em>hidden=False</em>, <em>color=u'black'</em><big>)</big><a class="headerlink" href="#plink.Arrow" title="Permalink to this definition">¶</a></dt>
 <dd><p>An arrow in a PL link diagram.</p>
 <dl class="method">
 <dt id="plink.Arrow.draw">
-<tt class="descname">draw</tt><big>(</big><em>crossings=</em><span class="optional">[</span><span class="optional">]</span>, <em>recurse=True</em><big>)</big><a class="headerlink" href="#plink.Arrow.draw" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">draw</tt><big>(</big><em>crossings=</em><span class="optional">[</span><span class="optional">]</span>, <em>recurse=True</em>, <em>skip_frozen=True</em><big>)</big><a class="headerlink" href="#plink.Arrow.draw" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
@@ -438,6 +462,19 @@ component.</p>
 <dt id="plink.Arrow.expose">
 <tt class="descname">expose</tt><big>(</big><em>crossings=</em><span class="optional">[</span><span class="optional">]</span><big>)</big><a class="headerlink" href="#plink.Arrow.expose" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
+
+<dl class="method">
+<dt id="plink.Arrow.find_segments">
+<tt class="descname">find_segments</tt><big>(</big><em>crossings</em>, <em>split_at_overcrossings=False</em><big>)</big><a class="headerlink" href="#plink.Arrow.find_segments" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a list of segments that make up this arrow, each
+segment being a list of 4 coordinates [x0,y0,x1,y1].  The
+first segment starts at the start vertex, and the last one
+ends at the end vertex.  Otherwise, endpoints are either near
+crossings where this arrow goes under, leaving a gap between
+the endpoint and the crossing point.  If the
+split_at_overcrossings flag is True, then the segments are
+also split at overcrossings, with no gap.</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="plink.Arrow.freeze">
