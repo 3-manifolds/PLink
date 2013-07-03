@@ -704,7 +704,7 @@ class LinkEditor:
         """
         Returns a list of lists of polylines, one per component, that
         make up the drawing of the link diagram.  Each polyline is a
-        list of coordinates [x0,y0,x1,y1,...]  Isolated vertices are
+        list of coordinates [(x0,y0), (x1,y1), ...]  Isolated vertices are
         ignored.
         """
         result = []
@@ -712,9 +712,8 @@ class LinkEditor:
         segments = {}
         for arrow in self.Arrows:
             self.update_crossings(arrow)
-            segments[arrow] = arrow.find_segments(
-                self.Crossings,
-                split_at_overcrossings=True)
+            arrows_segments = arrow.find_segments(self.Crossings, split_at_overcrossings=True)
+            segments[arrow] = [ [(x0, y0), (x1, y1)] for x0, y0, x1, y1 in arrows_segments]
         for component in self.arrow_components():
             color = component[0].color
             polylines = []
@@ -723,15 +722,15 @@ class LinkEditor:
                 for segment in segments[arrow]:
                     if len(polyline) == 0:
                         polyline = segment
-                    elif segment[:2] == polyline[-2:]:
-                        polyline += segment[2:]
+                    elif segment[0] == polyline[-1]:
+                        polyline.append(segment[1])
                     else:
                         polylines.append(polyline)
                         polyline = segment
             polylines.append(polyline)
-            if polylines[0][:2] == polylines[-1][-2:]:
+            if polylines[0][0] == polylines[-1][-1]:
                 if len(polylines) > 1:
-                    polylines[0] = polylines.pop()[:-2] + polylines[0]
+                    polylines[0] = polylines.pop()[:-1] + polylines[0]
             result.append((polylines, color))
         return result
 
@@ -1635,7 +1634,7 @@ class Arrow:
         Return a list of segments that make up this arrow, each
         segment being a list of 4 coordinates [x0,y0,x1,y1].  The
         first segment starts at the start vertex, and the last one
-        ends at the end qvertex.  Otherwise, endpoints are either near
+        ends at the end vertex.  Otherwise, endpoints are either near
         crossings where this arrow goes under, leaving a gap between
         the endpoint and the crossing point.  If the
         split_at_overcrossings flag is True, then the segments are
@@ -1965,35 +1964,35 @@ class SmoothLink:
         
     def draw_arc(self, points, color, t, s):
 #        self.canvas.create_line(*points, width=1, fill='black')
-        x0, y0 = points[:2]
-        x1, y1 = points[2:4]
-        XY = [x0, y0, x0 +s*(x1-x0), y0 + s*(y1-y0)]
-        for n in xrange(2,len(points)-2,2):
-            x0, y0 = points[n:n+2]
-            x1, y1 = points[n+2:n+4]
+        x0, y0 = points[0]
+        x1, y1 = points[1]
+        XY = [(x0, y0), (x0 +s*(x1-x0), y0 + s*(y1-y0))]
+        for n in xrange(1,len(points)-1):
+            x0, y0 = points[n]
+            x1, y1 = points[n+1]
             x, y = (x0+x1)/2, (y0+y1)/2
-            XY += [x+t*(x0-x), y+t*(y0-y), x, y, x+t*(x1-x),y+t*(y1-y)]
-        x1, y1 = points[-4:-2]
-        x0, y0 = points[-2:]
-        XY += [x0+s*(x1-x0), y0+s*(y1-y0), x0, y0]
+            XY += [(x+t*(x0-x), y+t*(y0-y)), (x, y), (x+t*(x1-x),y+t*(y1-y))]
+        x1, y1 = points[-2]
+        x0, y0 = points[-1]
+        XY += [(x0+s*(x1-x0), y0+s*(y1-y0)), (x0, y0)]
 #        self.canvas.create_line(*XY, width=1, fill='blue')
         self.canvas.create_line(*XY, smooth='raw', width=5,
                                 fill=color, splinesteps=100)
 
     def draw_loop(self, points, color, t, s):
 #        self.canvas.create_line(*points, width=1, fill='black')
-        x0, y0 = points[:2]
-        x1, y1 = points[2:4]
+        x0, y0 = points[0]
+        x1, y1 = points[1]
         x, y = (x0+x1)/2, (y0+y1)/2
-        XY = [x, y, x+t*(x1-x),y+t*(y1-y)]
-        for n in xrange(2,len(points)-2,2):
-            x0, y0 = points[n:n+2]
-            x1, y1 = points[n+2:n+4]
+        XY = [(x, y), (x+t*(x1-x),y+t*(y1-y))]
+        for n in xrange(1,len(points)-1):
+            x0, y0 = points[n]
+            x1, y1 = points[n+1]
             x, y = (x0+x1)/2, (y0+y1)/2
-            XY += [x+t*(x0-x), y+t*(y0-y), x, y, x+t*(x1-x),y+t*(y1-y)]
-        x1, y1 = points[-2:]
-        x0, y0 = points[:2]
-        XY += [x0+s*(x1-x0), y0+s*(y1-y0)] + XY[:2]
+            XY += [(x+t*(x0-x), y+t*(y0-y)), (x, y), (x+t*(x1-x),y+t*(y1-y))]
+        x1, y1 = points[-1]
+        x0, y0 = points[0]
+        XY += [(x0+s*(x1-x0), y0+s*(y1-y0))] + XY[0]
 #        self.canvas.create_line(*XY, width=1, fill='blue')
         self.canvas.create_line(*XY, smooth='raw', width=5,
                                 fill=color, splinesteps=100)
