@@ -215,7 +215,7 @@ class LinkEditor:
         tools_menu.add_command(
             label='Smooth',
             command=lambda : SmoothLink(
-                self.polylines(),
+                self.polylines(break_at_overcrossings=True),
                 width = self.canvas.winfo_width(),
                 height = self.canvas.winfo_height() )
             )
