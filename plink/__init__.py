@@ -705,7 +705,7 @@ class LinkEditor:
         nonclosed.sort(key=oldest_vertex)
         return closed + nonclosed
 
-    def polylines(self):
+    def polylines(self, gapsize=None):
         """
         Returns a list of lists of polylines, one per component, that
         make up the drawing of the link diagram.  Each polyline is a
@@ -718,9 +718,10 @@ class LinkEditor:
         for arrow in self.Arrows:
             self.update_crossings(arrow)
             arrows_segments = arrow.find_segments(
-                self.Crossings, split_at_overcrossings=True)
+                self.Crossings, split_at_overcrossings=True, gapsize=gapsize)
             segments[arrow] = [ [(x0, y0), (x1, y1)]
                                 for x0, y0, x1, y1 in arrows_segments]
+
         for component in self.arrow_components():
             color = component[0].color
             polylines = []
@@ -1636,7 +1637,7 @@ class Arrow:
         self.draw(crossings)
 
 
-    def find_segments(self, crossings, split_at_overcrossings=False):
+    def find_segments(self, crossings, split_at_overcrossings=False, gapsize=None):
         """
         Return a list of segments that make up this arrow, each
         segment being a list of 4 coordinates [x0,y0,x1,y1].  The
@@ -1649,7 +1650,8 @@ class Arrow:
         """
         segments = []
         self.vectorize()
-        gapsize = 9.0/self.length # rethink this
+        if gapsize is None:
+            gapsize = 9.0/self.length # rethink this
         cross_params = []
         for c in crossings:
             if c.under == self:
