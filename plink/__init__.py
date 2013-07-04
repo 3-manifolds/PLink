@@ -705,12 +705,17 @@ class LinkEditor:
         nonclosed.sort(key=oldest_vertex)
         return closed + nonclosed
 
-    def polylines(self, gapsize=None):
+    def polylines(self, gapsize=None, break_at_overcrossings=False):
         """
-        Returns a list of lists of polylines, one per component, that
-        make up the drawing of the link diagram.  Each polyline is a
-        list of coordinates [(x0,y0), (x1,y1), ...]  Isolated vertices are
+        Returns a list of lists of polylines, one per component, that make up
+        the drawing of the link diagram.  Each polyline is a maximal
+        segment with no undercrossings (e.g. corresponds to a generator
+        in the Wirtinger presentation).  Each polyline is a list of
+        coordinates [(x0,y0), (x1,y1), ...]  Isolated vertices are
         ignored.
+        
+        If the flag break_at_overcrossings is set, each polyline instead
+        corresponds to maximal arcs with no crossings on their interior.
         """
         result = []
         self.update_crosspoints()
@@ -722,6 +727,9 @@ class LinkEditor:
             segments[arrow] = [ [(x0, y0), (x1, y1)]
                                 for x0, y0, x1, y1 in arrows_segments]
 
+        if break_at_overcrossings:
+            crossing_locations = set([(c.x, c.y) for c in self.Crossings])
+
         for component in self.arrow_components():
             color = component[0].color
             polylines = []
@@ -731,7 +739,12 @@ class LinkEditor:
                     if len(polyline) == 0:
                         polyline = segment
                     elif segment[0] == polyline[-1]:
-                        polyline.append(segment[1])
+                        if (break_at_overcrossings and
+                            segment[0] in crossing_locations):
+                                polylines.append(polyline)
+                                polyline = segment
+                        else:
+                            polyline.append(segment[1])
                     else:
                         polylines.append(polyline)
                         polyline = segment
