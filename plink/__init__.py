@@ -1991,7 +1991,7 @@ class SmoothLink:
         x0, y0 = points[0]
         x1, y1 = points[1]
         XY = [(x0, y0), (x0 +s*(x1-x0), y0 + s*(y1-y0))]
-        for n in xrange(1,len(points)-1):
+        for n in xrange(1,len(points)-2):
             x0, y0 = points[n]
             x1, y1 = points[n+1]
             x, y = (x0+x1)/2, (y0+y1)/2
