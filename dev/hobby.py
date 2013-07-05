@@ -61,13 +61,6 @@ def good_bezier(p1, angle1, angle2, p2, tension1=1.0, tension2=1.0):
     alpha = a*(stheta - b*sphi) * (sphi - b*stheta) * (ctheta - cphi)
     rho = (2 + alpha) / (1 + (1-c)*ctheta + c*cphi) / tension1
     sigma = (2 - alpha) / (1 + (1-c)*cphi + c*ctheta) / tension2
-
-    print angle1-angle2
-    print angle1 - psi
-    print psi - angle2
-    print alpha
-    print rho
-    print sigma
     return (p1 + polar(l*rho/3, angle1), p2 - polar(l*sigma/3, angle2))
 
 def mock_curvature (dist, angle1, angle2, tension1=1.0, tension2=1.0):
