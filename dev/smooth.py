@@ -1,72 +1,97 @@
-from polylinesample import polylines
+from polylinesample import test_link, bends
 from collections import *
-import hobby
+import hobby, math, numpy
 
-def direction(p, q):
-    return hobby.to_polar(q-p)[1]
-
-def get_polylines():
+def get_polylines(file_name='test.lnk'):
     import plink
-    LE = plink.LinkEditor(file_name='test.lnk')
+    LE = plink.LinkEditor(file_name=file_name)
     return LE.polylines(gapsize=None,break_at_overcrossings=True)
+
+class Direction(list):
+    """
+    An angle/unit vector in R^2
+    """
+    def __init__(self, spec):
+        try:
+            x, y = spec
+            r = RR(sqrt(x**2 + y**2))
+            u = (x/r, y/r)
+        except:
+            u = (cos(spec), sin(spec))
+        list.__init__(self, u)
+
+    def angle(self):
+        return math.atan2(self[1], self[0])
+
+    def vector(self):
+        return vector(RR, self)
+
+def hobby_bezier(p, q, u, v):
+    a, b = hobby.good_bezier(p, u.angle(), v.angle(), q, 1.0, 1.0)
+    return [p, a, b, q]
+
+def culler_bezier(p, q, u, v, tightness=0.8):
+    u, v = u.vector(), v.vector()
+    A = matrix(RR, [u, v]).transpose()
+    if abs(A.det()) < 0.00001:
+        s = t = 0
+    else:
+        s, t = numpy.linalg.solve(A.numpy(), q - p)
+    return [p, p + tightness*s*u, q - tightness*t*v, q]
     
-class HobbySegment(list):
-    def __init__(self, points):
-        points = [vector(RR, p) for p in points]
+class PL_Arc(list):
+    def __init__(self, points, color='black'):
+        self.color = color
+        self.orig_points = points = [vector(RR, p) for p in points]
         midpoints =  [(points[k+1] + points[k])/2 for k in range(1, len(points) - 2)]
         list.__init__(self, [points[0]] + midpoints+ [points[-1]])
-        self.original_tangents = [direction(*points[:2])]+ [direction(*points[k:k+2] ) for k in range(1, len(points)-2)] + [direction(*points[-2:])]
-        self.orig_points = points
-        assert len(self) == len(self.original_tangents)
+        def direct(k):
+            return Direction(points[k] - points[k-1])
+        self.orig_tangents = [direct(1)] + [direct(k) for k in range(2, len(points)-1)] + [direct(-1)]
+        assert len(self) == len(self.orig_tangents)
+        self.hobby()
+
+    def hobby(self):
+        a, b = self.orig_tangents[0], self.orig_tangents[-1]
+        dirs = hobby.hobby_dirs(self, a.angle(), b.angle())
+        self.hobby_tangents = [Direction(angle) for angle in dirs]
+
+    def bezier(self, bezier=hobby_bezier, tangents='orig'):
+        tangents = self.orig_tangents if tangents.startswith('orig') else self.hobby_tangents
+        path = [bezier(self[0], self[1], tangents[0], tangents[1])]
+        for k in range(1, len(self) - 1):
+            path.append( bezier(self[k], self[k+1], tangents[k], tangents[k+1])[1:] )
+        return bezier_path(path, color=self.color, thickness=3)
+
+    def overlay(self):
+        color = self.color
+        ans = line(self.orig_points, color=color.lighter(0.7), thickness=1)
+        ans += point(self, color=color, size=30)
+        return ans
         
-    def bezier_spec(self, tension=1.0):
-        a, b= self.original_tangents[0], self.original_tangents[-1]
-        dirs = hobby.hobby_dirs(self, a, b)
-        dirs = self.original_tangents
-        path = []
-        for k in range(len(self)-1):
-            c0, c1 = hobby.good_bezier(self[k], dirs[k], dirs[k+1], self[k+1],
-                                       tension, tension)
-            if k == 0:
-                path.append([self[0], c0, c1, self[1]])
-            else:
-                path.append([c0, c1, self[k+1]])
 
-        return path
+class PL_Arcs(list):
+    def __init__(self, polylines=None, arcs=None):
+        if polylines:
+            arcs = []
+            for segments, color in polylines:
+                for seg in segments:
+                    arcs.append(PL_Arc(seg, Color(color)))
 
+        list.__init__(self, arcs)
 
-class SimpleSegment:
-    def __init__(self, points):
-        points = [vector(RR, p) for p in points]
-        midpoints =  [(points[k+1] + points[k])/2 for k in range(len(points) - 1)] 
-        points = [points[0]] + midpoints + [points[-1]]
-        list.__init__(self, points)
-        self.init_tangent = hobby.to_polar(self[1] - self[0])[1]
-        self.final_tangent = hobby.to_polar(self[-1] - self[-2])[1]
-
+    def show(self, bezier=culler_bezier, tangents='orig', overlay=True):
+        G = Graphics()
+        for arc in self:
+            G += arc.bezier(bezier, tangents)
+            if overlay:
+                G += arc.overlay()
+        return G
     
-
     
-
-def basic_draw():
-    G = Graphics()
-    G.set_aspect_ratio(1.0)
-    for segments, color in polylines:
-        for segment in segments:
-            G += line(segment, color=color, thickness=3)
-    return G
-
-def fancy_draw(segtype, torsion=1.0, polylines=polylines):
-    G = Graphics()
-    G.set_aspect_ratio(1.0)
-    for segments, color in polylines:
-        c = Color(color)
-        for i, segment in enumerate(segments):
-            S = segtype(segment)
-            x = 0.5 if i % 2 == 0 else 0.0
-            G += bezier_path(S.bezier_spec(torsion), color=c.lighter(x), thickness=3)
-            G += point(S, color=c, size=30)
-            G += line(segment, color=c.lighter(0.7), thickness=1)
-            #G += line(S, color=c.lighter(0.7), thickness=1)
-    return G
-
+def quick_fix(arcs):
+    ans = []
+    for arc in arcs:
+        if arc.color == Color(u'#26d826') and len(arc) == 3:
+            if tuple(arc.orig_points[1]) == (377, 109):
+                arc.hobby_tangents[1] = arc.orig_tangents[1]
