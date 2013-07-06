@@ -212,13 +212,7 @@ class LinkEditor:
             command=lambda : self._shift(0,5))
         tools_menu.add_cascade(label='Pan', menu=pan_menu)
         tools_menu.add_command(label='Clear', command=self.clear)
-        tools_menu.add_command(
-            label='Smooth',
-            command=lambda : SmoothLink(
-                self.polylines(break_at_overcrossings=True),
-                width = self.canvas.winfo_width(),
-                height = self.canvas.winfo_height() )
-            )
+        tools_menu.add_command(label='Smooth', command=self.smooth)
         menubar.add_cascade(label='Tools', menu=tools_menu)
         help_menu = Tk_.Menu(menubar, tearoff=0)
         help_menu.add_command(label='About PLink...', command=self.about)
@@ -932,6 +926,12 @@ class LinkEditor:
         # Now center the picture
         x0, y0, x1, y1 = self.canvas.bbox('transformable')
         self._shift( (W - x1 + x0)/2 - x0, (H - y1 + y0)/2 - y0 )
+
+    def smooth(self):
+        smoother = SmoothLink(
+            self.polylines(),
+            width=self.canvas.winfo_width(),
+            height=self.canvas.winfo_height())
 
     def update_info(self):
         self.hide_DT()
@@ -2001,10 +2001,10 @@ class SmoothLink:
         Tk_.Label(top_frame, text='end tightness:').grid(
             row=1, column=0, sticky=Tk_.SE)
         self.s_scale.grid(row=1, column=1)
-        top_frame.pack()
+        top_frame.pack(expand=True, fill=Tk_.X)
         self.canvas = Tk_.Canvas(self.window, width=width, height=height,
                              background='white')
-        self.canvas.pack()
+        self.canvas.pack(expand=True, fill=Tk_.BOTH)
         self.curves = []
         self.draw()
 
