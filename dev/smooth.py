@@ -30,7 +30,7 @@ def hobby_bezier(p, q, u, v):
     a, b = hobby.good_bezier(p, u.angle(), v.angle(), q, 1.0, 1.0)
     return [p, a, b, q]
 
-def culler_bezier(p, q, u, v, tightness=0.8):
+def culler_bezier(p, q, u, v, tightness=0.6):
     u, v = u.vector(), v.vector()
     A = matrix(RR, [u, v]).transpose()
     if abs(A.det()) < 0.00001:
@@ -86,6 +86,8 @@ class PL_Arcs(list):
             G += arc.bezier(bezier, tangents)
             if overlay:
                 G += arc.overlay()
+
+        G.set_aspect_ratio(1.0)
         return G
     
     
