@@ -76,7 +76,7 @@ class PL_Arcs(list):
             arcs = []
             for segments, color in polylines:
                 for seg in segments:
-                    arcs.append(PL_Arc(seg, Color(color)))
+                    arcs.append(PL_Arc(seg, Color(str(color))))
 
         list.__init__(self, arcs)
 
@@ -94,6 +94,6 @@ class PL_Arcs(list):
 def quick_fix(arcs):
     ans = []
     for arc in arcs:
-        if arc.color == Color(u'#26d826') and len(arc) == 3:
+        if arc.color == Color(str('#26d826')) and len(arc) == 3:
             if tuple(arc.orig_points[1]) == (377, 109):
                 arc.hobby_tangents[1] = arc.orig_tangents[1]
