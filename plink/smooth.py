@@ -90,9 +90,13 @@ class SmoothArc:
         """
         Compute the two control points for a nice cubic curve from the
         kth spline knot to the next one.  Return the first knot and the
-        two control points.
+        two control points.  We do not allow the speeds to exceed the
+        distance from the midpoint to the vertex.
         """
         p1, p2 = self.spline_knots[k:k+2]
+        v = self.points[k+1]
+        speed1_max = abs(v-p1)
+        speed2_max = abs(v-p2)
         u1, u2 = self.tangents[k:k+2]
         base = p2 - p1
         l, psi = abs(base), base.angle()
@@ -105,9 +109,11 @@ class SmoothArc:
         alpha = a*(stheta - b*sphi) * (sphi - b*stheta) * (ctheta - cphi)
         rho = (2 + alpha) / ((1 + (1-c)*ctheta + c*cphi) * self.tension1 )
         sigma = (2 - alpha) / ((1 + (1-c)*cphi + c*ctheta) * self.tension2 )
+        speed1 = min(l*rho/3, speed1_max)
+        speed2 = min(l*sigma/3, speed2_max)
         return [p1, 
-                p1 + self._polar_to_vector(l*rho/3, psi+theta),
-                p2 - self._polar_to_vector(l*sigma/3, psi-phi)]
+                p1 + self._polar_to_vector(speed1, psi+theta),
+                p2 - self._polar_to_vector(speed2, psi-phi)]
 
     def bezier(self):
         """
