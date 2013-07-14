@@ -24,7 +24,6 @@ import webbrowser
 from math import sqrt
 from random import random
 from colorsys import hls_to_rgb
-
 try:
     import Tkinter as Tk_
     import tkFileDialog
@@ -37,6 +36,7 @@ except ImportError: # Python 3
     import tkinter.messagebox as tkMessageBox
     import tkinter.simpledialog as tkSimpleDialog
     from urllib.request import pathname2url
+from .smooth import SmoothLink
 
 # Make the Tk file dialog work better with file extensions on OX
 
@@ -699,7 +699,7 @@ class LinkEditor:
         nonclosed.sort(key=oldest_vertex)
         return closed + nonclosed
 
-    def polylines(self, gapsize=None, break_at_overcrossings=False):
+    def polylines(self, gapsize=None, break_at_overcrossings=True):
         """
         Returns a list of lists of polylines, one per component, that make up
         the drawing of the link diagram.  Each polyline is a maximal
@@ -1974,96 +1974,6 @@ class InfoDialog(tkSimpleDialog.Dialog):
         self.app = None
         self.destroy()
 
-class SmoothLink:
-    def __init__(self, polylines, width=500, height=500,
-                 tightness=0.6, end_tightness=0.6):
-        self.polylines = polylines
-        self.tightness = tightness
-        self.end_tightness = end_tightness
-        self.window = window = Tk_.Toplevel()
-        self.window.title('PLink viewer')
-        top_frame = Tk_.Frame(window)
-        self.t_scale = Tk_.Scale(top_frame, from_=0.0, to=1.0,
-                                 resolution=0.01,
-                                 orient=Tk_.HORIZONTAL,
-                                 length=300,
-                                 command=self.set_tightness)
-        self.t_scale.set(tightness)
-        Tk_.Label(top_frame, text='tightness:').grid(
-            row=0, column=0, sticky=Tk_.SE)
-        self.t_scale.grid(row=0, column=1)
-        self.s_scale = Tk_.Scale(top_frame, from_=0.0, to=1.0,
-                                 resolution=0.01,
-                                 orient=Tk_.HORIZONTAL,
-                                 length=300,
-                                 command=self.set_end_tightness)
-        self.s_scale.set(end_tightness)
-        Tk_.Label(top_frame, text='end tightness:').grid(
-            row=1, column=0, sticky=Tk_.SE)
-        self.s_scale.grid(row=1, column=1)
-        top_frame.pack(expand=True, fill=Tk_.X)
-        self.canvas = Tk_.Canvas(self.window, width=width, height=height,
-                             background='white')
-        self.canvas.pack(expand=True, fill=Tk_.BOTH)
-        self.curves = []
-        self.draw()
-
-    def set_tightness(self, value):
-        self.tightness = float(value)
-        self.draw()
-
-    def set_end_tightness(self, value):
-        self.end_tightness = float(value)
-        self.draw()
-
-    def draw(self):
-        for curve in self.curves:
-            self.canvas.delete(curve)
-        for polyline, color in self.polylines:
-            if len(polyline) == 1 and polyline[0][:2] == polyline[0][-2:]:
-                self.draw_loop(polyline[0], color,
-                               self.tightness, self.end_tightness)
-            else:
-                for arc in polyline:
-                    self.draw_arc(arc, color,
-                                  self.tightness, self.end_tightness)
-        
-    def draw_arc(self, points, color, t, s):
-#        self.canvas.create_line(*points, width=1, fill='black')
-        x0, y0 = points[0]
-        x1, y1 = points[1]
-        XY = [(x0, y0), (x0 +s*(x1-x0), y0 + s*(y1-y0))]
-        for n in xrange(1,len(points)-2):
-            x0, y0 = points[n]
-            x1, y1 = points[n+1]
-            x, y = (x0+x1)/2, (y0+y1)/2
-            XY += [(x+t*(x0-x), y+t*(y0-y)), (x, y), (x+t*(x1-x),y+t*(y1-y))]
-        x1, y1 = points[-2]
-        x0, y0 = points[-1]
-        XY += [(x0+s*(x1-x0), y0+s*(y1-y0)), (x0, y0)]
-#        self.canvas.create_line(*XY, width=1, fill='blue')
-        self.curves.append(self.canvas.create_line(*XY, smooth='raw', width=5,
-                                fill=color, splinesteps=100))
-
-    def draw_loop(self, points, color, t, s):
-#        self.canvas.create_line(*points, width=1, fill='black')
-        x0, y0 = points[0]
-        x1, y1 = points[1]
-        x, y = (x0+x1)/2, (y0+y1)/2
-        XY = [(x, y), (x+t*(x1-x),y+t*(y1-y))]
-        for n in xrange(1,len(points)-1):
-            x0, y0 = points[n]
-            x1, y1 = points[n+1]
-            x, y = (x0+x1)/2, (y0+y1)/2
-            XY += [(x+t*(x0-x), y+t*(y0-y)), (x, y), (x+t*(x1-x),y+t*(y1-y))]
-        x1, y1 = points[-1]
-        x0, y0 = points[0]
-        XY += [(x0+s*(x1-x0), y0+s*(y1-y0))] + XY[0]
-#        self.canvas.create_line(*XY, width=1, fill='blue')
-        self.curves.append(self.canvas.create_line(*XY, smooth='raw', width=5,
-                                fill=color, splinesteps=100))
-
-                          
 
 try:
     import version
