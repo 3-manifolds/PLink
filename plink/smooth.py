@@ -38,6 +38,7 @@ try:
 except ImportError: # Python 3
     import tkinter as Tk_
 from math import sqrt, cos, sin, atan2, pi
+from . import canvasvg
 
 class TwoVector(tuple):
     def __new__(cls, x, y):
@@ -88,13 +89,13 @@ class SmoothArc:
         """
         return TwoVector(r*cos(phi), r*sin(phi))
 
-    def _control_points(self, k):
+    def _curve_to(self, k):
         """
         Compute the two control points for a nice cubic curve from the
-        kth spline knot to the next one.  Return the first knot and
-        the two control points.  We do not allow the speed at the spline
-        knots to exceed the distance to the interlacing vertex of the PL
-        curve; this avoids extraneous inflection points.
+        kth spline knot to the next one.  Return the kth spline knot
+        and the two control points.  We do not allow the speed at the
+        spline knots to exceed the distance to the interlacing vertex
+        of the PL curve; this avoids extraneous inflection points.
         """
         p1, p2 = self.spline_knots[k:k+2]
         v = self.points[k+1]
@@ -114,7 +115,7 @@ class SmoothArc:
         sigma = (2 - alpha) / ((1 + (1-c)*cphi + c*ctheta) * self.tension2 )
         speed1 = min(l*rho/3, speed1_max)
         speed2 = min(l*sigma/3, speed2_max)
-        return [p1, 
+        return [p1,
                 p1 + self._polar_to_vector(speed1, psi+theta),
                 p2 - self._polar_to_vector(speed2, psi-phi)]
 
@@ -123,13 +124,13 @@ class SmoothArc:
         Return a list of spline knots and control points for the Bezier
         spline, in format [ ... Knot, Control, Control, Knot ...]
         """
-        path = []
         if len(self.spline_knots) == 2:
             A, B = self.spline_knots
             M = 0.5*(A+B)
             return [A, M, M, B]
-        for k in xrange(len(self.spline_knots)-2 ):
-            path += self._control_points(k)
+        path = []
+        for k in xrange(len(self.spline_knots)-2):
+            path += self._curve_to(k)
         path.append(self.spline_knots[-1])
         return path
 
@@ -230,10 +231,13 @@ class SmoothLink:
         for curve in self.curves:
             curve.tk_draw(self.canvas)
         
-    def save(self, file_name):
+    def save_as_pdf(self, file_name):
         import pyx
         pyx.unit.set(defaultunit='pt')
         canvas = pyx.canvas.canvas()
         for curve in self.curves:
             curve.pyx_draw(canvas)
         canvas.writePDFfile(file_name)
+
+    def save_as_svg(self, file_name):
+        canvasvg.saveall(file_name, self.canvas)
