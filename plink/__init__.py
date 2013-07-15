@@ -718,7 +718,7 @@ class LinkEditor:
             self.update_crossings(arrow)
             arrows_segments = arrow.find_segments(
                 self.Crossings,
-                break_at_overcrossings=break_at_overcrossings,
+                include_overcrossings=True,
                 gapsize=gapsize)
             segments[arrow] = [ [(x0, y0), (x1, y1)]
                                 for x0, y0, x1, y1 in arrows_segments]
@@ -1652,7 +1652,7 @@ class Arrow:
         self.draw(crossings)
 
 
-    def find_segments(self, crossings, break_at_overcrossings=False,
+    def find_segments(self, crossings, include_overcrossings=False,
                       gapsize=None):
         """
         Return a list of segments that make up this arrow, each
@@ -1674,7 +1674,7 @@ class Arrow:
                 t = self ^ c.over
                 if t:
                     cross_params.append((t,gapsize))
-            if c.over == self and break_at_overcrossings:
+            if c.over == self and include_overcrossings:
                 t = self ^ c.under
                 if t:
                     cross_params.append((t,0))
