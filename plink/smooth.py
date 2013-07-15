@@ -68,7 +68,7 @@ class SmoothArc:
     """
     A Bezier spline that is tangent at the midpoints of segments in
     the PL path determined by specifying a list of vertices.  Speeds
-    at the nodes are chosen by using Hobby's scheme.
+    at the spline knots are chosen by using Hobby's scheme.
     """
     def __init__(self, points, color='black', tension1=1.0, tension2=1.0):
         self.points = P = [TwoVector(*p) for p in points]
@@ -91,9 +91,10 @@ class SmoothArc:
     def _control_points(self, k):
         """
         Compute the two control points for a nice cubic curve from the
-        kth spline knot to the next one.  Return the first knot and the
-        two control points.  We do not allow the speeds to exceed the
-        distance from the midpoint to the vertex.
+        kth spline knot to the next one.  Return the first knot and
+        the two control points.  We do not allow the speed at the spline
+        knots to exceed the distance to the interlacing vertex of the PL
+        curve; this avoids extraneous inflection points.
         """
         p1, p2 = self.spline_knots[k:k+2]
         v = self.points[k+1]
@@ -103,8 +104,8 @@ class SmoothArc:
         base = p2 - p1
         l, psi = abs(base), base.angle()
         theta, phi = u1.angle() - psi, psi - u2.angle()
-        ctheta, stheta = self._polar_to_vector(1.0, theta)
-        cphi, sphi = self._polar_to_vector(1.0, phi)
+        ctheta, stheta = cos(theta), sin(theta)
+        cphi, sphi = cos(phi), sin(phi)
         a = sqrt(2.0)
         b = 1.0/16.0
         c = (3.0 - sqrt(5.0))/2.0
@@ -141,10 +142,10 @@ class SmoothArc:
         import pyx
         XY = self.bezier()
         arc_parts = [pyx.path.moveto(XY[0][0], -XY[0][1])]
-        for i in range(1, len(XY), 3):
+        for i in xrange(1, len(XY), 3):
             arc_parts.append(pyx.path.curveto(
-                XY[i][0], -XY[i][1], XY[i+1][0], -XY[i+1][1], XY[i+2][0], -XY[i+2][1]))
-
+                XY[i][0], -XY[i][1], XY[i+1][0],
+                -XY[i+1][1], XY[i+2][0], -XY[i+2][1]))
         style = [pyx.style.linewidth(4), pyx.style.linecap.round,
                  pyx.color.rgbfromhexstring(self.color)]
         path = pyx.path.path(*arc_parts)
@@ -154,7 +155,7 @@ class SmoothLoop(SmoothArc):
     """
     A Bezier spline that is tangent at the midpoints of segments in a
     PL loop determined by specifying a list of vertices.  Speeds at
-    the nodes are chosen by using Hobby's scheme.
+    the spline knots are chosen by using Hobby's scheme.
     """    
     def __init__(self, points, color='black', tension1=1.0, tension2=1.0):
         if points[0] != points[-1]:
@@ -215,21 +216,17 @@ class SmoothLink:
         self.draw()
 
     def draw(self):
-        # Clear existing curves in case we've changed the tensions.
         for curve in self.curves:
             if curve.tk_line:
                 self.canvas.delete(curve.tk_line)
         self.curves = []
-      
         for polyline, color in self.polylines:
-            if len(polyline) == 1 and polyline[0][0] == polyline[0][-1]:
-                L = SmoothLoop(polyline[0], color, self.tension1, self.tension2)
-                self.curves.append(L)
-            else:
-                for arc in polyline:
+            for arc in polyline:
+                if arc[0] == arc[-1]:
+                    A = SmoothLoop(arc, color, self.tension1, self.tension2)
+                else:
                     A = SmoothArc(arc, color, self.tension1, self.tension2)
-                    self.curves.append(A)
-
+                self.curves.append(A)
         for curve in self.curves:
             curve.tk_draw(self.canvas)
         
