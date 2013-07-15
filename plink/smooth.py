@@ -70,9 +70,11 @@ class SmoothArc:
     the PL path determined by specifying a list of vertices.  Speeds
     at the nodes are chosen by using Hobby's scheme.
     """
-    def __init__(self, points, tension1=1.0, tension2=1.0):
+    def __init__(self, points, color='black', tension1=1.0, tension2=1.0):
         self.points = P = [TwoVector(*p) for p in points]
         self.tension1, self.tension2 = tension1, tension2
+        self.color = color
+        self.tk_line = None
         self.spline_knots =  (
             [P[0]] +
             [0.5*(P[k] + P[k+1]) for k in xrange(1, len(P)-1)] +
@@ -130,24 +132,42 @@ class SmoothArc:
         path.append(self.spline_knots[-1])
         return path
 
+    def tk_draw(self, canvas):
+        XY = self.bezier()
+        self.tk_line = canvas.create_line(*XY, smooth='raw', width=5,
+                                fill=self.color, splinesteps=100)
+
+    def pyx_draw(self, canvas):
+        import pyx
+        XY = self.bezier()
+        arc_parts = [pyx.path.moveto(XY[0][0], -XY[0][1])]
+        for i in range(1, len(XY), 3):
+            arc_parts.append(pyx.path.curveto(
+                XY[i][0], -XY[i][1], XY[i+1][0], -XY[i+1][1], XY[i+2][0], -XY[i+2][1]))
+
+        style = [pyx.style.linewidth(4), pyx.style.linecap.round,
+                 pyx.color.rgbfromhexstring(self.color)]
+        path = pyx.path.path(*arc_parts)
+        canvas.stroke(path, style)
+        
 class SmoothLoop(SmoothArc):
     """
     A Bezier spline that is tangent at the midpoints of segments in a
     PL loop determined by specifying a list of vertices.  Speeds at
     the nodes are chosen by using Hobby's scheme.
     """    
-    def __init__(self, points, tension1=1.0, tension2=1.0):
-        self.P = [TwoVector(*p) for p in points]
-        P.append(P[0])
+    def __init__(self, points, color='black', tension1=1.0, tension2=1.0):
+        if points[0] != points[-1]:
+            points = points[:] +[points[0]]
+        points = points[:] +[points[1]]
+        self.points = P = [TwoVector(*p) for p in points]
         self.tension1, self.tension2 = tension1, tension2
-        self.spline_knots =  [0.5*(P[k+1] + P[k])
-                      for k in range(len(P)-2)]
-        def direct(k):
-            return (P[k+1] - P[k]).unit()
-        self.tangents = [ direct(k) for k in range(len(P)-2) ]
-        self.append(self[0])
-        self.tangents.append(self.tangents[0])
-        assert len(self) == len(self.tangents)
+        self.color = color
+        self.tk_line = None
+        self.spline_knots = [0.5*(P[k] + P[k+1]) for k in xrange(len(P)-1)]
+        self.spline_knots.append(self.spline_knots[0])
+        self.tangents = [(P[k+1] - P[k]).unit()
+                         for k in xrange(len(P)-1)]
    
 class SmoothLink:
     """
@@ -195,31 +215,28 @@ class SmoothLink:
         self.draw()
 
     def draw(self):
+        # Clear existing curves in case we've changed the tensions.
         for curve in self.curves:
-            self.canvas.delete(curve)
+            if curve.tk_line:
+                self.canvas.delete(curve.tk_line)
+        self.curves = []
+      
         for polyline, color in self.polylines:
             if len(polyline) == 1 and polyline[0][0] == polyline[0][-1]:
-                self.draw_loop(polyline[0], color,
-                               self.tension1, self.tension2)
+                L = SmoothLoop(polyline[0], color, self.tension1, self.tension2)
+                self.curves.append(L)
             else:
                 for arc in polyline:
-                    self.draw_arc(arc, color,
-                                  self.tension1, self.tension2)
-        
-    def draw_arc(self, points, color, t, s):
-        self.curves.append( self.canvas.create_line(
-                *points, width=1, fill='black'))
-        A = SmoothArc(points, s, t)
-        XY = A.bezier()
-#        self.curves.append(self.canvas.create_line(*XY, width=1, fill='blue'))
-        self.curves.append(self.canvas.create_line(*XY, smooth='raw', width=5,
-                                fill=color, splinesteps=100))
+                    A = SmoothArc(arc, color, self.tension1, self.tension2)
+                    self.curves.append(A)
 
-    def draw_loop(self, points, color, t, s):
-        self.curves.append( self.canvas.create_line(
-                *points, width=1, fill='black'))
-        A = SmoothLoop(points, s, t)
-        XY = A.bezier()
-#        self.curves.append(self.canvas.create_line(*XY, width=1, fill='blue'))
-        self.curves.append(self.canvas.create_line(*XY, smooth='raw', width=5,
-                                fill=color, splinesteps=100))
+        for curve in self.curves:
+            curve.tk_draw(self.canvas)
+        
+    def save(self, file_name):
+        import pyx
+        pyx.unit.set(defaultunit='pt')
+        canvas = pyx.canvas.canvas()
+        for curve in self.curves:
+            curve.pyx_draw(canvas)
+        canvas.writePDFfile(file_name)

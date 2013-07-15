@@ -928,7 +928,7 @@ class LinkEditor:
         self._shift( (W - x1 + x0)/2 - x0, (H - y1 + y0)/2 - y0 )
 
     def smooth(self):
-        smoother = SmoothLink(
+        self.smoother = SmoothLink(
             self.polylines(),
             width=self.canvas.winfo_width(),
             height=self.canvas.winfo_height())
