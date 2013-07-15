@@ -9,6 +9,9 @@
 # e-mail: wojciech_mula@poczta.onet.pl
 # WWW   : http://0x80.pl/
 
+# Modified for plink by Marc Culler on 15 July 2013.
+# Added support for "raw" smoothed lines, which use cubic splines.
+
 """
 Tkinter canvas to SVG exporter
 ========================================================================
