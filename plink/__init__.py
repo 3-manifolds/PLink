@@ -699,7 +699,7 @@ class LinkEditor:
         nonclosed.sort(key=oldest_vertex)
         return closed + nonclosed
 
-    def polylines(self, gapsize=None, break_at_overcrossings=True):
+    def polylines(self, gapsize=None, break_at_overcrossings=False):
         """
         Returns a list of lists of polylines, one per component, that make up
         the drawing of the link diagram.  Each polyline is a maximal
@@ -717,7 +717,9 @@ class LinkEditor:
         for arrow in self.Arrows:
             self.update_crossings(arrow)
             arrows_segments = arrow.find_segments(
-                self.Crossings, split_at_overcrossings=True, gapsize=gapsize)
+                self.Crossings,
+                break_at_overcrossings=break_at_overcrossings,
+                gapsize=gapsize)
             segments[arrow] = [ [(x0, y0), (x1, y1)]
                                 for x0, y0, x1, y1 in arrows_segments]
 
@@ -1650,7 +1652,7 @@ class Arrow:
         self.draw(crossings)
 
 
-    def find_segments(self, crossings, split_at_overcrossings=False,
+    def find_segments(self, crossings, break_at_overcrossings=False,
                       gapsize=None):
         """
         Return a list of segments that make up this arrow, each
@@ -1659,7 +1661,7 @@ class Arrow:
         ends at the end vertex.  Otherwise, endpoints are near
         crossings where this arrow goes under, leaving a gap between
         the endpoint and the crossing point.  If the
-        split_at_overcrossings flag is True, then the segments are
+        break_at_overcrossings flag is True, then the segments are
         also split at overcrossings, with no gap.
         """
         segments = []
@@ -1672,7 +1674,7 @@ class Arrow:
                 t = self ^ c.over
                 if t:
                     cross_params.append((t,gapsize))
-            if c.over == self and split_at_overcrossings:
+            if c.over == self and break_at_overcrossings:
                 t = self ^ c.under
                 if t:
                     cross_params.append((t,0))
