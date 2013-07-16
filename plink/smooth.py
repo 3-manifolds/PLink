@@ -77,18 +77,18 @@ class SmoothArc:
     at the spline knots are chosen by using Hobby's scheme.
     """
     def __init__(self, vertices, color='black', tension1=1.0, tension2=1.0):
-        self.vertices = P = [TwoVector(*p) for p in vertices]
+        self.vertices = V = [TwoVector(*p) for p in vertices]
         self.tension1, self.tension2 = tension1, tension2
         self.color = color
         self.tk_line = None
         self.spline_knots = K = (
-            [ P[0] ] +
-            [ 0.5*(P[k] + P[k+1]) for k in xrange(1, len(P)-2) ] +
-            [ P[-1] ] )
+            [ V[0] ] +
+            [ 0.5*(V[k] + V[k+1]) for k in xrange(1, len(V)-2) ] +
+            [ V[-1] ] )
         self.tangents = (
-            [ P[1]-K[0] ] + 
-            [ P[k+1]-K[k] for k in xrange(1, len(P)-2) ] +
-            [ P[-1]-P[-2] ])
+            [ V[1]-K[0] ] + 
+            [ V[k+1]-K[k] for k in xrange(1, len(V)-2) ] +
+            [ V[-1]-V[-2] ])
 
     def _polar_to_vector(self, r, phi):
         """
@@ -174,13 +174,13 @@ class SmoothLoop(SmoothArc):
         if vertices[0] != vertices[-1]:
             vertices.append(vertices[0])
         vertices = vertices[:] + [vertices[1]]
-        self.vertices = P = [TwoVector(*p) for p in vertices]
+        self.vertices = V = [TwoVector(*p) for p in vertices]
         self.tension1, self.tension2 = tension1, tension2
         self.color = color
         self.tk_line = None
-        self.spline_knots = [0.5*(P[k] + P[k+1]) for k in xrange(len(P)-1)]
+        self.spline_knots = [0.5*(V[k] + V[k+1]) for k in xrange(len(V)-1)]
         self.spline_knots.append(self.spline_knots[0])
-        self.tangents = [(P[k+1] - P[k]) for k in xrange(len(P)-1)]
+        self.tangents = [(V[k+1] - V[k]) for k in xrange(len(V)-1)]
         self.tangents.append(self.tangents[0])
 
     def _extend(self, other):
@@ -195,15 +195,28 @@ class Smoother:
         self.polylines = polylines
         self.tension1 = tension1
         self.tension2 = tension2
+        self._build_curves()
+        self.window = window = Tk_.Toplevel()
+        self.window.title('PLink Smoother')
+        self.canvas = Tk_.Canvas(self.window, width=width, height=height,
+                             background='white')
+        self.canvas.pack(expand=True, fill=Tk_.BOTH)
+        self.draw()
+
+    def _build_curves(self):
         self.curves = curves = []
-        for polyline, color in polylines:
+        for polyline, color in self.polylines:
             n = len(curves)
             for arc in polyline:
                 if arc[0] == arc[-1]:
-                    A = SmoothLoop(arc, color)
+                    A = SmoothLoop(
+                        arc, color,
+                        tension1=self.tension1, tension2=self.tension2)
                     curves.append(A)
                 else:
-                    A = SmoothArc(arc, color)
+                    A = SmoothArc(
+                        arc, color,
+                        tension1=self.tension1, tension2=self.tension2)
                     try: # join arcs at overcrossings
                         curves[-1]._extend(A)
                     except (IndexError, ValueError):
@@ -214,13 +227,6 @@ class Smoother:
                     curves.pop(n)
                 except ValueError:
                     pass
-        self.window = window = Tk_.Toplevel()
-        self.window.title('PLink smoother')
-        top_frame = Tk_.Frame(window)
-        self.canvas = Tk_.Canvas(self.window, width=width, height=height,
-                             background='white')
-        self.canvas.pack(expand=True, fill=Tk_.BOTH)
-        self.draw()
 
     def draw(self):
         for curve in self.curves:
