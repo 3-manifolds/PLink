@@ -17,18 +17,23 @@
 #
 #                 ##############################
 #
-# This module exports the class SmoothLink which displays a smoothed
+# This module exports the class Smoother which displays a smoothed
 # PLink in a separate window.
 #
 # Cubic splines are used to draw each arc joining two crossings in the
-# link diagram.  The segments of the PLink are subdivided by
-# introducing vertices at all crossings and the splines are chosen to
-# interpolate the midpoints of all subdivision segments, except those
-# emanating from a crossing, in such a way that the smooth arc is
-# tangent to the segment at the midpoint.  The bezier arc are drawn with
-# a gap near the crossing to indicate which strand goes under.
+# PL link diagram.  The segments of the PLink are subdivided by
+# introducing vertices at all crossings. The spline knots are chosen
+# to lie at overcrossings, near undercrossings, and at the midpoint of
+# each PL segment which does not emanate from a crossing.  The spline
+# is tangent to the PL link at each knot.  Consecutive splines are
+# joined together at the overcrossing points so that the tangents at
+# overcrossings can be adjusted together, e.g. in an SVG editor.  Thus
+# the spline curves correspond to the arcs used in a Wirtinger
+# presentation.  Endpoints of the splines occur near undercrossing
+# points, leaving a small gap to indicate the undercrossing in the
+# usual way.
 #
-# The speeds at the midpoint are chosen using Hobby's algorithm from:
+# The speeds at the spline knots are chosen using Hobby's algorithm from:
 #   * Hobby, John D., "Smooth, easy to compute interpolating splines,"
 #     Discrete and Computational Geometry 1:123-140 (1986).
 #
@@ -68,7 +73,7 @@ class TwoVector(tuple):
 class SmoothArc:
     """
     A Bezier spline that is tangent at the midpoints of segments in
-    the PL path determined by specifying a list of vertices.  Speeds
+    the PL path given by specifying a list of vertices.  Speeds
     at the spline knots are chosen by using Hobby's scheme.
     """
     def __init__(self, vertices, color='black', tension1=1.0, tension2=1.0):
@@ -162,13 +167,13 @@ class SmoothArc:
 class SmoothLoop(SmoothArc):
     """
     A Bezier spline that is tangent at the midpoints of segments in a
-    PL loop determined by specifying a list of vertices.  Speeds at
+    PL loop given by specifying a list of vertices.  Speeds at
     the spline knots are chosen by using Hobby's scheme.
     """    
     def __init__(self, vertices, color='black', tension1=1.0, tension2=1.0):
         if vertices[0] != vertices[-1]:
-            vertices = vertices[:] +[vertices[0]]
-        vertices = vertices[:] +[vertices[1]]
+            vertices.append(vertices[0])
+        vertices = vertices[:] + [vertices[1]]
         self.vertices = P = [TwoVector(*p) for p in vertices]
         self.tension1, self.tension2 = tension1, tension2
         self.color = color
@@ -176,6 +181,7 @@ class SmoothLoop(SmoothArc):
         self.spline_knots = [0.5*(P[k] + P[k+1]) for k in xrange(len(P)-1)]
         self.spline_knots.append(self.spline_knots[0])
         self.tangents = [(P[k+1] - P[k]) for k in xrange(len(P)-1)]
+        self.tangents.append(self.tangents[0])
 
     def _extend(self, other):
         raise RuntimeError('SmoothLoops are not extendable.')
