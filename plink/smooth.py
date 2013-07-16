@@ -80,15 +80,16 @@ class SmoothArc:
         self.vertices = V = [TwoVector(*p) for p in vertices]
         self.tension1, self.tension2 = tension1, tension2
         self.color = color
-        self.tk_line = None
+        self.canvas_items = []
         self.spline_knots = K = (
             [ V[0] ] +
             [ 0.5*(V[k] + V[k+1]) for k in xrange(1, len(V)-2) ] +
             [ V[-1] ] )
         self.tangents = (
-            [ V[1]-K[0] ] + 
+            [ V[1]-K[0] ] +
             [ V[k+1]-K[k] for k in xrange(1, len(V)-2) ] +
             [ V[-1]-V[-2] ])
+        assert len(self.spline_knots) == len(self.tangents)
 
     def _polar_to_vector(self, r, phi):
         """
@@ -120,10 +121,9 @@ class SmoothArc:
         sigma = (2 - alpha) / ((1 + (1-c)*cphi + c*ctheta) * self.tension2 )
         A_speed = min(l*rho/3, A_speed_max)
         B_speed = min(l*sigma/3, B_speed_max)
-        return [A,
-                A + self._polar_to_vector(A_speed, psi+theta),
-                B - self._polar_to_vector(B_speed, psi-phi)
-                ]
+        return [ A,
+                 A + self._polar_to_vector(A_speed, psi+theta),
+                 B - self._polar_to_vector(B_speed, psi-phi) ]
 
     def _extend(self, other):
         if ( self.color != other.color or
@@ -147,9 +147,10 @@ class SmoothArc:
 
     def tk_draw(self, canvas):
         XY = self.bezier()
-        self.tk_line = canvas.create_line(*XY, smooth='raw', width=5,
-                                fill=self.color, splinesteps=100)
-        #canvas.create_line(self.vertices, width=1, fill='blue')
+        for item in self.canvas_items:
+            canvas.delete(item)
+        self.canvas_items.append(canvas.create_line(
+            *XY, smooth='raw', width=5, fill=self.color, splinesteps=100))
 
     def pyx_draw(self, canvas):
         import pyx
@@ -173,15 +174,16 @@ class SmoothLoop(SmoothArc):
     def __init__(self, vertices, color='black', tension1=1.0, tension2=1.0):
         if vertices[0] != vertices[-1]:
             vertices.append(vertices[0])
-        vertices = vertices[:] + [vertices[1]]
+        vertices.append(vertices[1])
         self.vertices = V = [TwoVector(*p) for p in vertices]
         self.tension1, self.tension2 = tension1, tension2
         self.color = color
-        self.tk_line = None
+        self.canvas_items = []
         self.spline_knots = [0.5*(V[k] + V[k+1]) for k in xrange(len(V)-1)]
         self.spline_knots.append(self.spline_knots[0])
         self.tangents = [(V[k+1] - V[k]) for k in xrange(len(V)-1)]
         self.tangents.append(self.tangents[0])
+        assert len(self.spline_knots) == len(self.tangents)
 
     def _extend(self, other):
         raise RuntimeError('SmoothLoops are not extendable.')
@@ -193,21 +195,27 @@ class Smoother:
     def __init__(self, polylines, width=500, height=500,
                  tension1=1.0, tension2=1.0):
         self.polylines = polylines
+        self.vertices = []
         self.tension1 = tension1
         self.tension2 = tension2
         self._build_curves()
+        self.mode = 'view'
         self.window = window = Tk_.Toplevel()
         self.window.title('PLink Smoother')
         self.canvas = Tk_.Canvas(self.window, width=width, height=height,
                              background='white')
         self.canvas.pack(expand=True, fill=Tk_.BOTH)
+        self.canvas_items = []
         self.draw()
 
     def _build_curves(self):
         self.curves = curves = []
+        self.polygons = []
         for polyline, color in self.polylines:
             n = len(curves)
+            polygon = []
             for arc in polyline:
+                polygon += arc[1:-1]
                 if arc[0] == arc[-1]:
                     A = SmoothLoop(
                         arc, color,
@@ -221,6 +229,7 @@ class Smoother:
                         curves[-1]._extend(A)
                     except (IndexError, ValueError):
                         curves.append(A)
+            self.polygons.append(polygon)
             if len(curves) - n > 1:
                 try: # join the first to the last if possible
                     curves[-1]._extend(self.curves[n])
@@ -229,11 +238,17 @@ class Smoother:
                     pass
 
     def draw(self):
-        for curve in self.curves:
-            if curve.tk_line:
-                self.canvas.delete(curve.tk_line)
+        for item in self.canvas_items:
+            self.canvas.delete(item)
         for curve in self.curves:
             curve.tk_draw(self.canvas)
+        if self.mode == 'edit':
+            for P in self.polygons:
+                self.canvas_items.append(self.canvas.create_line(
+                    P + [P[0]], width=1, fill='blue'))
+                for x, y in P:
+                    self.canvas_items.append(self.canvas.create_oval(
+                        x-2, y-2, x+2, y+2, fill='red'))
         
     def save_as_pdf(self, file_name):
         import pyx
@@ -245,4 +260,4 @@ class Smoother:
 
     def save_as_svg(self, file_name):
         canvasvg.saveall(file_name, self.canvas,
-                         items=[c.tk_line for c in self.curves])
+                         items=[c.tk_spline for c in self.curves])
