@@ -71,17 +71,19 @@ class SmoothArc:
     the PL path determined by specifying a list of vertices.  Speeds
     at the spline knots are chosen by using Hobby's scheme.
     """
-    def __init__(self, points, color='black', tension1=1.0, tension2=1.0):
-        self.points = P = [TwoVector(*p) for p in points]
+    def __init__(self, vertices, color='black', tension1=1.0, tension2=1.0):
+        self.vertices = P = [TwoVector(*p) for p in vertices]
         self.tension1, self.tension2 = tension1, tension2
         self.color = color
         self.tk_line = None
-        self.spline_knots =  (
-            [P[0]] +
-            [0.5*(P[k] + P[k+1]) for k in xrange(1, len(P)-1)] +
-            [P[-1]])
-        self.tangents = [(P[k+1] - P[k]).unit()
-                         for k in xrange(len(P)-1)]
+        self.spline_knots = K = (
+            [ P[0] ] +
+            [ 0.5*(P[k] + P[k+1]) for k in xrange(1, len(P)-2) ] +
+            [ P[-1] ] )
+        self.tangents = (
+            [ P[1]-K[0] ] + 
+            [ P[k+1]-K[k] for k in xrange(1, len(P)-2) ] +
+            [ P[-1]-P[-2] ])
 
     def _polar_to_vector(self, r, phi):
         """
@@ -97,14 +99,12 @@ class SmoothArc:
         spline knots to exceed the distance to the interlacing vertex
         of the PL curve; this avoids extraneous inflection points.
         """
-        p1, p2 = self.spline_knots[k:k+2]
-        v = self.points[k+1]
-        speed1_max = abs(v-p1)
-        speed2_max = abs(v-p2)
-        u1, u2 = self.tangents[k:k+2]
-        base = p2 - p1
+        A, B = self.spline_knots[k:k+2]
+        vA, vB = self.tangents[k:k+2]
+        A_speed_max, B_speed_max = abs(vA), abs(vB)
+        base = B - A
         l, psi = abs(base), base.angle()
-        theta, phi = u1.angle() - psi, psi - u2.angle()
+        theta, phi = vA.angle() - psi, psi - vB.angle()
         ctheta, stheta = cos(theta), sin(theta)
         cphi, sphi = cos(phi), sin(phi)
         a = sqrt(2.0)
@@ -113,23 +113,29 @@ class SmoothArc:
         alpha = a*(stheta - b*sphi) * (sphi - b*stheta) * (ctheta - cphi)
         rho = (2 + alpha) / ((1 + (1-c)*ctheta + c*cphi) * self.tension1 )
         sigma = (2 - alpha) / ((1 + (1-c)*cphi + c*ctheta) * self.tension2 )
-        speed1 = min(l*rho/3, speed1_max)
-        speed2 = min(l*sigma/3, speed2_max)
-        return [p1,
-                p1 + self._polar_to_vector(speed1, psi+theta),
-                p2 - self._polar_to_vector(speed2, psi-phi)]
+        A_speed = min(l*rho/3, A_speed_max)
+        B_speed = min(l*sigma/3, B_speed_max)
+        return [A,
+                A + self._polar_to_vector(A_speed, psi+theta),
+                B - self._polar_to_vector(B_speed, psi-phi)
+                ]
+
+    def _extend(self, other):
+        if ( self.color != other.color or
+             self.spline_knots[-1] != other.spline_knots[0] or
+             abs(self.tangents[-1].unit()-other.tangents[0].unit())>.000001):
+            raise ValueError('Splines do not match.')
+        self.spline_knots += other.spline_knots[1:]
+        self.tangents = self.tangents[:-1] + other.tangents
+        self.vertices += other.vertices[1:]
 
     def bezier(self):
         """
         Return a list of spline knots and control points for the Bezier
         spline, in format [ ... Knot, Control, Control, Knot ...]
         """
-        if len(self.spline_knots) == 2:
-            A, B = self.spline_knots
-            M = 0.5*(A+B)
-            return [A, M, M, B]
         path = []
-        for k in xrange(len(self.spline_knots)-2):
+        for k in xrange(len(self.spline_knots)-1):
             path += self._curve_to(k)
         path.append(self.spline_knots[-1])
         return path
@@ -138,6 +144,7 @@ class SmoothArc:
         XY = self.bezier()
         self.tk_line = canvas.create_line(*XY, smooth='raw', width=5,
                                 fill=self.color, splinesteps=100)
+        #canvas.create_line(self.vertices, width=1, fill='blue')
 
     def pyx_draw(self, canvas):
         import pyx
@@ -158,20 +165,22 @@ class SmoothLoop(SmoothArc):
     PL loop determined by specifying a list of vertices.  Speeds at
     the spline knots are chosen by using Hobby's scheme.
     """    
-    def __init__(self, points, color='black', tension1=1.0, tension2=1.0):
-        if points[0] != points[-1]:
-            points = points[:] +[points[0]]
-        points = points[:] +[points[1]]
-        self.points = P = [TwoVector(*p) for p in points]
+    def __init__(self, vertices, color='black', tension1=1.0, tension2=1.0):
+        if vertices[0] != vertices[-1]:
+            vertices = vertices[:] +[vertices[0]]
+        vertices = vertices[:] +[vertices[1]]
+        self.vertices = P = [TwoVector(*p) for p in vertices]
         self.tension1, self.tension2 = tension1, tension2
         self.color = color
         self.tk_line = None
         self.spline_knots = [0.5*(P[k] + P[k+1]) for k in xrange(len(P)-1)]
         self.spline_knots.append(self.spline_knots[0])
-        self.tangents = [(P[k+1] - P[k]).unit()
-                         for k in xrange(len(P)-1)]
-   
-class SmoothLink:
+        self.tangents = [(P[k+1] - P[k]) for k in xrange(len(P)-1)]
+
+    def _extend(self, other):
+        raise RuntimeError('SmoothLoops are not extendable.')
+
+class Smoother:
     """
     A Tk window that displays a smooth link image inscribed in a PLink.
     """
@@ -180,54 +189,37 @@ class SmoothLink:
         self.polylines = polylines
         self.tension1 = tension1
         self.tension2 = tension2
+        self.curves = curves = []
+        for polyline, color in polylines:
+            n = len(curves)
+            for arc in polyline:
+                if arc[0] == arc[-1]:
+                    A = SmoothLoop(arc, color)
+                    curves.append(A)
+                else:
+                    A = SmoothArc(arc, color)
+                    try: # join arcs at overcrossings
+                        curves[-1]._extend(A)
+                    except (IndexError, ValueError):
+                        curves.append(A)
+            if len(curves) - n > 1:
+                try: # join the first to the last if possible
+                    curves[-1]._extend(self.curves[n])
+                    curves.pop(n)
+                except ValueError:
+                    pass
         self.window = window = Tk_.Toplevel()
         self.window.title('PLink smoother')
         top_frame = Tk_.Frame(window)
-        self.t_scale = Tk_.Scale(top_frame, from_=0.0, to=2.0,
-                                 resolution=0.01,
-                                 orient=Tk_.HORIZONTAL,
-                                 length=300,
-                                 command=self.set_tension1)
-        self.t_scale.set(tension1)
-        Tk_.Label(top_frame, text='tension1:').grid(
-            row=0, column=0, sticky=Tk_.SE)
-        self.t_scale.grid(row=0, column=1)
-        self.s_scale = Tk_.Scale(top_frame, from_=0.0, to=2.0,
-                                 resolution=0.01,
-                                 orient=Tk_.HORIZONTAL,
-                                 length=300,
-                                 command=self.set_tension2)
-        self.s_scale.set(tension2)
-        Tk_.Label(top_frame, text='tension2:').grid(
-            row=1, column=0, sticky=Tk_.SE)
-        self.s_scale.grid(row=1, column=1)
-        top_frame.pack(expand=True, fill=Tk_.X)
         self.canvas = Tk_.Canvas(self.window, width=width, height=height,
                              background='white')
         self.canvas.pack(expand=True, fill=Tk_.BOTH)
-        self.curves = []
-        self.draw()
-
-    def set_tension1(self, value):
-        self.tension1 = float(value)
-        self.draw()
-
-    def set_tension2(self, value):
-        self.tension2 = float(value)
         self.draw()
 
     def draw(self):
         for curve in self.curves:
             if curve.tk_line:
                 self.canvas.delete(curve.tk_line)
-        self.curves = []
-        for polyline, color in self.polylines:
-            for arc in polyline:
-                if arc[0] == arc[-1]:
-                    A = SmoothLoop(arc, color, self.tension1, self.tension2)
-                else:
-                    A = SmoothArc(arc, color, self.tension1, self.tension2)
-                self.curves.append(A)
         for curve in self.curves:
             curve.tk_draw(self.canvas)
         
@@ -240,4 +232,5 @@ class SmoothLink:
         canvas.writePDFfile(file_name)
 
     def save_as_svg(self, file_name):
-        canvasvg.saveall(file_name, self.canvas)
+        canvasvg.saveall(file_name, self.canvas,
+                         items=[c.tk_line for c in self.curves])
