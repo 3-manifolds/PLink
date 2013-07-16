@@ -115,7 +115,7 @@ except NameError:
 def convert(document, canvas, items=None, tounicode=None):
 	"""
 	Convert 'items' stored in 'canvas' to SVG 'document'.
-	If 'items' is None, then all items are convered.
+	If 'items' is None, then all items are converted.
 
 	tounicode is a function that get text and returns
 	it's unicode representation. It should be used when

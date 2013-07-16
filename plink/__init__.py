@@ -36,7 +36,7 @@ except ImportError: # Python 3
     import tkinter.messagebox as tkMessageBox
     import tkinter.simpledialog as tkSimpleDialog
     from urllib.request import pathname2url
-from .smooth import SmoothLink
+from .smooth import Smoother
 
 # Make the Tk file dialog work better with file extensions on OX
 
@@ -699,7 +699,7 @@ class LinkEditor:
         nonclosed.sort(key=oldest_vertex)
         return closed + nonclosed
 
-    def polylines(self, gapsize=None, break_at_overcrossings=False):
+    def polylines(self, gapsize=None, break_at_overcrossings=True):
         """
         Returns a list of lists of polylines, one per component, that make up
         the drawing of the link diagram.  Each polyline is a maximal
@@ -930,7 +930,7 @@ class LinkEditor:
         self._shift( (W - x1 + x0)/2 - x0, (H - y1 + y0)/2 - y0 )
 
     def smooth(self):
-        self.smoother = SmoothLink(
+        self.smoother = Smoother(
             self.polylines(),
             width=self.canvas.winfo_width(),
             height=self.canvas.winfo_height())
