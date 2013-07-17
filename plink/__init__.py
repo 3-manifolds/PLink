@@ -583,8 +583,8 @@ class LinkEditor:
         self.ActiveVertex = None
         self.update_crosspoints()
         self.state = 'start_state'
-        self.update_info()
         self.full_redraw()
+        self.update_info()
         self.canvas.config(cursor='')
 
     def goto_drawing_state(self, x1,y1):
@@ -665,6 +665,11 @@ class LinkEditor:
             arrow.vectorize()
         for c in self.Crossings:
             c.locate()
+        # I don't know why, but sometimes PLink crashes here because
+        # a crossing gets "lost".
+        # Either there will be a crossing which is unable to locate()
+        # itself, or there will be a pair of crossing edges with no
+        # associated Crossing.
         self.CrossPoints = [Vertex(c.x, c.y, self.canvas, hidden=True)
                                     for c in self.Crossings]
 
