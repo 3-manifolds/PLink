@@ -467,8 +467,8 @@ class LinkEditor:
         elif self.state == 'dragging_state':
             x = self.canvas.canvasx(event.x)
             y = self.canvas.canvasy(event.y)
-#            self.ActiveVertex.x, self.ActiveVertex.y = x, y
-#            self.ActiveVertex.draw()
+            self.ActiveVertex.x, self.ActiveVertex.y = x, y
+            self.ActiveVertex.draw()
             if self.LiveArrow1:
                 x0,y0,x1,y1 = self.canvas.coords(self.LiveArrow1)
                 self.canvas.coords(self.LiveArrow1, x0, y0, x, y)
@@ -609,12 +609,12 @@ class LinkEditor:
             return True
         for vertex in self.Vertices:
             if arrow.too_close(vertex):
-                #print 'arrow too close to vertex'
+                #print 'arrow too close to vertex %s'%vertex
                 return False
         for crossing in self.Crossings:
             point = self.CrossPoints[self.Crossings.index(crossing)]
             if arrow not in crossing and arrow.too_close(point):
-                #print 'arrow too close to crossing'
+                #print 'arrow too close to crossing %s'%crossing
                 return False
         return True
        
@@ -1590,7 +1590,7 @@ class Arrow:
     """
     An arrow in a PL link diagram.
     """
-    epsilon = 12
+    epsilon = 8
     
     def __init__(self, start, end, canvas=None, hidden=False, color='black'):
         self.start, self.end = start, end
@@ -1766,7 +1766,7 @@ class Crossing:
 
     def __repr__(self):
         self.locate()
-        return '%s over %s at (%d,%d)'%(self.over, self.under, self.x, self.y)
+        return '%s over %s at (%s,%s)'%(self.over, self.under, self.x, self.y)
 
     def __eq__(self, other):
         """
@@ -1793,9 +1793,7 @@ class Crossing:
             self.x = self.over.start.x + t*self.over.dx
             self.y = self.over.start.y + t*self.over.dy
         else:
-            print('What is this about?  Please tell Marc.',
-                  self.under, self.over)
-#            self.x, self.y = None, None
+            self.x = self.y = None
 
     def sign(self):
         try:
