@@ -42,6 +42,12 @@ try:
     import Tkinter as Tk_
 except ImportError: # Python 3
     import tkinter as Tk_
+
+try:
+    import pyx
+except ImportError:
+    pass
+
 from math import sqrt, cos, sin, atan2, pi
 from . import canvasvg
 
@@ -150,20 +156,20 @@ class SmoothArc:
         for item in self.canvas_items:
             canvas.delete(item)
         self.canvas_items.append(canvas.create_line(
-            *XY, smooth='raw', width=5, fill=self.color, splinesteps=100))
+            *XY, smooth='raw', width=5, fill=self.color, splinesteps=100,
+             tags='smooth'))
 
     def pyx_draw(self, canvas):
-        import pyx
         XY = self.bezier()
         arc_parts = [pyx.path.moveto(XY[0][0], -XY[0][1])]
         for i in xrange(1, len(XY), 3):
             arc_parts.append(pyx.path.curveto(
-                XY[i][0], -XY[i][1], XY[i+1][0],
-                -XY[i+1][1], XY[i+2][0], -XY[i+2][1]))
-        style = [pyx.style.linewidth(4), pyx.style.linecap.round,
-                 pyx.color.rgbfromhexstring(self.color)]
-        path = pyx.path.path(*arc_parts)
-        canvas.stroke(path, style)
+                    XY[i][0], -XY[i][1], XY[i+1][0],
+                    -XY[i+1][1], XY[i+2][0], -XY[i+2][1]))
+            style = [pyx.style.linewidth(4), pyx.style.linecap.round,
+                     pyx.color.rgbfromhexstring(self.color)]
+            path = pyx.path.path(*arc_parts)
+            canvas.stroke(path, style)
         
 class SmoothLoop(SmoothArc):
     """
@@ -250,14 +256,45 @@ class Smoother:
                     self.canvas_items.append(self.canvas.create_oval(
                         x-2, y-2, x+2, y+2, fill='red'))
         
-    def save_as_pdf(self, file_name):
-        import pyx
-        pyx.unit.set(defaultunit='pt')
+    def save_as_pdf(self, file_name, colormode='color', width=312.0):
+        """
+        Save the link diagram as an encapsulated postscript file.
+        Accepts options colormode and width.
+        The colormode must be 'color', 'gray', or 'mono'; default is 'color'.
+        The width option sets the width of the figure in points.
+        The default width is 312pt = 4.33in = 11cm .
+        """
+        ulx, uly, lrx, lry = self.canvas.bbox(Tk_.ALL)
+        scale = float(width)/(lrx - ulx)
+        pyx.unit.set(uscale=scale, wscale=scale, defaultunit='pt')
+        # Currently ignoring colormode
         canvas = pyx.canvas.canvas()
         for curve in self.curves:
             curve.pyx_draw(canvas)
         canvas.writePDFfile(file_name)
 
-    def save_as_svg(self, file_name):
-        canvasvg.saveall(file_name, self.canvas,
-                         items=[c.tk_spline for c in self.curves])
+    def save_as_eps(self, file_name, colormode='color', width=312.0):
+        """
+        Save the link diagram as an encapsulated postscript file.
+        Accepts options colormode and width.
+        The colormode must be 'color', 'gray', or 'mono'; default is 'color'.
+        The width option sets the width of the figure in points.
+        The default width is 312pt = 4.33in = 11cm .
+        """
+        ulx, uly, lrx, lry = self.canvas.bbox(Tk_.ALL)
+        self.canvas.postscript(file=file_name, x=ulx, y=uly,
+                               width=lrx-ulx, height=lry-uly,
+                               colormode=colormode,
+                               pagewidth=width)
+
+    def save_as_svg(self, file_name, colormode='color', width=None):
+        """
+        Save the link diagram as an encapsulated postscript file.
+        Accepts options colormode and width.
+        The colormode must be 'color', 'gray', or 'mono'; default is 'color'.
+        The width option is ignored for svg images.
+        """
+        # Currently ignoring colormode
+        canvasvg.saveall(
+            file_name, self.canvas,
+            items=self.canvas.find_withtag('smooth'))
