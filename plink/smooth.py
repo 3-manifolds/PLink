@@ -82,7 +82,9 @@ class SmoothArc:
     the PL path given by specifying a list of vertices.  Speeds
     at the spline knots are chosen by using Hobby's scheme.
     """
-    def __init__(self, vertices, color='black', tension1=1.0, tension2=1.0):
+    def __init__(self, canvas, vertices, color='black',
+                 tension1=1.0, tension2=1.0):
+        self.canvas = canvas
         self.vertices = V = [TwoVector(*p) for p in vertices]
         self.tension1, self.tension2 = tension1, tension2
         self.color = color
@@ -151,11 +153,14 @@ class SmoothArc:
         path.append(self.spline_knots[-1])
         return path
 
-    def tk_draw(self, canvas):
-        XY = self.bezier()
+    def tk_clear(self):
         for item in self.canvas_items:
-            canvas.delete(item)
-        self.canvas_items.append(canvas.create_line(
+            self.canvas.delete(item)
+            
+    def tk_draw(self):
+        XY = self.bezier()
+        self.tk_clear()
+        self.canvas_items.append(self.canvas.create_line(
             *XY, smooth='raw', width=5, fill=self.color, splinesteps=100,
              tags='smooth'))
 
@@ -177,7 +182,9 @@ class SmoothLoop(SmoothArc):
     PL loop given by specifying a list of vertices.  Speeds at
     the spline knots are chosen by using Hobby's scheme.
     """    
-    def __init__(self, vertices, color='black', tension1=1.0, tension2=1.0):
+    def __init__(self, canvas, vertices, color='black',
+                 tension1=1.0, tension2=1.0):
+        self.canvas = canvas
         if vertices[0] != vertices[-1]:
             vertices.append(vertices[0])
         vertices.append(vertices[1])
@@ -196,23 +203,12 @@ class SmoothLoop(SmoothArc):
 
 class Smoother:
     """
-    A Tk window that displays a smooth link image inscribed in a PLink.
+    An object that displays a smooth link image on a Tk canvas.
     """
-    def __init__(self, polylines, width=500, height=500,
-                 tension1=1.0, tension2=1.0):
-        self.polylines = polylines
-        self.vertices = []
-        self.tension1 = tension1
-        self.tension2 = tension2
-        self._build_curves()
-        self.mode = 'view'
-        self.window = window = Tk_.Toplevel()
-        self.window.title('PLink Smoother')
-        self.canvas = Tk_.Canvas(self.window, width=width, height=height,
-                             background='white')
-        self.canvas.pack(expand=True, fill=Tk_.BOTH)
+    def __init__(self, canvas):
+        self.canvas = canvas
         self.canvas_items = []
-        self.draw()
+        self.curves = []
 
     def _build_curves(self):
         self.curves = curves = []
@@ -223,13 +219,11 @@ class Smoother:
             for arc in polyline:
                 polygon += arc[1:-1]
                 if arc[0] == arc[-1]:
-                    A = SmoothLoop(
-                        arc, color,
+                    A = SmoothLoop(self.canvas, arc, color,
                         tension1=self.tension1, tension2=self.tension2)
                     curves.append(A)
                 else:
-                    A = SmoothArc(
-                        arc, color,
+                    A = SmoothArc(self.canvas, arc, color,
                         tension1=self.tension1, tension2=self.tension2)
                     try: # join arcs at overcrossings
                         curves[-1]._extend(A)
@@ -243,18 +237,22 @@ class Smoother:
                 except ValueError:
                     pass
 
+    def set_polylines(self, polylines, tension1=1.0, tension2=1.0):
+        self.clear()
+        self.polylines = polylines
+        self.vertices = []
+        self.tension1 = tension1
+        self.tension2 = tension2
+        self._build_curves()
+        self.draw()
+
     def draw(self):
-        for item in self.canvas_items:
-            self.canvas.delete(item)
         for curve in self.curves:
-            curve.tk_draw(self.canvas)
-        if self.mode == 'edit':
-            for P in self.polygons:
-                self.canvas_items.append(self.canvas.create_line(
-                    P + [P[0]], width=1, fill='blue'))
-                for x, y in P:
-                    self.canvas_items.append(self.canvas.create_oval(
-                        x-2, y-2, x+2, y+2, fill='red'))
+            curve.tk_draw()
+
+    def clear(self):
+        for curve in self.curves:
+            curve.tk_clear()
         
     def save_as_pdf(self, file_name, colormode='color', width=312.0):
         """

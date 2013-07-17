@@ -136,6 +136,8 @@ class LinkEditor:
         self.infotext.pack(padx=5, pady=0, fill=Tk_.X, expand=Tk_.NO)
         self.show_DT_var = Tk_.IntVar(self.window)
         self.info_var = Tk_.IntVar(self.window)
+        self.view_var = Tk_.StringVar(self.window)
+        self.view_var.set('pl')
         self.current_info = 0
         self.has_focus = True
         # Menus
@@ -151,6 +153,7 @@ class LinkEditor:
         self.window.protocol("WM_DELETE_WINDOW", self.done)
         # Go
         self.flipcheck = None
+        self.smoother = Smoother(self.canvas)
         self.state='start_state'
         if file_name:
             self.load(file_name=file_name)
@@ -212,8 +215,18 @@ class LinkEditor:
             command=lambda : self._shift(0,5))
         tools_menu.add_cascade(label='Pan', menu=pan_menu)
         tools_menu.add_command(label='Clear', command=self.clear)
-        tools_menu.add_command(label='Smooth', command=self.smooth)
         menubar.add_cascade(label='Tools', menu=tools_menu)
+        view_menu = Tk_.Menu(menubar, tearoff=0)
+        view_menu.add_radiobutton(label='PL', value='pl',
+                              command=self.set_view_mode,
+                              variable=self.view_var)
+        view_menu.add_radiobutton(label='Smooth',  value='smooth',
+                              command=self.set_view_mode,
+                              variable=self.view_var)
+        view_menu.add_radiobutton(label='Both (edit mode)', value='both',
+                              command=self.set_view_mode,
+                              variable=self.view_var)
+        menubar.add_cascade(label='View', menu=view_menu)
         help_menu = Tk_.Menu(menubar, tearoff=0)
         help_menu.add_command(label='About PLink...', command=self.about)
         help_menu.add_command(label='Instructions ...', command=self.howto)
@@ -276,10 +289,27 @@ class LinkEditor:
     def focus_out(self, event):
         self.has_focus = False
 
+    def set_view_mode(self):
+        if self.view_var.get() == 'smooth':
+            self.canvas.config(background='white')
+            for vertex in self.Vertices:
+                vertex.hide()
+            for arrow in self.Arrows: 
+                arrow.hide()
+        else:
+            self.canvas.config(background='#dcecff')
+            for vertex in self.Vertices:
+                vertex.expose()
+            for arrow in self.Arrows: 
+                arrow.expose()
+        self.full_redraw()
+    
     def single_click(self, event):
         """
         Event handler for mouse clicks.
         """
+        if self.view_var.get() == 'smooth':
+            return
         if self.state == 'start_state':
             if not self.has_focus:
                 return
@@ -317,6 +347,7 @@ class LinkEditor:
                 self.update_info()
                 crossing.under.draw(self.Crossings)
                 crossing.over.draw(self.Crossings)
+                self.update_smooth()
                 return
             elif self.clicked_on_arrow(start_vertex):
                 #print 'clicked on an arrow.'
@@ -398,6 +429,8 @@ class LinkEditor:
         """
         Event handler for mouse double-clicks.
         """
+        if self.view_var.get() == 'smooth':
+            return
         x = self.canvas.canvasx(event.x)
         y = self.canvas.canvasy(event.y)
         self.clear_text()
@@ -441,6 +474,8 @@ class LinkEditor:
         """
         Handler for mouse motion events.
         """
+        if self.view_var.get() == 'smooth':
+            return
         self.cursorx, self.cursory = event.x, event.y
         x = self.canvas.canvasx(event.x)
         y = self.canvas.canvasy(event.y)
@@ -480,6 +515,8 @@ class LinkEditor:
         """
         Handler for keypress events.
         """
+        if self.view_var.get() == 'smooth':
+            return
         dx, dy = 0, 0
         if event.keysym == 'Delete' or event.keysym == 'BackSpace':
             if self.state == 'drawing_state':
@@ -547,11 +584,7 @@ class LinkEditor:
         self.update_crosspoints()
         self.state = 'start_state'
         self.update_info()
-        self.adjust_colors()
-        for vertex in self.Vertices:
-            vertex.draw()
-#        for arrow in self.Arrows: 
-#            arrow.draw(self.Crossings)
+        self.full_redraw()
         self.canvas.config(cursor='')
 
     def goto_drawing_state(self, x1,y1):
@@ -662,7 +695,7 @@ class LinkEditor:
                     self.Crossings.remove(new_crossing)
         for arrow in damage_list:
             arrow.draw(self.Crossings)
-
+            
     def arrow_components(self, include_isolated_vertices=False):
         """
         Returns a list of components, given as lists of arrows.
@@ -772,7 +805,7 @@ class LinkEditor:
             result.append([ECrossing(c[1],c[2]) for c in crosses]) 
         return result
 
-    def adjust_colors(self):
+    def full_redraw(self):
         """
         Recolors and redraws all components, in DT order, and displays
         the legend linking colors to cusp indices.
@@ -792,15 +825,17 @@ class LinkEditor:
                 arrow.color = color
                 arrow.end.color = color
                 arrow.draw(self.Crossings)
-            self.color_keys.append(
-                self.canvas.create_text(x, y,
-                                        text=str(n),
-                                        fill=color,
-                                        anchor=Tk_.SW,
-                                        font='Helvetica 16 bold'))
+            if self.view_var.get() != 'smooth':
+                self.color_keys.append(
+                    self.canvas.create_text(x, y,
+                                            text=str(n),
+                                            fill=color,
+                                            anchor=Tk_.SW,
+                                            font='Helvetica 16 bold'))
             x, n = x+16, n+1
         for vertex in self.Vertices:
             vertex.draw()
+        self.update_smooth()
 
     def set_info(self):
         self.clear_text()
@@ -856,6 +891,7 @@ class LinkEditor:
         self.update_info()
         for arrow in self.Arrows:
             arrow.draw(self.Crossings)
+        self.update_smooth()
 
     def reflect(self):
         for crossing in self.Crossings:
@@ -900,6 +936,7 @@ class LinkEditor:
             arrow.draw(self.Crossings, skip_frozen=False)
         for vertex in self.Vertices:
             vertex.draw(skip_frozen=False)
+        self.update_smooth()
         for livearrow in (self.LiveArrow1, self.LiveArrow2):
             if livearrow:
                 x0,y0,x1,y1 = self.canvas.coords(livearrow)
@@ -929,11 +966,10 @@ class LinkEditor:
         x0, y0, x1, y1 = self.canvas.bbox('transformable')
         self._shift( (W - x1 + x0)/2 - x0, (H - y1 + y0)/2 - y0 )
 
-    def smooth(self):
-        self.smoother = Smoother(
-            self.polylines(),
-            width=self.canvas.winfo_width(),
-            height=self.canvas.winfo_height())
+    def update_smooth(self):
+        self.smoother.clear()
+        if self.view_var.get() != 'pl':
+            self.smoother.set_polylines(self.polylines())
 
     def update_info(self):
         self.hide_DT()
