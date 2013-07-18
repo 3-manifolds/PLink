@@ -665,13 +665,12 @@ class LinkEditor:
             arrow.vectorize()
         for c in self.Crossings:
             c.locate()
-        # I don't know why, but sometimes PLink crashes here because
-        # a crossing gets "lost".
-        # Either there will be a crossing which is unable to locate()
-        # itself, or there will be a pair of crossing edges with no
-        # associated Crossing.
+        # clean up the crossing list
+        self.Crossings = [c for c in self.Crossings
+                          if c.x is not None and c.y is not None]
         self.CrossPoints = [Vertex(c.x, c.y, self.canvas, hidden=True)
-                                    for c in self.Crossings]
+                            for c in self.Crossings]
+                            
 
     def update_crossings(self, this_arrow):
         if this_arrow == None:
@@ -1837,6 +1836,8 @@ class Crossing:
             self.x = self.over.start.x + t*self.over.dx
             self.y = self.over.start.y + t*self.over.dy
         else:
+            #print 'Crossing.locate failed'
+            #print 'over = %s, under = %s'%(self.over, self.under)
             self.x = self.y = None
 
     def sign(self):
