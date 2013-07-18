@@ -678,7 +678,8 @@ class LinkEditor:
             if this_arrow == arrow:
                 continue
             new_crossing = Crossing(this_arrow, arrow)
-            if this_arrow ^ arrow:
+            new_crossing.locate()
+            if new_crossing.x != None:
                 if new_crossing in cross_list:
                     #print 'keeping %s'%new_crossing
                     find(new_crossing).locate()
@@ -686,7 +687,6 @@ class LinkEditor:
                 else:
                     #print 'adding %s'%new_crossing
                     self.Crossings.append(new_crossing)
-                    new_crossing.locate()
             else:
                 #print 'removing %s'%new_crossing
                 if new_crossing in self.Crossings:
