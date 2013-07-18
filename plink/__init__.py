@@ -500,8 +500,8 @@ class LinkEditor:
             x0,y0,x1,y1 = self.canvas.coords(self.LiveArrow1)
             self.canvas.coords(self.LiveArrow1, x0, y0, x, y)
         elif self.state == 'dragging_state':
-            x = self.canvas.canvasx(event.x)
-            y = self.canvas.canvasy(event.y)
+            x = float(self.canvas.canvasx(event.x))
+            y = float(self.canvas.canvasy(event.y))
             self.ActiveVertex.x, self.ActiveVertex.y = x, y
             self.ActiveVertex.draw()
             if self.LiveArrow1:
@@ -515,8 +515,6 @@ class LinkEditor:
         """
         Handler for keypress events.
         """
-        if self.view_var.get() == 'smooth':
-            return
         dx, dy = 0, 0
         if event.keysym == 'Delete' or event.keysym == 'BackSpace':
             if self.state == 'drawing_state':
@@ -608,7 +606,8 @@ class LinkEditor:
     def end_dragging_state(self):
         if not self.verify_drag():
             raise ValueError
-        self.ActiveVertex.x, self.ActiveVertex.y = self.cursorx, self.cursory
+        x, y = float(self.cursorx), float(self.cursory)
+        self.ActiveVertex.x, self.ActiveVertex.y = x, y
         endpoint = None
         if self.ActiveVertex.is_endpoint():
             other_ends = [v for v in self.Vertices if
@@ -665,9 +664,6 @@ class LinkEditor:
             arrow.vectorize()
         for c in self.Crossings:
             c.locate()
-        # clean up the crossing list
-        self.Crossings = [c for c in self.Crossings
-                          if c.x is not None and c.y is not None]
         self.CrossPoints = [Vertex(c.x, c.y, self.canvas, hidden=True)
                             for c in self.Crossings]
                             
@@ -904,6 +900,7 @@ class LinkEditor:
         self.update_info()
         for arrow in self.Arrows:
             arrow.draw(self.Crossings)
+        self.update_smooth()
 
     def clear(self):
         for arrow in self.Arrows:
@@ -947,6 +944,7 @@ class LinkEditor:
                 x0 = ulx + xfactor*(x0 - ulx)
                 y0 = uly + yfactor*(y0 - uly)
                 self.canvas.coords(livearrow, x0, y0, x1, y1)
+        self.update_info()
 
     def zoom_in(self):
         self._zoom(1.2, 1.2)
@@ -1670,8 +1668,8 @@ class Arrow:
             return None
 
     def vectorize(self):
-        self.dx = self.end.x - self.start.x
-        self.dy = self.end.y - self.start.y
+        self.dx = float(self.end.x - self.start.x)
+        self.dy = float(self.end.y - self.start.y)
         self.length = sqrt(self.dx*self.dx + self.dy*self.dy) 
 
     def reverse(self, crossings=[]):
@@ -1693,7 +1691,6 @@ class Arrow:
         self.hidden = False
         self.frozen = False
         self.draw(crossings)
-
 
     def find_segments(self, crossings, include_overcrossings=False,
                       gapsize=None):

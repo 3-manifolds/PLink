@@ -162,7 +162,7 @@ class SmoothArc:
         self.tk_clear()
         self.canvas_items.append(self.canvas.create_line(
             *XY, smooth='raw', width=thickness, fill=self.color,
-             splinesteps=100, tags='smooth'))
+             splinesteps=100, tags=('smooth','transformable')))
 
     def pyx_draw(self, canvas):
         XY = self.bezier()
