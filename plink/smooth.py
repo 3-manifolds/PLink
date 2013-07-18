@@ -157,12 +157,12 @@ class SmoothArc:
         for item in self.canvas_items:
             self.canvas.delete(item)
             
-    def tk_draw(self):
+    def tk_draw(self, thickness=5):
         XY = self.bezier()
         self.tk_clear()
         self.canvas_items.append(self.canvas.create_line(
-            *XY, smooth='raw', width=5, fill=self.color, splinesteps=100,
-             tags='smooth'))
+            *XY, smooth='raw', width=thickness, fill=self.color,
+             splinesteps=100, tags='smooth'))
 
     def pyx_draw(self, canvas):
         XY = self.bezier()
@@ -237,18 +237,19 @@ class Smoother:
                 except ValueError:
                     pass
 
-    def set_polylines(self, polylines, tension1=1.0, tension2=1.0):
+    def set_polylines(self, polylines, thickness=5,
+                      tension1=1.0, tension2=1.0):
         self.clear()
         self.polylines = polylines
         self.vertices = []
         self.tension1 = tension1
         self.tension2 = tension2
         self._build_curves()
-        self.draw()
+        self.draw(thickness=thickness)
 
-    def draw(self):
+    def draw(self, thickness=5):
         for curve in self.curves:
-            curve.tk_draw()
+            curve.tk_draw(thickness=thickness)
 
     def clear(self):
         for curve in self.curves:
