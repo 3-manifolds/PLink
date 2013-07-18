@@ -968,8 +968,11 @@ class LinkEditor:
 
     def update_smooth(self):
         self.smoother.clear()
-        if self.view_var.get() != 'pl':
+        mode = self.view_var.get()
+        if mode == 'smooth':
             self.smoother.set_polylines(self.polylines())
+        elif mode == 'both': 
+            self.smoother.set_polylines(self.polylines(), thickness=3)
 
     def update_info(self):
         self.hide_DT()
