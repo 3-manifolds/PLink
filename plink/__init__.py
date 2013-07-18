@@ -223,7 +223,7 @@ class LinkEditor:
         view_menu.add_radiobutton(label='Smooth',  value='smooth',
                               command=self.set_view_mode,
                               variable=self.view_var)
-        view_menu.add_radiobutton(label='Both (edit mode)', value='both',
+        view_menu.add_radiobutton(label='Smooth edit', value='both',
                               command=self.set_view_mode,
                               variable=self.view_var)
         menubar.add_cascade(label='View', menu=view_menu)
@@ -290,10 +290,17 @@ class LinkEditor:
         self.has_focus = False
 
     def set_view_mode(self):
-        if self.view_var.get() == 'smooth':
+        mode = self.view_var.get()
+        if mode == 'smooth':
             self.canvas.config(background='white')
             for vertex in self.Vertices:
                 vertex.hide()
+            for arrow in self.Arrows: 
+                arrow.hide()
+        elif mode == 'both':
+            self.canvas.config(background='#dcecff')
+            for vertex in self.Vertices:
+                vertex.expose()
             for arrow in self.Arrows: 
                 arrow.hide()
         else:
@@ -581,6 +588,7 @@ class LinkEditor:
         self.ActiveVertex = None
         self.update_crosspoints()
         self.state = 'start_state'
+        self.set_view_mode()
         self.full_redraw()
         self.update_info()
         self.canvas.config(cursor='')
@@ -621,10 +629,11 @@ class LinkEditor:
         if endpoint is None and not self.generic_vertex(self.ActiveVertex):
             raise ValueError
         self.ActiveVertex.expose()
-        if self.ActiveVertex.in_arrow:
-            self.ActiveVertex.in_arrow.expose()
-        if self.ActiveVertex.out_arrow:
-            self.ActiveVertex.out_arrow.expose()
+        if self.view_var.get() == 'pl':
+            if self.ActiveVertex.in_arrow:
+                self.ActiveVertex.in_arrow.expose()
+            if self.ActiveVertex.out_arrow:
+                self.ActiveVertex.out_arrow.expose()
         self.goto_start_state()
 
     def generic_vertex(self, vertex):
@@ -974,7 +983,7 @@ class LinkEditor:
         if mode == 'smooth':
             self.smoother.set_polylines(self.polylines())
         elif mode == 'both': 
-            self.smoother.set_polylines(self.polylines(), thickness=3)
+            self.smoother.set_polylines(self.polylines(), thickness=2)
 
     def update_info(self):
         self.hide_DT()
