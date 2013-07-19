@@ -76,6 +76,20 @@ scut = {
     'Right'  : '→',
     'Down'   : '↓'}
 
+# Shift vectors
+canvas_shifts = {
+    'Down'  : (0, 5),
+    'Up'    : (0, -5),
+    'Right' : (5, 0),
+    'Left'  : (-5, 0)
+    }
+vertex_shifts = {
+    'Down'  : (0, 1),
+    'Up'    : (0, -1),
+    'Right' : (1, 0),
+    'Left'  : (-1, 0)
+    }
+
 class LinkEditor:
     """
     A graphical link drawing tool based on the one embedded in Jeff Weeks'
@@ -331,6 +345,7 @@ class LinkEditor:
                 #print 'single click on a vertex'
                 self.state = 'dragging_state'
                 self.hide_DT()
+                self.update_info()
                 self.canvas.config(cursor='circle')
                 self.ActiveVertex = self.Vertices[
                     self.Vertices.index(start_vertex)]
@@ -436,7 +451,7 @@ class LinkEditor:
         """
         Event handler for mouse double-clicks.
         """
-        if self.view_var.get() != 'pl':
+        if self.view_var.get() == 'smooth':
             return
         x = self.canvas.canvasx(event.x)
         y = self.canvas.canvasy(event.y)
@@ -507,17 +522,21 @@ class LinkEditor:
             x0,y0,x1,y1 = self.canvas.coords(self.LiveArrow1)
             self.canvas.coords(self.LiveArrow1, x0, y0, x, y)
         elif self.state == 'dragging_state':
-            x = float(self.canvas.canvasx(event.x))
-            y = float(self.canvas.canvasy(event.y))
-            self.ActiveVertex.x, self.ActiveVertex.y = x, y
-            self.ActiveVertex.draw()
-            if self.LiveArrow1:
-                x0,y0,x1,y1 = self.canvas.coords(self.LiveArrow1)
-                self.canvas.coords(self.LiveArrow1, x0, y0, x, y)
-            if self.LiveArrow2:
-                x0,y0,x1,y1 = self.canvas.coords(self.LiveArrow2)
-                self.canvas.coords(self.LiveArrow2, x0, y0, x, y)
-            self.update_smooth()
+            self.move_active(self.canvas.canvasx(event.x),
+                             self.canvas.canvasy(event.y))
+
+    def move_active(self, x, y):
+        x, y = float(x), float(y)
+        self.ActiveVertex.x, self.ActiveVertex.y = x, y
+        self.ActiveVertex.draw()
+        if self.LiveArrow1:
+            x0,y0,x1,y1 = self.canvas.coords(self.LiveArrow1)
+            self.canvas.coords(self.LiveArrow1, x0, y0, x, y)
+        if self.LiveArrow2:
+            x0,y0,x1,y1 = self.canvas.coords(self.LiveArrow2)
+            self.canvas.coords(self.LiveArrow2, x0, y0, x, y)
+        self.update_smooth()
+        self.update_info()
 
     def key_press(self, event):
         """
@@ -554,16 +573,26 @@ class LinkEditor:
             self.zoom_out()
         elif event.char == '0':
             self.zoom_to_fit()
-        elif event.keysym == 'Down':
-            dx, dy = 0, 5
-        elif event.keysym == 'Up':
-            dx, dy = 0, -5
-        elif event.keysym == 'Right':
-            dx, dy = 5, 0
-        elif event.keysym == 'Left':
-            dx, dy = -5, 0
-        if dx or dy:
-            self._shift(dx, dy)
+        if self.state != 'dragging_state':
+            try:
+                self._shift(*canvas_shifts[event.keysym])
+            except KeyError:
+                pass
+            return
+        else:
+            if event.keysym == 'Return':
+                self.cursorx = self.ActiveVertex.x
+                self.cursory = self.ActiveVertex.y
+                self.end_dragging_state()
+                return
+            try:
+                dx, dy = vertex_shifts[event.keysym]
+                self.cursorx = x = self.ActiveVertex.x + dx
+                self.cursory = y = self.ActiveVertex.y + dy
+                self.move_active(x,y)
+            except KeyError:
+                pass
+            return
         event.x, event.y = self.cursorx, self.cursory
         self.mouse_moved(event)
 
@@ -989,6 +1018,9 @@ class LinkEditor:
     def update_info(self):
         self.hide_DT()
         self.clear_text()
+        if self.state == 'dragging_state':
+            x, y = self.cursorx, self.canvas.winfo_height()-self.cursory
+            self.write_text( '(%d, %d)'%(x, y) )
         if self.state != 'start_state':
             return
         if self.show_DT_var.get():

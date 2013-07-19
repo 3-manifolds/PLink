@@ -18,7 +18,7 @@
 #                 ##############################
 #
 # This module exports the class Smoother which displays a smoothed
-# PLink in a separate window.
+# PLink on a canvas.
 #
 # Cubic splines are used to draw each arc joining two crossings in the
 # PL link diagram.  The segments of the PLink are subdivided by
@@ -157,7 +157,7 @@ class SmoothArc:
         for item in self.canvas_items:
             self.canvas.delete(item)
             
-    def tk_draw(self, thickness=5):
+    def tk_draw(self, thickness=4):
         XY = self.bezier()
         self.tk_clear()
         self.canvas_items.append(self.canvas.create_line(
@@ -258,7 +258,7 @@ class Smoother:
         
     def save_as_pdf(self, file_name, colormode='color', width=312.0):
         """
-        Save the link diagram as an encapsulated postscript file.
+        Save the smooth link diagram as a PDF file.
         Accepts options colormode and width.
         The colormode must be 'color', 'gray', or 'mono'; default is 'color'.
         The width option sets the width of the figure in points.
@@ -297,4 +297,4 @@ class Smoother:
         # Currently ignoring colormode
         canvasvg.saveall(
             file_name, self.canvas,
-            items=self.canvas.find_withtag('smooth'))
+            items=self.canvas.find_withtag(Tk_.ALL))
