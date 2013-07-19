@@ -436,7 +436,7 @@ class LinkEditor:
         """
         Event handler for mouse double-clicks.
         """
-        if self.view_var.get() == 'smooth':
+        if self.view_var.get() != 'pl':
             return
         x = self.canvas.canvasx(event.x)
         y = self.canvas.canvasy(event.y)
@@ -517,6 +517,7 @@ class LinkEditor:
             if self.LiveArrow2:
                 x0,y0,x1,y1 = self.canvas.coords(self.LiveArrow2)
                 self.canvas.coords(self.LiveArrow2, x0, y0, x, y)
+            self.update_smooth()
 
     def key_press(self, event):
         """
@@ -673,9 +674,9 @@ class LinkEditor:
             arrow.vectorize()
         for c in self.Crossings:
             c.locate()
+        self.Crossings = [ c for c in self.Crossings if c.x is not None]
         self.CrossPoints = [Vertex(c.x, c.y, self.canvas, hidden=True)
                             for c in self.Crossings]
-                            
 
     def update_crossings(self, this_arrow):
         if this_arrow == None:
@@ -1649,6 +1650,7 @@ class Arrow:
         self.component = None
         self.hidden = hidden
         self.frozen = False
+        self.quiet = False
         self.lines = []
         self.cross_params = []
         if self.start != self.end:
