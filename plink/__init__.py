@@ -261,7 +261,7 @@ class LinkEditor:
         background = self.canvas.cget('bg')
         def reset_bg():
             self.canvas.config(bg=background)
-        self.canvas.config(bg='#ffffff')
+        self.canvas.config(bg='#000000')
         self.canvas.after(100, reset_bg)
 
     def warn_arcs(self):
@@ -306,13 +306,13 @@ class LinkEditor:
     def set_view_mode(self):
         mode = self.view_var.get()
         if mode == 'smooth':
-            self.canvas.config(background='white')
+            self.canvas.config(background='#ffffff')
             for vertex in self.Vertices:
                 vertex.hide()
             for arrow in self.Arrows: 
                 arrow.hide()
         elif mode == 'both':
-            self.canvas.config(background='#dcecff')
+            self.canvas.config(background='#ffffff')
             for vertex in self.Vertices:
                 vertex.expose()
             for arrow in self.Arrows: 
@@ -429,12 +429,14 @@ class LinkEditor:
                 self.goto_start_state()
                 return
             #print 'just extending a path, as usual'
-            self.update_crossings(next_arrow)
-            self.update_crosspoints()
             if not (self.generic_vertex(next_vertex) and
                     self.generic_arrow(next_arrow) ):
                 self.alert()
+#                next_vertex.hide()
+                next_arrow.hide()
                 return
+            self.update_crossings(next_arrow)
+            self.update_crosspoints()
             next_arrow.expose(self.Crossings)
             self.Vertices.append(next_vertex)
             next_vertex.expose()
