@@ -302,7 +302,7 @@ class LinkEditor:
             for vertex in self.Vertices:
                 vertex.expose()
             for arrow in self.Arrows: 
-                arrow.hide()
+                arrow.make_faint()
         else:
             self.canvas.config(background='#dcecff')
             for vertex in self.Vertices:
@@ -325,7 +325,7 @@ class LinkEditor:
         x = self.canvas.canvasx(event.x)
         y = self.canvas.canvasy(event.y)
         self.clear_text()
-        start_vertex = Vertex(x, y, self.canvas, hidden=True)
+        start_vertex = Vertex(x, y, self.canvas, style='hidden')
         if self.state == 'start_state':
             if start_vertex in self.Vertices:
                 #print 'single click on a vertex'
@@ -372,7 +372,7 @@ class LinkEditor:
             self.goto_drawing_state(x1,y1)
             return
         elif self.state == 'drawing_state':
-            next_vertex = Vertex(x, y, self.canvas, hidden=True)
+            next_vertex = Vertex(x, y, self.canvas, style='hidden')
             if next_vertex == self.ActiveVertex:
                 #print 'clicked the same vertex twice'
                 next_vertex.erase()
@@ -391,7 +391,7 @@ class LinkEditor:
             else:
                 this_color = self.ActiveVertex.color
                 next_arrow = Arrow(self.ActiveVertex, next_vertex,
-                                 self.canvas, hidden=True,
+                                 self.canvas, style='hidden',
                                  color=this_color)
                 self.Arrows.append(next_arrow)
             next_vertex.set_color(next_arrow.color)
@@ -441,7 +441,7 @@ class LinkEditor:
         x = self.canvas.canvasx(event.x)
         y = self.canvas.canvasy(event.y)
         self.clear_text()
-        vertex = Vertex(x, y, self.canvas, hidden=True)
+        vertex = Vertex(x, y, self.canvas, style='hidden')
         #print 'double-click in %s'%self.state
         if self.state == 'dragging_state':
             try:
@@ -487,7 +487,7 @@ class LinkEditor:
         x = self.canvas.canvasx(event.x)
         y = self.canvas.canvasy(event.y)
         if self.state == 'start_state':
-            point = Vertex(x, y, self.canvas, hidden=True)
+            point = Vertex(x, y, self.canvas, style='hidden')
             if point in self.Vertices:
                 self.flipcheck=None
                 self.canvas.config(cursor='hand1')
@@ -595,7 +595,7 @@ class LinkEditor:
         self.canvas.config(cursor='')
 
     def goto_drawing_state(self, x1,y1):
-        self.ActiveVertex.hidden = False
+        self.ActiveVertex.expose()
         self.ActiveVertex.draw()
         x0, y0 = self.ActiveVertex.point()
         self.LiveArrow1 = self.canvas.create_line(x0,y0,x1,y1,fill='red')
@@ -630,7 +630,7 @@ class LinkEditor:
         if endpoint is None and not self.generic_vertex(self.ActiveVertex):
             raise ValueError
         self.ActiveVertex.expose()
-        if self.view_var.get() == 'pl':
+        if self.view_var.get() != 'smooth':
             if self.ActiveVertex.in_arrow:
                 self.ActiveVertex.in_arrow.expose()
             if self.ActiveVertex.out_arrow:
@@ -675,7 +675,7 @@ class LinkEditor:
         for c in self.Crossings:
             c.locate()
         self.Crossings = [ c for c in self.Crossings if c.x is not None]
-        self.CrossPoints = [Vertex(c.x, c.y, self.canvas, hidden=True)
+        self.CrossPoints = [Vertex(c.x, c.y, self.canvas, style='hidden')
                             for c in self.Crossings]
 
     def update_crossings(self, this_arrow):
@@ -1492,15 +1492,14 @@ class Vertex:
     """
     epsilon = 8
 
-    def __init__(self, x, y, canvas, hidden=False,color='black'):
+    def __init__(self, x, y, canvas, style='normal', color='black'):
         self.x, self.y = float(x), float(y)
         self.in_arrow = None
         self.out_arrow = None
         self.canvas = canvas
         self.color = color
         self.dot = None
-        self.hidden = hidden
-        self.frozen = False
+        self.style = style
         self.draw()
 
     def __repr__(self):
@@ -1515,14 +1514,24 @@ class Vertex:
 
     def hide(self):
         self.canvas.delete(self.dot)
-        self.hidden = True
+        self.style = 'hidden'
+
+    @property
+    def hidden(self):
+        return self.style == 'hidden'
     
     def freeze(self):
-        self.frozen = True
+        self.style = 'frozen'
     
+    @property
+    def frozen(self):
+        return self.style == 'frozen'
+
+    def make_faint(self):
+        self.style = 'faint'
+
     def expose(self, crossings=[]):
-        self.hidden = False
-        self.frozen = False
+        self.style = 'normal'
         self.draw()
 
     def point(self):
@@ -1531,7 +1540,10 @@ class Vertex:
     def draw(self, skip_frozen=False):
         if self.hidden or (self.frozen and skip_frozen):
             return
-        color = 'gray' if self.frozen else self.color
+        if self.style != 'normal':
+            color = 'gray'
+        else:
+            color = self.color
         delta = 2
         x, y = self.point()
         if self.dot:
@@ -1643,14 +1655,12 @@ class Arrow:
     """
     epsilon = 8
     
-    def __init__(self, start, end, canvas=None, hidden=False, color='black'):
+    def __init__(self, start, end, canvas=None, style='normal', color='black'):
         self.start, self.end = start, end
         self.canvas = canvas
         self.color = color
         self.component = None
-        self.hidden = hidden
-        self.frozen = False
-        self.quiet = False
+        self.style = 'normal'
         self.lines = []
         self.cross_params = []
         if self.start != self.end:
@@ -1691,16 +1701,28 @@ class Arrow:
     def hide(self):
         for line in self.lines:
             self.canvas.delete(line)
-        self.hidden = True
+            self.style = 'hidden'
+
+    @property
+    def hidden(self):
+        return self.style == 'hidden'
 
     def freeze(self):
         for line in self.lines:
             self.canvas.itemconfig(line, fill='gray')
-        self.frozen = True
-    
+        self.style = 'frozen'
+
+    @property
+    def frozen(self):
+        return self.style == 'frozen'
+
+    def make_faint(self):
+        for line in self.lines:
+            self.canvas.itemconfig(line, fill='gray', width=1)
+        self.style = 'faint'
+
     def expose(self, crossings=[]):
-        self.hidden = False
-        self.frozen = False
+        self.style = 'normal'
         self.draw(crossings)
 
     def find_segments(self, crossings, include_overcrossings=False,
@@ -1743,19 +1765,27 @@ class Arrow:
     def draw(self, crossings=[], recurse=True, skip_frozen=True):
         if self.hidden or (self.frozen and skip_frozen):
             return
-        color = 'gray' if self.frozen else self.color
+        if self.style == 'frozen':
+            color = 'gray'
+            thickness = 3
+        elif self.style == 'faint':
+            color = 'gray'
+            thickness = 1
+        else:
+            color = self.color
+            thickness = 3
         segments = self.find_segments(crossings)
         for line in self.lines:
             self.canvas.delete(line)
         for x0, y0, x1, y1 in segments[:-1]:
             self.lines.append(self.canvas.create_line(
                     x0, y0, x1, y1,
-                    width=3, fill=color, tags='transformable'))
+                    width=thickness, fill=color, tags='transformable'))
         x0, y0, x1, y1 = segments[-1]
         self.lines.append(self.canvas.create_line(
                 x0, y0, x1, y1,
                 arrow=Tk_.LAST,
-                width=3, fill=color, tags='transformable'))
+                width=thickness, fill=color, tags='transformable'))
         if recurse:
             under_arrows = [c.under for c in crossings if c.over == self]
             for arrow in under_arrows:
