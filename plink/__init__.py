@@ -1505,7 +1505,6 @@ class LinkEditor:
             self.ActiveVertex = self.Vertices[hot]
             self.goto_drawing_state(*self.canvas.winfo_pointerxy())
         self.goto_start_state()
-        print self.infotext.winfo_geometry()
         self.zoom_to_fit()
 
     def load(self, file_name=None):
