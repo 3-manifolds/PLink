@@ -131,7 +131,7 @@ class LinkEditor:
                                    borderwidth=2,
                                    relief=Tk_.FLAT,
                                    background='#ffffff')
-        self.infotext_contents = Tk_.StringVar()
+        self.infotext_contents = Tk_.StringVar(self.window)
         self.infotext = Tk_.Entry(self.infoframe,
                                   state='readonly',
                                   font='Helvetica 16',
@@ -139,15 +139,11 @@ class LinkEditor:
                                   readonlybackground='#ffffff',
                                   relief=Tk_.FLAT,
                                   highlightthickness=0)
-        #spacer = Tk_.Frame(self.window,
-        #                   height=16,
-        #                   background='#dcecff')
-        #spacer.pack(side=Tk_.BOTTOM)
         self.infoframe.pack(padx=0, pady=0, fill=Tk_.X, expand=Tk_.NO,
                             side=Tk_.BOTTOM)
         self.frame.pack(padx=0, pady=0, fill=Tk_.BOTH, expand=Tk_.YES)
         self.canvas.pack(padx=0, pady=0, fill=Tk_.BOTH, expand=Tk_.YES)
-        self.infotext.pack(padx=5, pady=0, fill=Tk_.X, expand=Tk_.NO)
+        self.infotext.pack(padx=5, pady=0, fill=Tk_.X, expand=Tk_.YES)
         self.show_DT_var = Tk_.IntVar(self.window)
         self.info_var = Tk_.IntVar(self.window)
         self.view_var = Tk_.StringVar(self.window)
@@ -256,6 +252,9 @@ class LinkEditor:
         self.LiveArrow2 = None
         self.ActiveVertex = None
         self.DTlabels = []
+        self.shift_stamp = time.time()
+        self.shift_delta = (0,0)
+        self.shifting = False
 
     def alert(self):
         background = self.canvas.cget('bg')
@@ -524,8 +523,12 @@ class LinkEditor:
             x0,y0,x1,y1 = self.canvas.coords(self.LiveArrow1)
             self.canvas.coords(self.LiveArrow1, x0, y0, x, y)
         elif self.state == 'dragging_state':
-            self.move_active(self.canvas.canvasx(event.x),
-                             self.canvas.canvasy(event.y))
+            if self.shifting:
+                self.window.event_generate('<Return>')
+                return 'break'
+            else:
+                self.move_active(self.canvas.canvasx(event.x),
+                                 self.canvas.canvasy(event.y))
 
     def move_active(self, x, y):
         x, y = float(x), float(y)
@@ -539,13 +542,15 @@ class LinkEditor:
             self.canvas.coords(self.LiveArrow2, x0, y0, x, y)
         self.update_smooth()
         self.update_info()
+        self.window.update_idletasks()
 
     def key_press(self, event):
         """
         Handler for keypress events.
         """
         dx, dy = 0, 0
-        if event.keysym == 'Delete' or event.keysym == 'BackSpace':
+        key, char = event.keysym, event.char
+        if key == 'Delete' or key == 'BackSpace':
             if self.state == 'drawing_state':
                 last_arrow = self.ActiveVertex.in_arrow
                 if last_arrow:
@@ -569,34 +574,49 @@ class LinkEditor:
                     self.Vertices.remove(self.ActiveVertex)
                     self.ActiveVertex.erase()
                     self.goto_start_state()
-        elif event.char in ('+','='):
+        elif char in ('+','='):
             self.zoom_in()
-        elif event.char in ('-','_'):
+        elif char in ('-','_'):
             self.zoom_out()
-        elif event.char == '0':
+        elif char == '0':
             self.zoom_to_fit()
         if self.state != 'dragging_state':
             try:
-                self._shift(*canvas_shifts[event.keysym])
+                self._shift(*canvas_shifts[key])
             except KeyError:
                 pass
             return
         else:
-            if event.keysym == 'Return':
+            if key == 'Return' or key == 'Escape':
                 self.cursorx = self.ActiveVertex.x
                 self.cursory = self.ActiveVertex.y
                 self.end_dragging_state()
+                self.shifting = False
                 return
-            try:
-                dx, dy = vertex_shifts[event.keysym]
-                self.cursorx = x = self.ActiveVertex.x + dx
-                self.cursory = y = self.ActiveVertex.y + dy
-                self.move_active(x,y)
-            except KeyError:
-                pass
-            return
+            self._smooth_shift(key)
+            return 'break'
         event.x, event.y = self.cursorx, self.cursory
         self.mouse_moved(event)
+
+    def _smooth_shift(self, key):
+            # We can't keep up with a fast repeat.
+        try:
+            ddx, ddy = vertex_shifts[key]
+        except KeyError:
+            return
+        self.shifting = True
+        dx, dy = self.shift_delta
+        dx += ddx
+        dy += ddy
+        now = time.time()
+        if now - self.shift_stamp < .1:
+            self.shift_delta = (dx, dy)
+        else:
+            self.cursorx = x = self.ActiveVertex.x + dx
+            self.cursory = y = self.ActiveVertex.y + dy
+            self.move_active(x,y)
+            self.shift_delta = (0,0)
+            self.shift_stamp = now
 
     def clicked_on_arrow(self, vertex):
         for arrow in self.Arrows:
@@ -1453,6 +1473,41 @@ class LinkEditor:
             savefile.write(self.canvas.postscript(colormode=color_mode))
             savefile.close()
 
+    def unpickle(self, vertices, arrows, crossings, hot=None):
+        """
+        Builds a link diagram from the following data:
+           * vertices: a list of (x,y)-coordinates for the vertices;
+
+           * arrows: a list of pairs of integers (start, end), giving
+           the indices in the vertex list of the endpoints of each arrow;
+
+           * crossings: a list of pairs of integers (under, over), giving
+           the indices in the arrow list of each pair of crossing arrows.
+
+           * an optional argument "hot" giving the index of one vertex
+           which was being added at the time the diagram was pickled
+        """
+        # make sure the window has been rendered before doing anything
+        self.window.update()
+        self.clear()
+        self.clear_text()
+        for x, y in vertices:
+            X, Y = float(x), float(y)
+            self.Vertices.append(Vertex(X, Y, self.canvas))
+        for start, end in arrows:
+            S, E = self.Vertices[int(start)], self.Vertices[int(end)]
+            self.Arrows.append(Arrow(S, E, self.canvas))
+        for under, over in crossings:
+            U, O = self.Arrows[int(under)], self.Arrows[int(over)]
+            self.Crossings.append(Crossing(O, U))
+        self.create_colors()
+        if hot:
+            self.ActiveVertex = self.Vertices[hot]
+            self.goto_drawing_state(*self.canvas.winfo_pointerxy())
+        self.goto_start_state()
+        print self.infotext.winfo_geometry()
+        self.zoom_to_fit()
+
     def load(self, file_name=None):
         if file_name:
             loadfile = open(file_name, "r")
@@ -1460,6 +1515,7 @@ class LinkEditor:
             loadfile = askopenfile()
         if loadfile:
             lines = [line for line in loadfile.readlines() if len(line) > 1]
+            loadfile.close()
             num_lines = len(lines)
             if not lines.pop(0).startswith('% Link Projection'):
                 tkMessageBox.showwarning(
@@ -1469,35 +1525,29 @@ class LinkEditor:
                 self.clear()
                 self.clear_text()
                 try:
+                    vertices, arrows, crossings = [], [], []
                     num_components = int(lines.pop(0))
                     for n in range(num_components):
                         lines.pop(0) # We don't need this
                     num_vertices = int(lines.pop(0))
                     for n in range(num_vertices):
                         x, y = lines.pop(0).split()
-                        X, Y = float(x), float(y)
-                        self.Vertices.append(Vertex(X, Y, self.canvas))
+                        vertices.append( (x,y) )
                     num_arrows = int(lines.pop(0))
                     for n in range(num_arrows):
                         s, e = lines.pop(0).split()
-                        S, E = self.Vertices[int(s)], self.Vertices[int(e)]
-                        self.Arrows.append(Arrow(S, E, self.canvas))
+                        arrows.append( (s,e) )
                     num_crossings = int(lines.pop(0))
                     for n in range(num_crossings):
                         u, o = lines.pop(0).split()
-                        U, O = self.Arrows[int(u)], self.Arrows[int(o)]
-                        self.Crossings.append(Crossing(O, U))
-                    hot = int(lines.pop(0))
+                        crossings.append( (u,o) )
+                    h = int(lines[0])
+                    hot = h if h != -1 else None
                 except:
                     tkMessageBox.showwarning(
                         'Bad file',
                         'Failed while parsing line %d'%(num_lines - len(lines)))
-                loadfile.close()
-                self.create_colors()
-                self.goto_start_state()
-                if hot != -1:
-                    self.ActiveVertex = self.Vertices[hot]
-                    self.goto_drawing_state(*self.canvas.winfo_pointerxy())
+                self.unpickle(vertices, arrows, crossings)
 
     def create_colors(self):
         components = self.arrow_components()
