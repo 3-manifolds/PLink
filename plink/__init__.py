@@ -1822,14 +1822,15 @@ class Arrow:
         """
         segments = []
         self.vectorize()
-        if gapsize is None:
-            gapsize = 9.0/self.length # rethink this
+        if gapsize == None:
+            gapsize = 9.0
+        relgap = gapsize/self.length if self.length > gapsize else 0.25
         cross_params = []
         for c in crossings:
             if c.under == self:
                 t = self ^ c.over
                 if t:
-                    cross_params.append((t,gapsize))
+                    cross_params.append((t,relgap))
             if c.over == self and include_overcrossings:
                 t = self ^ c.under
                 if t:
