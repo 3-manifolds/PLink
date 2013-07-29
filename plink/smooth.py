@@ -165,17 +165,25 @@ class SmoothArc:
              capstyle=Tk_.ROUND, splinesteps=100,
              tags=('smooth','transformable')))
 
-    def pyx_draw(self, canvas):
+    def pyx_draw(self, canvas, hshift=0, vshift=0):
         XY = self.bezier()
-        arc_parts = [pyx.path.moveto(XY[0][0], -XY[0][1])]
+        arc_parts = [pyx.path.moveto(-hshift+XY[0][0], vshift-XY[0][1])]
         for i in xrange(1, len(XY), 3):
             arc_parts.append(pyx.path.curveto(
-                    XY[i][0], -XY[i][1], XY[i+1][0],
-                    -XY[i+1][1], XY[i+2][0], -XY[i+2][1]))
+                    -hshift + XY[i][0], vshift-XY[i][1],
+                    -hshift + XY[i+1][0], vshift-XY[i+1][1],
+                    -hshift + XY[i+2][0], vshift-XY[i+2][1]))
             style = [pyx.style.linewidth(4), pyx.style.linecap.round,
                      pyx.color.rgbfromhexstring(self.color)]
             path = pyx.path.path(*arc_parts)
             canvas.stroke(path, style)
+
+    def tikz_draw(self, shift_func):
+        ans = ''
+        points = ['(%.2f, %.2f)' % shift_func(xy) for xy in self.bezier()]
+        for i in range(0, len(points) - 3, 3):
+            ans += '    \\draw %s .. controls %s and %s .. %s;\n' % tuple(points[i:i+4])
+        return ans
         
 class SmoothLoop(SmoothArc):
     """
@@ -270,8 +278,10 @@ class Smoother:
         # Currently ignoring colormode
         canvas = pyx.canvas.canvas()
         for curve in self.curves:
-            curve.pyx_draw(canvas)
-        canvas.writePDFfile(file_name)
+            curve.pyx_draw(canvas, ulx, lry)
+        page = pyx.document.page(canvas,  bboxenlarge=3.5* pyx.unit.t_pt)
+        doc = pyx.document.document([page])
+        doc.writePDFfile(file_name)
 
     def save_as_eps(self, file_name, colormode='color', width=312.0):
         """
@@ -298,3 +308,15 @@ class Smoother:
         canvasvg.saveall(
             file_name, self.canvas,
             items=self.canvas.find_withtag(Tk_.ALL))
+
+    def save_as_tikz(self, file_name, colormode='color', width=312.0):
+        file = open(file_name, 'w')
+        ulx, uly, lrx, lry = self.canvas.bbox(Tk_.ALL)
+        pt_scale = float(width)/(lrx - ulx)
+        cm_scale = 0.0352777778*pt_scale
+        file.write('\\begin{tikzpicture}[line width=%.1f, line cap=round]\n' % (pt_scale*4))
+        def transform(xy):
+            return (cm_scale*(-ulx+xy[0]), cm_scale*(lry-xy[1]))
+        for curve in self.curves:
+            file.write(curve.tikz_draw(transform))
+        file.write(r'\end{tikzpicture}'+'\n')
