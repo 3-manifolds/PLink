@@ -182,10 +182,10 @@ class SmoothArc:
 
     def tikz_draw(self, file, transform):
         points = ['(%.2f, %.2f)' % transform(xy) for xy in self.bezier()]
-        file.write('    \\draw %s .. controls %s and %s .. %s' % tuple(points[:4]))
-        for i in range(4, len(points) - 2, 3):
-            file.write('\n' + 23*' ' + '.. controls %s and %s .. %s' % tuple(points[i:i+3]))
-        file.write(';\n')
+        file.write('    \\draw %s .. controls %s and %s .. ' % tuple(points[:3]))
+        for i in range(3, len(points) - 3, 3):
+            file.write('\n' + 10*' ' + '%s .. controls %s and %s .. ' % tuple(points[i:i+3]))
+        file.write(points[-1] + ';\n')
         
 class SmoothLoop(SmoothArc):
     """
