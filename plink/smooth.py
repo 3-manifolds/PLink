@@ -51,6 +51,10 @@ except ImportError:
 from math import sqrt, cos, sin, atan2, pi
 from . import canvasvg
 
+def in_twos(L):
+    assert len(L) % 2 == 0
+    return [L[i:i+2] for i in range(0, len(L), 2)]        
+
 class TwoVector(tuple):
     def __new__(cls, x, y):
         return tuple.__new__(cls, (x,y))
@@ -314,9 +318,29 @@ class Smoother:
         ulx, uly, lrx, lry = self.canvas.bbox(Tk_.ALL)
         pt_scale = float(width)/(lrx - ulx)
         cm_scale = 0.0352777778*pt_scale
+
+        # Define the colors
+        colors = dict()
+        for i, pl in enumerate(self.polylines):
+            colors[pl[-1]] = i
+            if colormode=='color':
+                rgb = [int(c,16)/255.0 for c in in_twos(pl[-1][1:])]
+            else:
+                rgb = [0.0, 0.0, 0.0]
+            file.write('\\definecolor{linkcolor%d}' % i +
+                           '{rgb}{%.2f, %.2f, %.2f}\n' % tuple(rgb))
+            
         file.write('\\begin{tikzpicture}[line width=%.1f, line cap=round]\n' % (pt_scale*4))
         def transform(xy):
             return (cm_scale*(-ulx+xy[0]), cm_scale*(lry-xy[1]))
+
+        curcolor = -1
         for curve in self.curves:
+            color = colors[curve.color]
+            if color != curcolor:
+                if curcolor != -1:
+                    file.write('  \\end{scope}\n')
+                file.write('  \\begin{scope}[color=linkcolor%d]\n' % color)
+                curcolor = color
             file.write(curve.tikz_draw(transform))
-        file.write(r'\end{tikzpicture}'+'\n')
+        file.write('  \\end{scope}\n\\end{tikzpicture}'+'\n')
