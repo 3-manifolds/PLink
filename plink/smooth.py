@@ -169,25 +169,23 @@ class SmoothArc:
              capstyle=Tk_.ROUND, splinesteps=100,
              tags=('smooth','transformable')))
 
-    def pyx_draw(self, canvas, hshift=0, vshift=0):
-        XY = self.bezier()
-        arc_parts = [pyx.path.moveto(-hshift+XY[0][0], vshift-XY[0][1])]
+    def pyx_draw(self, canvas, transform):
+        XY = [transform(xy) for xy in self.bezier()]
+        arc_parts = [pyx.path.moveto(*XY[0])]
         for i in xrange(1, len(XY), 3):
-            arc_parts.append(pyx.path.curveto(
-                    -hshift + XY[i][0], vshift-XY[i][1],
-                    -hshift + XY[i+1][0], vshift-XY[i+1][1],
-                    -hshift + XY[i+2][0], vshift-XY[i+2][1]))
+            arc_parts.append(pyx.path.curveto(XY[i][0], XY[i][1],
+                XY[i+1][0], XY[i+1][1], XY[i+2][0], XY[i+2][1]))
             style = [pyx.style.linewidth(4), pyx.style.linecap.round,
                      pyx.color.rgbfromhexstring(self.color)]
             path = pyx.path.path(*arc_parts)
             canvas.stroke(path, style)
 
-    def tikz_draw(self, shift_func):
-        ans = ''
-        points = ['(%.2f, %.2f)' % shift_func(xy) for xy in self.bezier()]
-        for i in range(0, len(points) - 3, 3):
-            ans += '    \\draw %s .. controls %s and %s .. %s;\n' % tuple(points[i:i+4])
-        return ans
+    def tikz_draw(self, file, transform):
+        points = ['(%.2f, %.2f)' % transform(xy) for xy in self.bezier()]
+        file.write('    \\draw %s .. controls %s and %s .. %s' % tuple(points[:4]))
+        for i in range(4, len(points) - 2, 3):
+            file.write('\n' + 23*' ' + '.. controls %s and %s .. %s' % tuple(points[i:i+3]))
+        file.write(';\n')
         
 class SmoothLoop(SmoothArc):
     """
@@ -276,13 +274,14 @@ class Smoother:
         The width option sets the width of the figure in points.
         The default width is 312pt = 4.33in = 11cm .
         """
+        # Currently ignoring colormode
         ulx, uly, lrx, lry = self.canvas.bbox(Tk_.ALL)
         scale = float(width)/(lrx - ulx)
         pyx.unit.set(uscale=scale, wscale=scale, defaultunit='pt')
-        # Currently ignoring colormode
+        transform = lambda xy: (xy[0]-ulx,-xy[1]+lry)
         canvas = pyx.canvas.canvas()
         for curve in self.curves:
-            curve.pyx_draw(canvas, ulx, lry)
+            curve.pyx_draw(canvas, transform)
         page = pyx.document.page(canvas,  bboxenlarge=3.5* pyx.unit.t_pt)
         doc = pyx.document.document([page])
         doc.writePDFfile(file_name)
@@ -313,27 +312,21 @@ class Smoother:
             file_name, self.canvas,
             items=self.canvas.find_withtag(Tk_.ALL))
 
-    def save_as_tikz(self, file_name, colormode='color', width=312.0):
+    def save_as_tikz(self, file_name, colormode='color', width=282.0):
         file = open(file_name, 'w')
         ulx, uly, lrx, lry = self.canvas.bbox(Tk_.ALL)
         pt_scale = float(width)/(lrx - ulx)
         cm_scale = 0.0352777778*pt_scale
-
+        transform = lambda xy: (cm_scale*(-ulx+xy[0]), cm_scale*(lry-xy[1]))        
         # Define the colors
         colors = dict()
         for i, pl in enumerate(self.polylines):
             colors[pl[-1]] = i
-            if colormode=='color':
-                rgb = [int(c,16)/255.0 for c in in_twos(pl[-1][1:])]
-            else:
-                rgb = [0.0, 0.0, 0.0]
+            rgb = [int(c,16)/255.0 for c in in_twos(pl[-1][1:])]
             file.write('\\definecolor{linkcolor%d}' % i +
                            '{rgb}{%.2f, %.2f, %.2f}\n' % tuple(rgb))
             
         file.write('\\begin{tikzpicture}[line width=%.1f, line cap=round]\n' % (pt_scale*4))
-        def transform(xy):
-            return (cm_scale*(-ulx+xy[0]), cm_scale*(lry-xy[1]))
-
         curcolor = -1
         for curve in self.curves:
             color = colors[curve.color]
@@ -342,5 +335,5 @@ class Smoother:
                     file.write('  \\end{scope}\n')
                 file.write('  \\begin{scope}[color=linkcolor%d]\n' % color)
                 curcolor = color
-            file.write(curve.tikz_draw(transform))
+            curve.tikz_draw(file, transform)
         file.write('  \\end{scope}\n\\end{tikzpicture}'+'\n')
