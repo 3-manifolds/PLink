@@ -1076,8 +1076,7 @@ class LinkEditor:
 
         """
         try:
-            components = self.crossing_components()
-            components.sort(key=lambda x:len(x))
+            components = self.crossing_components()[::-1]
         except ValueError:
             return None
         for crossing in self.Crossings:
@@ -1132,6 +1131,7 @@ class LinkEditor:
                 arrow = arrow.end.out_arrow
                 if arrow == first_arrow:
                     break
+        self.full_redraw()
         return sorted_components
 
     def SnapPea_KLPProjection(self):
@@ -1164,15 +1164,15 @@ class LinkEditor:
         \ 
         """
         try:
-            sorted_components = self.sorted_components()
+            components = self.crossing_components()
         except ValueError:
             return None
         num_crossings = len(self.Crossings)
         num_free_loops = 0
-        num_components = len(sorted_components)
+        num_components = len(components)
         id = lambda x: self.Crossings.index(x.crossing)
-        for component in sorted_components:
-            this_component = sorted_components.index(component)
+        for component in components:
+            this_component = components.index(component)
             N = len(component)
             for n in range(N):
                 this = component[n]
@@ -1204,14 +1204,14 @@ class LinkEditor:
         # We view an ecrossing as corresponding to the outgoing arc
         # of the diagram at the ecrossing.crossing.
         try:
-            sorted_components = self.sorted_components()
+            components = self.crossing_components()
         except ValueError:
             return None
-        ecrossings = [ ec for component in sorted_components
+        ecrossings = [ ec for component in components
                        for ec in component ]
         counter = dict( (ec, k+1) for k, ec in enumerate(ecrossings) )
         over_dict, under_dict = {}, {}
-        for component in sorted_components:
+        for component in components:
             N = len(component)
             for n, ec in enumerate(component):
                 incoming = counter[component[n-1]]
@@ -1320,7 +1320,7 @@ class LinkEditor:
         by following the top of a tubular neighborhood of the knot).
         """
         try:
-            components = self.sorted_components()
+            components = self.crossing_components()
         except ValueError:
             return None
         framing = []
