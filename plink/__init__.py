@@ -1507,6 +1507,18 @@ class LinkEditor:
         self.goto_start_state()
         self.zoom_to_fit()
 
+    def pickle(self):
+        """
+        Inverse of unpickle.
+        """
+        V = lambda v:self.Vertices.index(v)
+        A = lambda a:self.Arrows.index(a)
+        vertices = [(v.x, v.y) for v in self.Vertices]
+        arrows = [(V(a.start), V(a.end)) for a in self.Arrows]
+        crossings = [(A(c.under), A(c.over)) for c in self.Crossings]
+        hot = V(self.ActiveVertex) if self.ActiveVertex else None        
+        return [vertices, arrows, crossings, hot]
+    
     def load(self, file_name=None):
         if file_name:
             loadfile = open(file_name, "r")
