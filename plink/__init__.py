@@ -38,6 +38,8 @@ except ImportError: # Python 3
     from urllib.request import pathname2url
 from .smooth import Smoother
 
+default_gap_size = 9.0
+
 # Make the Tk file dialog work better with file extensions on OX
 
 def asksaveasfile(mode='w',**options):
@@ -793,7 +795,7 @@ class LinkEditor:
         nonclosed.sort(key=oldest_vertex)
         return closed + nonclosed
 
-    def polylines(self, gapsize=None, break_at_overcrossings=True):
+    def polylines(self, gapsize=default_gap_size, break_at_overcrossings=True):
         """
         Returns a list of lists of polylines, one per component, that make up
         the drawing of the link diagram.  Each polyline is a maximal
@@ -809,7 +811,6 @@ class LinkEditor:
         self.update_crosspoints()
         segments = {}
         for arrow in self.Arrows:
-            self.update_crossings(arrow)
             arrows_segments = arrow.find_segments(
                 self.Crossings,
                 include_overcrossings=True,
@@ -1821,7 +1822,7 @@ class Arrow:
         self.draw(crossings)
 
     def find_segments(self, crossings, include_overcrossings=False,
-                      gapsize=None):
+                      gapsize=default_gap_size):
         """
         Return a list of segments that make up this arrow, each
         segment being a list of 4 coordinates [x0,y0,x1,y1].  The
@@ -1829,34 +1830,42 @@ class Arrow:
         ends at the end vertex.  Otherwise, endpoints are near
         crossings where this arrow goes under, leaving a gap between
         the endpoint and the crossing point.  If the
-        break_at_overcrossings flag is True, then the segments are
+        include_overcrossings flag is True, then the segments are
         also split at overcrossings, with no gap.
         """
         segments = []
         self.vectorize()
-        if gapsize == None:
-            gapsize = 9.0
-        relgap = gapsize/self.length if self.length > gapsize else 0.25
-        cross_params = []
+        cross_params = [(0.0,False), (1.0,False)]
         for c in crossings:
             if c.under == self:
                 t = self ^ c.over
                 if t:
-                    cross_params.append((t,relgap))
+                    cross_params.append((t, True))
             if c.over == self and include_overcrossings:
                 t = self ^ c.under
                 if t:
-                    cross_params.append((t,0))
+                    cross_params.append((t, False))
         cross_params.sort()
-        x0, y0 = x00, y00 = self.start.point()
-        for s, gap in cross_params:
-            x1 = x00 + (s-gap)*self.dx 
-            y1 = y00 + (s-gap)*self.dy
-            segments.append([x0,y0,x1,y1])
-            x0, y0 = x1 + 2*gap*self.dx, y1 + 2*gap*self.dy
-        x1, y1 = self.end.point()
-        segments.append([x0,y0,x1,y1])
-        return segments
+        
+        def r(t):
+            "Affine parameterization of the arrow with domain [0,1]."
+            if t == 1.0:
+                return list(self.end.point())
+            x, y = self.start.point()
+            return [x + t*self.dx, y + t*self.dy]
+
+        def gap(dt):
+            "A suitable gap for r restricted to a subinterval of length dt"
+            return min(gapsize/self.length, 0.2*dt)
+
+        segments = []
+        for i in range(len(cross_params)-1):
+            a, has_gap_a = cross_params[i]
+            b, has_gap_b = cross_params[i+1]
+            gap_a = gap(b-a) if has_gap_a else 0
+            gap_b = gap(b-a) if has_gap_b else 0
+            segments.append( (a + gap_a, b - gap_b) )
+        return [r(a) + r(b) for a, b in segments]
 
     def draw(self, crossings=[], recurse=True, skip_frozen=True):
         if self.hidden or (self.frozen and skip_frozen):
