@@ -137,15 +137,6 @@ class SmoothArc:
                  A + self._polar_to_vector(A_speed, psi+theta),
                  B - self._polar_to_vector(B_speed, psi-phi) ]
 
-    def _extend(self, other):
-        if ( self.color != other.color or
-             self.spline_knots[-1] != other.spline_knots[0] or
-             abs(self.tangents[-1].unit()-other.tangents[0].unit())>.000001):
-            raise ValueError('Splines do not match.')
-        self.spline_knots += other.spline_knots[1:]
-        self.tangents = self.tangents[:-1] + other.tangents
-        self.vertices += other.vertices[1:]
-
     def bezier(self):
         """
         Return a list of spline knots and control points for the Bezier
@@ -209,9 +200,6 @@ class SmoothLoop(SmoothArc):
         self.tangents.append(self.tangents[0])
         assert len(self.spline_knots) == len(self.tangents)
 
-    def _extend(self, other):
-        raise RuntimeError('SmoothLoops are not extendable.')
-
 class Smoother:
     """
     An object that displays a smooth link image on a Tk canvas.
@@ -236,17 +224,8 @@ class Smoother:
                 else:
                     A = SmoothArc(self.canvas, arc, color,
                         tension1=self.tension1, tension2=self.tension2)
-                    try: # join arcs at overcrossings
-                        curves[-1]._extend(A)
-                    except (IndexError, ValueError):
-                        curves.append(A)
+                    curves.append(A)
             self.polygons.append(polygon)
-            if len(curves) - n > 1:
-                try: # join the first to the last if possible
-                    curves[-1]._extend(self.curves[n])
-                    curves.pop(n)
-                except ValueError:
-                    pass
 
     def set_polylines(self, polylines, thickness=5,
                       tension1=1.0, tension2=1.0):
