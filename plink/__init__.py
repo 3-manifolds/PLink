@@ -1121,18 +1121,7 @@ class LinkEditor:
                 next_component = touching[0][1]
                 components.remove(next_component)
                 components.append(next_component)
-        for arrow in self.Arrows:
-            arrow.component = None
-        for n, component in enumerate(sorted_components):
-            if len(component) == 0:
-                continue
-            arrow = first_arrow = component[0].arrow
-            while True:
-                arrow.component = n
-                arrow = arrow.end.out_arrow
-                if arrow == first_arrow:
-                    break
-        self.full_redraw()
+
         return sorted_components
 
     def SnapPea_KLPProjection(self):
