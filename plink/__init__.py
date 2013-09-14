@@ -1488,8 +1488,7 @@ class LinkEditor:
         savefile = asksaveasfile(
             mode='w',
             title='Save As %s (%s)'% (file_type.upper(), color_mode),
-            defaultextension = "." + file_type, 
-            filetypes=[('ps','eps')])
+            defaultextension = "." + file_type)
         if savefile:
             mode = self.view_var.get()
             if mode == 'smooth':
