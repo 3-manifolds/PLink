@@ -34,9 +34,11 @@
 # usual way.
 #
 # The speeds at the spline knots are chosen using Hobby's algorithm from:
+#
 #   * Hobby, John D., "Smooth, easy to compute interpolating splines,"
 #     Discrete and Computational Geometry 1:123-140 (1986).
 #
+# with caps on the velocities to remove some unnecessary inflection points.  
 
 try:
     import Tkinter as Tk_
@@ -316,3 +318,4 @@ class Smoother:
                 curcolor = color
             curve.tikz_draw(file, transform)
         file.write('  \\end{scope}\n\\end{tikzpicture}'+'\n')
+        file.close()

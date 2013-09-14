@@ -193,11 +193,32 @@ class LinkEditor:
         menubar.add_cascade(label='Help', menu=help_menu)
         
     def build_save_image_menu(self, parent_menu):
-        save_image_menu = Tk_.Menu(self.menubar, tearoff=0)
-        save_image_menu.add_command(label='monochrome',
-                       command=lambda : self.save_image(color_mode='mono'))
-        save_image_menu.add_command(label='color', command=self.save_image)
-        parent_menu.add_cascade(label='Save Image', menu=save_image_menu)
+        try:
+            import pyx
+            self.have_pyx = True
+        except ImportError:
+            self.have_pyx = False
+        
+        menu = self.save_image_menu = Tk_.Menu(self.menubar, tearoff=0)
+        save = self.save_image
+        for item_name, save_function in [
+                ('PostScript (color)', lambda : save('eps', 'color')), 
+                ('PostScript (grays)', lambda : save('eps', 'gray')),
+                ('PDF', lambda : save('pdf', 'color')),
+                ('SVG', lambda : save('svg', 'color')),
+                ('TikZ', lambda : save('tikz', 'color'))]:
+            menu.add_command(label=item_name, command=save_function)
+        self.disable_fancy_save_images()
+        parent_menu.add_cascade(label='Save Image', menu=menu)
+
+    def disable_fancy_save_images(self):
+        for i in [2,3,4]:
+            self.save_image_menu.entryconfig(i, state='disabled')
+
+    def enable_fancy_save_images(self):
+        fancy = [2,3,4] if self.have_pyx else [3,4]
+        for i in fancy:
+            self.save_image_menu.entryconfig(i, state='active')
         
     def build_plink_menus(self):
         menubar = self.menubar
@@ -315,18 +336,21 @@ class LinkEditor:
         mode = self.view_var.get()
         if mode == 'smooth':
             self.canvas.config(background='#ffffff')
+            self.enable_fancy_save_images()
             for vertex in self.Vertices:
                 vertex.hide()
             for arrow in self.Arrows: 
                 arrow.hide()
         elif mode == 'both':
             self.canvas.config(background='#ffffff')
+            self.disable_fancy_save_images()
             for vertex in self.Vertices:
                 vertex.expose()
             for arrow in self.Arrows: 
                 arrow.make_faint()
         else:
             self.canvas.config(background='#dcecff')
+            self.disable_fancy_save_images()
             for vertex in self.Vertices:
                 vertex.expose()
             for arrow in self.Arrows: 
@@ -1460,15 +1484,24 @@ class LinkEditor:
             savefile.write(self.SnapPea_projection_file())
             savefile.close()
 
-    def save_image(self, color_mode='color'):
+    def save_image(self, file_type='eps', color_mode='color'):
         savefile = asksaveasfile(
             mode='w',
-            title='Save As Postscript Image File (%s)'%color_mode,
-            defaultextension = ".eps", 
+            title='Save As %s (%s)'% (file_type.upper(), color_mode),
+            defaultextension = "." + file_type, 
             filetypes=[('ps','eps')])
         if savefile:
-            savefile.write(self.canvas.postscript(colormode=color_mode))
-            savefile.close()
+            mode = self.view_var.get()
+            if mode == 'smooth':
+                file_name = savefile.name
+                savefile.close()
+                save_fn = getattr(self.smoother, 'save_as_' + file_type)
+                save_fn(file_name, color_mode)
+            else:
+                ulx, uly, lrx, lry = self.canvas.bbox(Tk_.ALL)
+                savefile.write(self.canvas.postscript(
+                    colormode=color_mode, x=ulx, y=uly, width=lrx-ulx, height=lry-uly))
+                savefile.close()
 
     def unpickle(self, vertices, arrows, crossings, hot=None):
         """
