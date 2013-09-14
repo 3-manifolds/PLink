@@ -172,15 +172,11 @@ class LinkEditor:
     
     # Subclasses may want to overide this method.
     def build_menus(self):
-        menubar = Tk_.Menu(self.window)
+        self.menubar = menubar = Tk_.Menu(self.window)
         file_menu = Tk_.Menu(menubar, tearoff=0)
         file_menu.add_command(label='Open File ...', command=self.load)
         file_menu.add_command(label='Save ...', command=self.save)
-        print_menu = Tk_.Menu(menubar, tearoff=0)
-        print_menu.add_command(label='monochrome',
-                       command=lambda : self.save_image(color_mode='mono'))
-        print_menu.add_command(label='color', command=self.save_image)
-        file_menu.add_cascade(label='Save Image', menu=print_menu)
+        self.build_save_image_menu(file_menu)
         file_menu.add_separator()
         if self.callback:
             file_menu.add_command(label=self.cb_menu, command=self.do_callback)
@@ -189,6 +185,22 @@ class LinkEditor:
             file_menu.add_command(label='Exit', command=self.done)
         menubar.add_cascade(label='File', menu=file_menu)
         export_menu = Tk_.Menu(menubar, tearoff=0)
+        self.build_plink_menus()
+        self.window.config(menu=menubar)
+        help_menu = Tk_.Menu(menubar, tearoff=0)
+        help_menu.add_command(label='About PLink...', command=self.about)
+        help_menu.add_command(label='Instructions ...', command=self.howto)
+        menubar.add_cascade(label='Help', menu=help_menu)
+        
+    def build_save_image_menu(self, parent_menu):
+        save_image_menu = Tk_.Menu(self.menubar, tearoff=0)
+        save_image_menu.add_command(label='monochrome',
+                       command=lambda : self.save_image(color_mode='mono'))
+        save_image_menu.add_command(label='color', command=self.save_image)
+        parent_menu.add_cascade(label='Save Image', menu=save_image_menu)
+        
+    def build_plink_menus(self):
+        menubar = self.menubar
         info_menu = Tk_.Menu(menubar, tearoff=0)
         info_menu.add_radiobutton(label='DT code', var=self.info_var,
                                   command=self.set_info, value=1)
@@ -239,11 +251,6 @@ class LinkEditor:
                               command=self.set_view_mode,
                               variable=self.view_var)
         menubar.add_cascade(label='View', menu=view_menu)
-        help_menu = Tk_.Menu(menubar, tearoff=0)
-        help_menu.add_command(label='About PLink...', command=self.about)
-        help_menu.add_command(label='Instructions ...', command=self.howto)
-        menubar.add_cascade(label='Help', menu=help_menu)
-        self.window.config(menu=menubar)
 
     def initialize(self):
         self.Arrows = []
