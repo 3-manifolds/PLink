@@ -37,6 +37,13 @@ except ImportError: # Python 3
     import tkinter.simpledialog as tkSimpleDialog
     from urllib.request import pathname2url
 from .smooth import Smoother
+from . import canvasvg
+
+try:
+    import pyx
+    have_pyx = True
+except ImportError:
+    have_pyx = False
 
 default_gap_size = 9.0
 
@@ -193,30 +200,24 @@ class LinkEditor:
         menubar.add_cascade(label='Help', menu=help_menu)
         
     def build_save_image_menu(self, parent_menu):
-        try:
-            import pyx
-            self.have_pyx = True
-        except ImportError:
-            self.have_pyx = False
-        
         menu = self.save_image_menu = Tk_.Menu(self.menubar, tearoff=0)
         save = self.save_image
         for item_name, save_function in [
                 ('PostScript (color)', lambda : save('eps', 'color')), 
                 ('PostScript (grays)', lambda : save('eps', 'gray')),
-                ('PDF', lambda : save('pdf', 'color')),
                 ('SVG', lambda : save('svg', 'color')),
-                ('TikZ', lambda : save('tikz', 'color'))]:
+                ('TikZ', lambda : save('tikz', 'color')),
+                ('PDF', lambda : save('pdf', 'color'))]:
             menu.add_command(label=item_name, command=save_function)
         self.disable_fancy_save_images()
         parent_menu.add_cascade(label='Save Image', menu=menu)
 
     def disable_fancy_save_images(self):
-        for i in [2,3,4]:
+        for i in [3,4]:
             self.save_image_menu.entryconfig(i, state='disabled')
 
     def enable_fancy_save_images(self):
-        fancy = [2,3,4] if self.have_pyx else [3,4]
+        fancy = [3,4] if have_pyx else [3]
         for i in fancy:
             self.save_image_menu.entryconfig(i, state='active')
         
@@ -350,7 +351,7 @@ class LinkEditor:
                 arrow.make_faint()
         else:
             self.canvas.config(background='#dcecff')
-            self.disable_fancy_save_images()
+            self.enable_fancy_save_images()
             for vertex in self.Vertices:
                 vertex.expose()
             for arrow in self.Arrows: 
@@ -1484,24 +1485,90 @@ class LinkEditor:
             savefile.write(self.SnapPea_projection_file())
             savefile.close()
 
-    def save_image(self, file_type='eps', color_mode='color'):
+    def save_image(self, file_type='eps', colormode='color'):
         savefile = asksaveasfile(
             mode='w',
-            title='Save As %s (%s)'% (file_type.upper(), color_mode),
+            title='Save As %s (%s)'% (file_type.upper(), colormode),
             defaultextension = "." + file_type)
         if savefile:
             mode = self.view_var.get()
+            file_name = savefile.name
+            savefile.close()
             if mode == 'smooth':
-                file_name = savefile.name
-                savefile.close()
                 save_fn = getattr(self.smoother, 'save_as_' + file_type)
-                save_fn(file_name, color_mode)
+                save_fn(file_name, colormode)
             else:
-                ulx, uly, lrx, lry = self.canvas.bbox(Tk_.ALL)
-                savefile.write(self.canvas.postscript(
-                    colormode=color_mode, x=ulx, y=uly, width=lrx-ulx, height=lry-uly))
-                savefile.close()
+                if file_type == 'eps':
+                    ulx, uly, lrx, lry = self.canvas.bbox(Tk_.ALL)
+                    self.canvas.postscript(file_name=file_name, colormode=colormode,
+                                           x=ulx, y=uly, width=lrx-ulx, height=lry-uly)
+                elif file_type == 'svg':
+                    canvasvg.saveall(file_name, self.canvas,
+                                     items=self.canvas.find_withtag(Tk_.ALL))
+                elif file_type == 'pdf':
+                    self.save_as_pdf(file_name, colormode)
+                elif file_type == 'tikz':
+                    self.save_as_tikz(file_name, colormode)
 
+    def save_as_pdf(self, file_name, colormode='color', width=312.0):
+        """
+        Save the smooth link diagram as a PDF file.
+        Accepts options colormode and width.
+        The colormode must be 'color', 'gray', or 'mono'; default is 'color'.
+        The width option sets the width of the figure in points.
+        The default width is 312pt = 4.33in = 11cm .
+        """
+        # Currently ignoring colormode
+        ulx, uly, lrx, lry = self.canvas.bbox(Tk_.ALL)
+        scale = float(width)/(lrx - ulx)
+        pyx.unit.set(uscale=scale, wscale=scale, defaultunit='pt')
+        transform = lambda xy: (xy[0]-ulx,-xy[1]+lry)
+        canvas = pyx.canvas.canvas()
+        for polylines, color in self.polylines(break_at_overcrossings=False):
+            style = [pyx.style.linewidth(4), pyx.style.linecap.round,
+                     pyx.style.linejoin.round, pyx.color.rgbfromhexstring(color)]
+            for lines in polylines:
+                lines = [transform(xy) for xy in lines]
+                path_parts = [pyx.path.moveto(* lines[0])] + [pyx.path.lineto(*xy) for xy in lines]
+                canvas.stroke(pyx.path.path(*path_parts), style)
+        page = pyx.document.page(canvas,  bboxenlarge=3.5* pyx.unit.t_pt)
+        doc = pyx.document.document([page])
+        doc.writePDFfile(file_name)
+
+    def save_as_tikz(self, file_name, colormode='color', width=282.0):
+        def in_twos(L):
+            assert len(L) % 2 == 0
+            return [L[i:i+2] for i in range(0, len(L), 2)]  
+        file = open(file_name, 'w')
+        ulx, uly, lrx, lry = self.canvas.bbox(Tk_.ALL)
+        pt_scale = float(width)/(lrx - ulx)
+        cm_scale = 0.0352777778*pt_scale
+        transform = lambda xy: (cm_scale*(-ulx+xy[0]), cm_scale*(lry-xy[1]))        
+        # Define the colors
+        colors = dict()
+        polylines = self.polylines(break_at_overcrossings=True)
+        for i, pl in enumerate(polylines):
+            colors[pl[-1]] = i
+            rgb = [int(c,16)/255.0 for c in in_twos(pl[-1][1:])]
+            file.write('\\definecolor{linkcolor%d}' % i +
+                           '{rgb}{%.2f, %.2f, %.2f}\n' % tuple(rgb))
+            
+        file.write(
+            '\\begin{tikzpicture}[line width=%.1f, line cap=round, line join=round]\n' % (pt_scale*4))
+        curcolor = -1
+        for polyline, color in polylines:
+            color = colors[color]
+            if color != curcolor:
+                if curcolor != -1:
+                    file.write('  \\end{scope}\n')
+                file.write('  \\begin{scope}[color=linkcolor%d]\n' % color)
+                curcolor = color
+            for line in polyline:
+                points = ['(%.2f, %.2f)' % transform(xy) for xy in line]
+                file.write('    \\draw ' + ' -- '.join(points) + ';\n')
+        file.write('  \\end{scope}\n\\end{tikzpicture}'+'\n')
+        file.close()    
+                    
     def unpickle(self, vertices, arrows, crossings, hot=None):
         """
         Builds a link diagram from the following data:
