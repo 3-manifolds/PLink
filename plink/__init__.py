@@ -36,7 +36,7 @@ except ImportError: # Python 3
     import tkinter.messagebox as tkMessageBox
     import tkinter.simpledialog as tkSimpleDialog
     from urllib.request import pathname2url
-from .smooth import Smoother
+from . import smooth
 from . import canvasvg
 
 try:
@@ -172,7 +172,7 @@ class LinkEditor:
         self.window.protocol("WM_DELETE_WINDOW", self.done)
         # Go
         self.flipcheck = None
-        self.smoother = Smoother(self.canvas)
+        self.smoother = smooth.Smoother(self.canvas)
         self.state='start_state'
         if file_name:
             self.load(file_name=file_name)
@@ -1494,81 +1494,34 @@ class LinkEditor:
             mode = self.view_var.get()
             file_name = savefile.name
             savefile.close()
-            if mode == 'smooth':
-                save_fn = getattr(self.smoother, 'save_as_' + file_type)
-                save_fn(file_name, colormode)
-            else:
-                if file_type == 'eps':
-                    ulx, uly, lrx, lry = self.canvas.bbox(Tk_.ALL)
-                    self.canvas.postscript(file_name=file_name, colormode=colormode,
-                                           x=ulx, y=uly, width=lrx-ulx, height=lry-uly)
-                elif file_type == 'svg':
-                    canvasvg.saveall(file_name, self.canvas,
-                                     items=self.canvas.find_withtag(Tk_.ALL))
-                elif file_type == 'pdf':
-                    self.save_as_pdf(file_name, colormode)
-                elif file_type == 'tikz':
-                    self.save_as_tikz(file_name, colormode)
+            target = self.smoother if mode == 'smooth' else self
+            save_fn = getattr(target, 'save_as_' + file_type)
+            save_fn(file_name, colormode)
 
-    def save_as_pdf(self, file_name, colormode='color', width=312.0):
-        """
-        Save the smooth link diagram as a PDF file.
-        Accepts options colormode and width.
-        The colormode must be 'color', 'gray', or 'mono'; default is 'color'.
-        The width option sets the width of the figure in points.
-        The default width is 312pt = 4.33in = 11cm .
-        """
-        # Currently ignoring colormode
-        ulx, uly, lrx, lry = self.canvas.bbox(Tk_.ALL)
-        scale = float(width)/(lrx - ulx)
-        pyx.unit.set(uscale=scale, wscale=scale, defaultunit='pt')
-        transform = lambda xy: (xy[0]-ulx,-xy[1]+lry)
-        canvas = pyx.canvas.canvas()
+    def save_as_eps(self, file_name, colormode):
+        smooth.save_as_eps(self.canvas, file_name, colormode)
+
+    def save_as_pdf(self, file_name, colormode):
+        PDF = smooth.PDFPicture(self.canvas, width)
         for polylines, color in self.polylines(break_at_overcrossings=False):
             style = [pyx.style.linewidth(4), pyx.style.linecap.round,
                      pyx.style.linejoin.round, pyx.color.rgbfromhexstring(color)]
             for lines in polylines:
-                lines = [transform(xy) for xy in lines]
+                lines = [PDF.transform(xy) for xy in lines]
                 path_parts = [pyx.path.moveto(* lines[0])] + [pyx.path.lineto(*xy) for xy in lines]
-                canvas.stroke(pyx.path.path(*path_parts), style)
-        page = pyx.document.page(canvas,  bboxenlarge=3.5* pyx.unit.t_pt)
-        doc = pyx.document.document([page])
-        doc.writePDFfile(file_name)
-
-    def save_as_tikz(self, file_name, colormode='color', width=282.0):
-        def in_twos(L):
-            assert len(L) % 2 == 0
-            return [L[i:i+2] for i in range(0, len(L), 2)]  
-        file = open(file_name, 'w')
-        ulx, uly, lrx, lry = self.canvas.bbox(Tk_.ALL)
-        pt_scale = float(width)/(lrx - ulx)
-        cm_scale = 0.0352777778*pt_scale
-        transform = lambda xy: (cm_scale*(-ulx+xy[0]), cm_scale*(lry-xy[1]))        
-        # Define the colors
-        colors = dict()
-        polylines = self.polylines(break_at_overcrossings=True)
-        for i, pl in enumerate(polylines):
-            colors[pl[-1]] = i
-            rgb = [int(c,16)/255.0 for c in in_twos(pl[-1][1:])]
-            file.write('\\definecolor{linkcolor%d}' % i +
-                           '{rgb}{%.2f, %.2f, %.2f}\n' % tuple(rgb))
+                PDF.canvas.stroke(pyx.path.path(*path_parts), style)
+        PDF.save(file_name)
             
-        file.write(
-            '\\begin{tikzpicture}[line width=%.1f, line cap=round, line join=round]\n' % (pt_scale*4))
-        curcolor = -1
-        for polyline, color in polylines:
-            color = colors[color]
-            if color != curcolor:
-                if curcolor != -1:
-                    file.write('  \\end{scope}\n')
-                file.write('  \\begin{scope}[color=linkcolor%d]\n' % color)
-                curcolor = color
-            for line in polyline:
-                points = ['(%.2f, %.2f)' % transform(xy) for xy in line]
-                file.write('    \\draw ' + ' -- '.join(points) + ';\n')
-        file.write('  \\end{scope}\n\\end{tikzpicture}'+'\n')
-        file.close()    
-                    
+    def save_as_tikz(self, file_name, colormode='color', width=282.0):
+        polylines = self.polylines(break_at_overcrossings=True)
+        colors = [polyline[-1] for polyline in polylines]
+        tikz = smooth.TikZPicture(self.canvas, colors, width)
+        for polyline in polylines:
+            for line in polyline[0]:
+                points = ['(%.2f, %.2f)' % tikz.transform(xy) for xy in line]
+                tikz.write(polyline[1], '    \\draw ' + ' -- '.join(points) + ';\n')
+        tikz.save(file_name)
+
     def unpickle(self, vertices, arrows, crossings, hot=None):
         """
         Builds a link diagram from the following data:

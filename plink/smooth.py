@@ -175,10 +175,10 @@ class SmoothArc:
 
     def tikz_draw(self, file, transform):
         points = ['(%.2f, %.2f)' % transform(xy) for xy in self.bezier()]
-        file.write('    \\draw %s .. controls %s and %s .. ' % tuple(points[:3]))
+        file.write(self.color, '    \\draw %s .. controls %s and %s .. ' % tuple(points[:3]))
         for i in range(3, len(points) - 3, 3):
-            file.write('\n' + 10*' ' + '%s .. controls %s and %s .. ' % tuple(points[i:i+3]))
-        file.write(points[-1] + ';\n')
+            file.write(self.color, '\n' + 10*' ' + '%s .. controls %s and %s .. ' % tuple(points[i:i+3]))
+        file.write(self.color, points[-1] + ';\n')
         
 class SmoothLoop(SmoothArc):
     """
@@ -251,22 +251,15 @@ class Smoother:
         """
         Save the smooth link diagram as a PDF file.
         Accepts options colormode and width.
-        The colormode must be 'color', 'gray', or 'mono'; default is 'color'.
+        The colormode (currently ignored) must be 'color', 'gray', or 'mono'; default is 'color'.
         The width option sets the width of the figure in points.
         The default width is 312pt = 4.33in = 11cm .
         """
-        # Currently ignoring colormode
-        ulx, uly, lrx, lry = self.canvas.bbox(Tk_.ALL)
-        scale = float(width)/(lrx - ulx)
-        pyx.unit.set(uscale=scale, wscale=scale, defaultunit='pt')
-        transform = lambda xy: (xy[0]-ulx,-xy[1]+lry)
-        canvas = pyx.canvas.canvas()
+        PDF = PDFPicture(self.canvas, width)
         for curve in self.curves:
-            curve.pyx_draw(canvas, transform)
-        page = pyx.document.page(canvas,  bboxenlarge=3.5* pyx.unit.t_pt)
-        doc = pyx.document.document([page])
-        doc.writePDFfile(file_name)
-
+            curve.pyx_draw(PDF.canvas, PDF.transform)
+        PDF.save(file_name)
+      
     def save_as_eps(self, file_name, colormode='color', width=312.0):
         """
         Save the link diagram as an encapsulated postscript file.
@@ -275,47 +268,82 @@ class Smoother:
         The width option sets the width of the figure in points.
         The default width is 312pt = 4.33in = 11cm .
         """
-        ulx, uly, lrx, lry = self.canvas.bbox(Tk_.ALL)
-        self.canvas.postscript(file=file_name, x=ulx, y=uly,
-                               width=lrx-ulx, height=lry-uly,
-                               colormode=colormode,
-                               pagewidth=width)
+        save_as_eps(self.canvas, file_name, colormode, width)
 
     def save_as_svg(self, file_name, colormode='color', width=None):
         """
-        Save the link diagram as an encapsulated postscript file.
-        Accepts options colormode and width.
-        The colormode must be 'color', 'gray', or 'mono'; default is 'color'.
+        The colormode (currently ignored) must be 'color', 'gray', or 'mono'.
         The width option is ignored for svg images.
         """
-        # Currently ignoring colormode
-        canvasvg.saveall(
-            file_name, self.canvas,
-            items=self.canvas.find_withtag(Tk_.ALL))
+        save_as_svg(self.canvas, file_name, colormode, width)
 
     def save_as_tikz(self, file_name, colormode='color', width=282.0):
-        file = open(file_name, 'w')
-        ulx, uly, lrx, lry = self.canvas.bbox(Tk_.ALL)
+        colors = [pl[-1] for pl in self.polylines]
+        tikz = TikZPicture(self.canvas, colors, width)
+        for curve in self.curves:
+            curve.tikz_draw(tikz, tikz.transform)
+        tikz.save(file_name)
+
+
+
+#----- Code for saving various file types ------
+
+def save_as_eps(canvas, file_name, colormode='color', width=312.0):
+    """
+    The colormode must be 'color', 'gray', or 'mono'; default is 'color'.
+    The width option sets the width of the figure in points.  The
+    default width is 312pt = 4.33in = 11cm .
+    """
+    ulx, uly, lrx, lry = canvas.bbox(Tk_.ALL)
+    canvas.postscript(file=file_name, x=ulx, y=uly, width=lrx-ulx, height=lry-uly,
+                               colormode=colormode, pagewidth=width)
+    
+    
+def save_as_svg(canvas, file_name, colormode='color', width=None):
+    """
+    Width is ignored for SVG images; colormode is currently ignored.
+    """
+    canvasvg.saveall(file_name, canvas, items=canvas.find_withtag(Tk_.ALL))
+
+class PDFPicture:
+    def __init__(self, canvas, width):
+        ulx, uly, lrx, lry = canvas.bbox(Tk_.ALL)        
+        scale = float(width)/(lrx - ulx)
+        pyx.unit.set(uscale=scale, wscale=scale, defaultunit='pt')
+        self.transform = lambda xy: (xy[0]-ulx,-xy[1]+lry)
+        self.canvas = pyx.canvas.canvas()
+
+    def save(self, file_name):
+        page = pyx.document.page(self.canvas,  bboxenlarge=3.5* pyx.unit.t_pt)
+        doc = pyx.document.document([page])
+        doc.writePDFfile(file_name)
+
+class TikZPicture:
+    def __init__(self, canvas, raw_colors, width=282.0):
+        self.string = ''
+        ulx, uly, lrx, lry = canvas.bbox(Tk_.ALL)
         pt_scale = float(width)/(lrx - ulx)
         cm_scale = 0.0352777778*pt_scale
-        transform = lambda xy: (cm_scale*(-ulx+xy[0]), cm_scale*(lry-xy[1]))        
-        # Define the colors
-        colors = dict()
-        for i, pl in enumerate(self.polylines):
-            colors[pl[-1]] = i
-            rgb = [int(c,16)/255.0 for c in in_twos(pl[-1][1:])]
-            file.write('\\definecolor{linkcolor%d}' % i +
-                           '{rgb}{%.2f, %.2f, %.2f}\n' % tuple(rgb))
-            
-        file.write('\\begin{tikzpicture}[line width=%.1f, line cap=round]\n' % (pt_scale*4))
-        curcolor = -1
-        for curve in self.curves:
-            color = colors[curve.color]
-            if color != curcolor:
-                if curcolor != -1:
-                    file.write('  \\end{scope}\n')
-                file.write('  \\begin{scope}[color=linkcolor%d]\n' % color)
-                curcolor = color
-            curve.tikz_draw(file, transform)
-        file.write('  \\end{scope}\n\\end{tikzpicture}'+'\n')
+        self.transform = lambda xy: (cm_scale*(-ulx+xy[0]), cm_scale*(lry-xy[1]))
+
+        self.colors = dict()
+        for i, hex_color in enumerate(raw_colors):
+            self.colors[hex_color] = i
+            rgb = [int(c,16)/255.0 for c in in_twos(hex_color[1:])]
+            self.string += '\\definecolor{linkcolor%d}' % i + '{rgb}{%.2f, %.2f, %.2f}\n' % tuple(rgb)
+        self.string += '\\begin{tikzpicture}[line width=%.1f, line cap=round, line join=round]\n' % (pt_scale*4)
+        self.curcolor = None
+
+    def write(self, color, line):
+        if color != self.curcolor:
+            if self.curcolor is not None:
+                self.string += '  \\end{scope}\n'
+            self.string += '  \\begin{scope}[color=linkcolor%d]\n' % self.colors[color]
+            self.curcolor = color
+        self.string += line
+        
+    def save(self, file_name):
+        file = open(file_name, 'w')
+        file.write(self.string + '  \\end{scope}\n\\end{tikzpicture}\n')
         file.close()
+    
