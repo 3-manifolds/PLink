@@ -127,34 +127,6 @@ class LinkManager:
         self.Crossings = [ c for c in self.Crossings if c.x is not None]
         self.CrossPoints = [Vertex(c.x, c.y, self.canvas, style='hidden')
                             for c in self.Crossings]
-
-    def update_crossings(self, this_arrow):
-        if this_arrow == None:
-            return
-        cross_list = [c for c in self.Crossings if this_arrow in c]
-        damage_list =[]
-        find = lambda x: cross_list[cross_list.index(x)]
-        for arrow in self.Arrows:
-            if this_arrow == arrow:
-                continue
-            new_crossing = Crossing(this_arrow, arrow)
-            new_crossing.locate()
-            if new_crossing.x != None:
-                if new_crossing in cross_list:
-                    #print 'keeping %s'%new_crossing
-                    find(new_crossing).locate()
-                    continue
-                else:
-                    #print 'adding %s'%new_crossing
-                    self.Crossings.append(new_crossing)
-            else:
-                #print 'removing %s'%new_crossing
-                if new_crossing in self.Crossings:
-                    if arrow == find(new_crossing).under:
-                        damage_list.append(arrow)
-                    self.Crossings.remove(new_crossing)
-        for arrow in damage_list:
-            arrow.draw(self.Crossings)
             
     def arrow_components(self, include_isolated_vertices=False):
         """
@@ -670,16 +642,60 @@ class LinkManager:
 
 class LinkViewer(LinkManager):
     """
-    Simply draws a smooth link diagram on a canvas.  Instantiate with a
-    canvas and a pickled link diagram.
+    Simply draws a smooth link diagram on a canvas.  Instantiate with
+    a canvas and a pickled link diagram as returned by
+    OrthogonalLinkDiagram.plink_data.
     """
-    def __init__(self, canvas, pickle):
+    def __init__(self, canvas, data):
         self.initialize()
         self.canvas = canvas
+        self.palette = Palette()
         self.smoother = smooth.Smoother(self.canvas)
-        self.unpickle(pickle)
+        self.unpickle(*data)
+
+    def _zoom(self):
+        W, H = self.canvas.winfo_width(), self.canvas.winfo_height()
+        # To avoid round-off artifacts, compute a floating point bbox
+        x0, y0, x1, y1 = self._bbox(W,H)
+#        print x0, y0, x1, y1
+        w, h = x1-x0, y1-y0
+        factor = min( (W-40)/w, (H-40)/h )
+        # Make sure we get an integer bbox after zooming
+        xfactor, yfactor = round(factor*w)/w, round(factor*h)/h
+        self.update_crosspoints()
+        # Scale the picture
+        for vertex in self.Vertices:
+            vertex.x = x0 + xfactor*(vertex.x - x0)
+            vertex.y = y0 + yfactor*(vertex.y - y1)
+        # FIX ME
+        w, h = xfactor*w, yfactor*h
+#        print w, h
+        x0, y0, x1, y1 = self._bbox(W, H)
+#        print ( (W - x1 + x0)/2 - x0, (H - y1 + y0)/2 - y0)
+        self._shift( (W - w)/2 - x0, (H - h)/2 - y0)
+
+    def _bbox(self, W, H):
+        x0, y0, x1, y1 = W, H, 0, 0
+        for vertex in self.Vertices:
+            x0, y0 = min(x0, vertex.x), min(y0, vertex.y)
+            x1, y1 = max(x1, vertex.x), max(y1, vertex.y)
+        return x0, y0, x1, y1
+
+    def _shift(self, dx, dy):
+        for vertex in self.Vertices:
+            vertex.x += dx
+            vertex.y += dy
+        self.canvas.move(Tk_.ALL, dx, dy)
 
     def draw(self):
+        # Fit to the canvas
+        self._zoom()
+        # Hide the polygon image
+        for vertex in self.Vertices:
+            vertex.hide()
+        for arrow in self.Arrows: 
+            arrow.hide()
+        # draw the smooth image
         self.smoother.clear()
         self.smoother.set_polylines(self.polylines())
 
@@ -1323,6 +1339,37 @@ class LinkEditor(LinkManager):
             arrow.start.out_arrow = None
         arrow.erase()
         self.Crossings = [c for c in self.Crossings if arrow not in c]
+
+    def update_crossings(self, this_arrow):
+        """
+        Redraw any arrows which were changed by moving this_arrow.
+        """
+        if this_arrow == None:
+            return
+        cross_list = [c for c in self.Crossings if this_arrow in c]
+        damage_list =[]
+        find = lambda x: cross_list[cross_list.index(x)]
+        for arrow in self.Arrows:
+            if this_arrow == arrow:
+                continue
+            new_crossing = Crossing(this_arrow, arrow)
+            new_crossing.locate()
+            if new_crossing.x != None:
+                if new_crossing in cross_list:
+                    #print 'keeping %s'%new_crossing
+                    find(new_crossing).locate()
+                    continue
+                else:
+                    #print 'adding %s'%new_crossing
+                    self.Crossings.append(new_crossing)
+            else:
+                #print 'removing %s'%new_crossing
+                if new_crossing in self.Crossings:
+                    if arrow == find(new_crossing).under:
+                        damage_list.append(arrow)
+                    self.Crossings.remove(new_crossing)
+        for arrow in damage_list:
+            arrow.draw(self.Crossings)
 
     def full_redraw(self):
         """
