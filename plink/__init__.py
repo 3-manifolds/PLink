@@ -618,7 +618,8 @@ class LinkManager:
         for polyline in polylines:
             for line in polyline[0]:
                 points = ['(%.2f, %.2f)' % tikz.transform(xy) for xy in line]
-                tikz.write(polyline[1], '    \\draw ' + ' -- '.join(points) + ';\n')
+                tikz.write(polyline[1],
+                           '    \\draw ' + ' -- '.join(points) + ';\n')
         tikz.save(file_name)
 
     def unpickle(self, vertices, arrows, crossings):
@@ -666,6 +667,21 @@ class LinkManager:
             for arrow in component:
                 arrow.set_color(color)
                 arrow.end.set_color(color)
+
+class LinkViewer(LinkManager):
+    """
+    Simply draws a smooth link diagram on a canvas.  Instantiate with a
+    canvas and a pickled link diagram.
+    """
+    def __init__(self, canvas, pickle):
+        self.initialize()
+        self.canvas = canvas
+        self.smoother = smooth.Smoother(self.canvas)
+        self.unpickle(pickle)
+
+    def draw(self):
+        self.smoother.clear()
+        self.smoother.set_polylines(self.polylines())
 
 class LinkEditor(LinkManager):
     """
@@ -740,7 +756,6 @@ class LinkEditor(LinkManager):
         self.window.protocol("WM_DELETE_WINDOW", self.done)
         # Go
         self.flipcheck = None
-        self.smoother = smooth.Smoother(self.canvas)
         self.state='start_state'
         if file_name:
             self.load(file_name=file_name)
