@@ -656,26 +656,22 @@ class LinkViewer(LinkManager):
     def _zoom(self):
         W, H = self.canvas.winfo_width(), self.canvas.winfo_height()
         # To avoid round-off artifacts, compute a floating point bbox
-        x0, y0, x1, y1 = self._bbox(W,H)
-#        print x0, y0, x1, y1
+        x0, y0, x1, y1 = self._bbox()
         w, h = x1-x0, y1-y0
         factor = min( (W-40)/w, (H-40)/h )
         # Make sure we get an integer bbox after zooming
         xfactor, yfactor = round(factor*w)/w, round(factor*h)/h
         self.update_crosspoints()
-        # Scale the picture
+        # Scale the picture, fixing the upper left corner
         for vertex in self.Vertices:
             vertex.x = x0 + xfactor*(vertex.x - x0)
-            vertex.y = y0 + yfactor*(vertex.y - y1)
-        # FIX ME
-        w, h = xfactor*w, yfactor*h
-#        print w, h
-        x0, y0, x1, y1 = self._bbox(W, H)
-#        print ( (W - x1 + x0)/2 - x0, (H - y1 + y0)/2 - y0)
-        self._shift( (W - w)/2 - x0, (H - h)/2 - y0)
+            vertex.y = y0 + yfactor*(vertex.y - y0)
+        # Shift into place
+        self._shift( 20 - x0, 20 - y0)
 
-    def _bbox(self, W, H):
-        x0, y0, x1, y1 = W, H, 0, 0
+    def _bbox(self):
+        x0 = y0 = float('inf')
+        x1 = y1 = float('-inf')
         for vertex in self.Vertices:
             x0, y0 = min(x0, vertex.x), min(y0, vertex.y)
             x1, y1 = max(x1, vertex.x), max(y1, vertex.y)
@@ -736,6 +732,7 @@ class LinkEditor(LinkManager):
                                  width=500,
                                  height=500,
                                  highlightthickness=0)
+        self.smoother = smooth.Smoother(self.canvas)
         self.infoframe = Tk_.Frame(self.window, 
                                    borderwidth=2,
                                    relief=Tk_.FLAT,
@@ -1719,7 +1716,6 @@ class Vertex:
         self.color = color
         self.dot = None
         self.style = style
-        self.draw()
 
     def __repr__(self):
         return '(%s,%s)'%(self.x, self.y)
@@ -1886,7 +1882,6 @@ class Arrow:
             self.start.out_arrow = self
             self.end.in_arrow = self
             self.vectorize()
-            self.draw()
         
     def __repr__(self):
         return '%s-->%s'%(self.start, self.end)
