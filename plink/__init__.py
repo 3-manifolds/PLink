@@ -834,7 +834,7 @@ class LinkEditor(LinkManager):
         info_menu.add_checkbutton(label='DT labels', var=self.show_DT_var,
                                   command = self.update_info)
         menubar.add_cascade(label='Info', menu=info_menu)
-        tools_menu = Tk_.Menu(menubar, tearoff=0)
+        self.tools_menu = tools_menu = Tk_.Menu(menubar, tearoff=0)
         tools_menu.add_command(label='Make alternating',
                        command=self.make_alternating)
         tools_menu.add_command(label='Reflect', command=self.reflect)
