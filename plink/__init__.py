@@ -594,7 +594,7 @@ class LinkManager:
                            '    \\draw ' + ' -- '.join(points) + ';\n')
         tikz.save(file_name)
 
-    def unpickle(self, vertices, arrows, crossings):
+    def unpickle(self, vertices, arrows, crossings, hot=None):
         """
         Builds a link diagram from the following data:
            * vertices: a list of (x,y)-coordinates for the vertices;
