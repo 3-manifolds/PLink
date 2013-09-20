@@ -1696,6 +1696,9 @@ class LinkEditor(LinkManager):
     def save_as_eps(self, file_name, colormode):
         smooth.save_as_eps(self.canvas, file_name, colormode)
 
+    def save_as_svg(self, file_name, colormode):
+        smooth.save_as_svg(self.canvas, file_name, colormode)
+
     def save_as_pdf(self, file_name, colormode):
         PDF = smooth.PDFPicture(self.canvas, width)
         for polylines, color in self.polylines(break_at_overcrossings=False):
