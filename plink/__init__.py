@@ -839,21 +839,21 @@ class LinkEditor(LinkManager):
                        command=self.make_alternating)
         tools_menu.add_command(label='Reflect', command=self.reflect)
         zoom_menu = Tk_.Menu(tools_menu, tearoff=0)
-        zoom_menu.add_command(label='Zoom in', accelerator='+',
+        zoom_menu.add_command(label='Zoom in    \t+',
                               command=self.zoom_in)
-        zoom_menu.add_command(label='Zoom out', accelerator='-',
+        zoom_menu.add_command(label='Zoom out   \t-',
                               command=self.zoom_out)
-        zoom_menu.add_command(label='Zoom to fit', accelerator='0',
+        zoom_menu.add_command(label='Zoom to fit\t0',
                               command=self.zoom_to_fit)
         tools_menu.add_cascade(label='Zoom', menu=zoom_menu)
         pan_menu = Tk_.Menu(tools_menu, tearoff=0)
-        pan_menu.add_command(label='Left', accelerator=scut['Left'],
+        pan_menu.add_command(label='Left  \t'+scut['Left'],
             command=lambda : self._shift(-5,0))
-        pan_menu.add_command(label='Up', accelerator=scut['Up'],
+        pan_menu.add_command(label='Up    \t'+scut['Up'],
             command=lambda : self._shift(0,-5))
-        pan_menu.add_command(label='Right', accelerator=scut['Right'],
+        pan_menu.add_command(label='Right \t'+scut['Right'],
             command=lambda : self._shift(5,0))
-        pan_menu.add_command(label='Down', accelerator=scut['Down'],
+        pan_menu.add_command(label='Down  \t'+scut['Down'],
             command=lambda : self._shift(0,5))
         tools_menu.add_cascade(label='Pan', menu=pan_menu)
         tools_menu.add_command(label='Clear', command=self.clear)
@@ -1166,8 +1166,8 @@ class LinkEditor(LinkManager):
         Handler for keypress events.
         """
         dx, dy = 0, 0
-        key, char = event.keysym, event.char
-        if key == 'Delete' or key == 'BackSpace':
+        key = event.keysym
+        if key in ('Delete','BackSpace'):
             if self.state == 'drawing_state':
                 last_arrow = self.ActiveVertex.in_arrow
                 if last_arrow:
@@ -1191,11 +1191,11 @@ class LinkEditor(LinkManager):
                     self.Vertices.remove(self.ActiveVertex)
                     self.ActiveVertex.erase()
                     self.goto_start_state()
-        elif char in ('+','='):
+        elif key in ('plus', 'equal'):
             self.zoom_in()
-        elif char in ('-','_'):
+        elif key in ('minus', 'underscore'):
             self.zoom_out()
-        elif char == '0':
+        elif key == '0':
             self.zoom_to_fit()
         if self.state != 'dragging_state':
             try:
@@ -1204,7 +1204,7 @@ class LinkEditor(LinkManager):
                 pass
             return
         else:
-            if key == 'Return' or key == 'Escape':
+            if key in ('Return','Escape'):
                 self.cursorx = self.ActiveVertex.x
                 self.cursory = self.ActiveVertex.y
                 self.end_dragging_state()
