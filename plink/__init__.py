@@ -839,22 +839,39 @@ class LinkEditor(LinkManager):
                        command=self.make_alternating)
         tools_menu.add_command(label='Reflect', command=self.reflect)
         zoom_menu = Tk_.Menu(tools_menu, tearoff=0)
-        zoom_menu.add_command(label='Zoom in    \t+',
-                              command=self.zoom_in)
-        zoom_menu.add_command(label='Zoom out   \t-',
-                              command=self.zoom_out)
-        zoom_menu.add_command(label='Zoom to fit\t0',
-                              command=self.zoom_to_fit)
-        tools_menu.add_cascade(label='Zoom', menu=zoom_menu)
         pan_menu = Tk_.Menu(tools_menu, tearoff=0)
-        pan_menu.add_command(label='Left  \t'+scut['Left'],
-            command=lambda : self._shift(-5,0))
-        pan_menu.add_command(label='Up    \t'+scut['Up'],
-            command=lambda : self._shift(0,-5))
-        pan_menu.add_command(label='Right \t'+scut['Right'],
-            command=lambda : self._shift(5,0))
-        pan_menu.add_command(label='Down  \t'+scut['Down'],
-            command=lambda : self._shift(0,5))
+        # Accelerators are really slow on the Mac.  Bad UX
+        if sys.platform == 'darwin':
+            zoom_menu.add_command(label='Zoom in    \t+',
+                                  command=self.zoom_in)
+            zoom_menu.add_command(label='Zoom out   \t-',
+                                  command=self.zoom_out)
+            zoom_menu.add_command(label='Zoom to fit\t0',
+                                  command=self.zoom_to_fit)
+            pan_menu.add_command(label='Left  \t'+scut['Left'],
+                                 command=lambda : self._shift(-5,0))
+            pan_menu.add_command(label='Up    \t'+scut['Up'],
+                                 command=lambda : self._shift(0,-5))
+            pan_menu.add_command(label='Right \t'+scut['Right'],
+                                 command=lambda : self._shift(5,0))
+            pan_menu.add_command(label='Down  \t'+scut['Down'],
+                                 command=lambda : self._shift(0,5))
+        else:
+            zoom_menu.add_command(label='Zoom in', accelerator='+',
+                                  command=self.zoom_in)
+            zoom_menu.add_command(label='Zoom out', accelerator='-',
+                                  command=self.zoom_out)
+            zoom_menu.add_command(label='Zoom to fit', accelerator='0',
+                                  command=self.zoom_to_fit)
+            pan_menu.add_command(label='Left', accelerator=scut['Left'],
+                                 command=lambda : self._shift(-5,0))
+            pan_menu.add_command(label='Up', accelerator=scut['Up'],
+                                 command=lambda : self._shift(0,-5))
+            pan_menu.add_command(label='Right', accelerator=scut['Right'],
+                                 command=lambda : self._shift(5,0))
+            pan_menu.add_command(label='Down', accelerator=scut['Down'],
+                                 command=lambda : self._shift(0,5))
+        tools_menu.add_cascade(label='Zoom', menu=zoom_menu)
         tools_menu.add_cascade(label='Pan', menu=pan_menu)
         tools_menu.add_command(label='Clear', command=self.clear)
         menubar.add_cascade(label='Tools', menu=tools_menu)
