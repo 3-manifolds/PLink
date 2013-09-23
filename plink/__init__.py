@@ -668,6 +668,7 @@ class LinkViewer(LinkManager):
             vertex.y = y0 + yfactor*(vertex.y - y0)
         # Shift into place
         self._shift( 20 - x0, 20 - y0)
+        self.update_info()
 
     def _bbox(self):
         x0 = y0 = float('inf')
@@ -694,6 +695,10 @@ class LinkViewer(LinkManager):
         # draw the smooth image
         self.smoother.clear()
         self.smoother.set_polylines(self.polylines())
+
+    def update_info(self):
+        # subclasses can override this method.
+        pass
 
 class LinkEditor(LinkManager):
     """
