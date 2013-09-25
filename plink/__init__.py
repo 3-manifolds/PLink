@@ -154,7 +154,8 @@ class LinkManager:
                 closed.append(component)
         if include_isolated_vertices:
             for vertex in [v for v in self.Vertices if v.is_isolated()]:
-                nonclosed.append([Arrow(vertex, vertex, color=vertex.color)])
+                nonclosed.append([Arrow(vertex, vertex, self.canvas,
+                                        color=vertex.color)])
         def oldest_vertex(component):
             def oldest(arrow):
                 return min([self.Vertices.index(v)
