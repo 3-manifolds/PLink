@@ -1434,6 +1434,11 @@ class LinkEditor(LinkManager):
             self.current_info = which_info
             self.update_info()
 
+    def unpickle(self,  vertices, arrows, crossings, hot=None):
+        LinkManager.unpickle(self, vertices, arrows, crossings, hot)
+        self.canvas.wait_visibility()
+        self.full_redraw()
+        
     def clear_text(self):
         self.infotext_contents.set('')
         self.window.focus_set()
@@ -1546,7 +1551,7 @@ class LinkEditor(LinkManager):
             x0, y0 = min(x0, V.x), min(y0, V.y)
             x1, y1 = max(x1, V.x), max(y1, V.y)
         w, h = x1-x0, y1-y0
-        factor = min( (W-40)/w, (H-40)/h )
+        factor = min( (W-60)/w, (H-60)/h )
         # Make sure we get an integer bbox after zooming
         xfactor, yfactor = round(factor*w)/w, round(factor*h)/h
         self._zoom(xfactor, yfactor)
