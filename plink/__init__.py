@@ -1711,7 +1711,7 @@ class LinkEditor(LinkManager):
         smooth.save_as_svg(self.canvas, file_name, colormode)
 
     def save_as_pdf(self, file_name, colormode):
-        PDF = smooth.PDFPicture(self.canvas, width)
+        PDF = smooth.PDFPicture(self.canvas)
         for polylines, color in self.polylines(break_at_overcrossings=False):
             style = [pyx.style.linewidth(4), pyx.style.linecap.round,
                      pyx.style.linejoin.round, pyx.color.rgbfromhexstring(color)]
