@@ -812,6 +812,7 @@ class LinkEditor(LinkManager):
                 ('PDF', lambda : save('pdf', 'color'))]:
             menu.add_command(label=item_name, command=save_function)
         self.disable_fancy_save_images()
+        self.enable_fancy_save_images()
         parent_menu.add_cascade(label='Save Image', menu=menu)
 
     def disable_fancy_save_images(self):
