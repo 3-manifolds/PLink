@@ -1995,6 +1995,7 @@ class Arrow:
                 t = self ^ c.under
                 if t:
                     cross_params.append((t, False))
+            # Virtual crossings are False, but remember them.
         cross_params.sort()
         
         def r(t):
@@ -2045,6 +2046,7 @@ class Arrow:
             under_arrows = [c.under for c in crossings if c.over == self]
             for arrow in under_arrows:
                 arrow.draw(crossings, recurse=False)
+        #Now drop the dots for virtual crossings.
     
     def set_start(self, vertex, crossings=[]):
         self.start = vertex
@@ -2099,11 +2101,17 @@ class Crossing:
         self.comp1 = None
         self.comp2 = None
         self.flipped = None
+        self.virtual = False
 
     def __repr__(self):
         self.locate()
-        return '%s over %s at (%s,%s)'%(self.over, self.under, self.x, self.y)
-
+        if not self.virtual:
+            return '%s over %s at (%s,%s)'%(
+                self.over, self.under, self.x, self.y)
+        else:
+            return 'virtual crossing of %s and %s at (%s,%s)'%(
+                self.over, self.under, self.x, self.y)
+            
     def __eq__(self, other):
         """
         Crossings are equivalent if they involve the same arrows.
