@@ -767,14 +767,17 @@ class LinkEditor(LinkManager):
         # Event bindings
         self.canvas.bind('<Button-1>', self.single_click)
         self.canvas.bind('<Double-Button-1>', self.double_click)
+        self.canvas.bind('<Shift-Button-1>', self.shift_click)
         self.canvas.bind('<Motion>', self.mouse_moved)
         self.window.bind('<FocusIn>', self.focus_in)
         self.window.bind('<FocusOut>', self.focus_out)
         self.window.bind('<Key>', self.key_press)
+        self.window.bind('<KeyRelease>', self.key_release)
         self.infotext.bind('<<Copy>>', lambda event : None)
         self.window.protocol("WM_DELETE_WINDOW", self.done)
         # Go
         self.flipcheck = None
+        self.shift_down = False
         self.state='start_state'
         if file_name:
             self.load(file_name=file_name)
@@ -965,6 +968,30 @@ class LinkEditor(LinkManager):
                 arrow.expose()
         self.full_redraw()
     
+    def shift_click(self, event):
+        """
+        Event handler for mouse shift-clicks.
+        """
+        if self.view_var.get() == 'smooth':
+            return
+        if self.state == 'start_state':
+            if not self.has_focus:
+                return
+        else:
+            self.has_focus = True
+        x = self.canvas.canvasx(event.x)
+        y = self.canvas.canvasy(event.y)
+        self.clear_text()
+        start_vertex = Vertex(x, y, self.canvas, style='hidden')
+        if start_vertex in self.CrossPoints:
+            #print 'shift-click in %s'%self.state
+            crossing = self.Crossings[self.CrossPoints.index(start_vertex)]
+            self.update_info()
+            crossing.is_virtual = not crossing.is_virtual
+            crossing.under.draw(self.Crossings)
+            crossing.over.draw(self.Crossings)
+            self.update_smooth()
+
     def single_click(self, event):
         """
         Event handler for mouse clicks.
@@ -1133,7 +1160,31 @@ class LinkEditor(LinkManager):
             if dead_arrow:
                 self.destroy_arrow(dead_arrow)
             self.goto_start_state()
-        
+
+    def set_start_cursor(self, x, y):
+        point = Vertex(x, y, self.canvas, style='hidden')
+        if self.shift_down:
+            if point in self.CrossPoints:
+                self.canvas.config(cursor='dot')
+            else:
+                self.canvas.config(cursor='')
+        else:
+            if point in self.CrossPoints:
+                self.flipcheck=None
+                self.canvas.config(cursor='exchange')
+            elif point in self.Vertices:
+                self.flipcheck=None
+                self.canvas.config(cursor='hand1')
+            elif self.cursor_on_arrow(point):
+                now = time.time()
+                if self.flipcheck is None:
+                    self.flipcheck = now
+                elif now - self.flipcheck > 0.5:
+                    self.canvas.config(cursor='double_arrow')
+            else:
+                self.flipcheck=None
+                self.canvas.config(cursor='')
+ 
     def mouse_moved(self,event):
         """
         Handler for mouse motion events.
@@ -1145,21 +1196,7 @@ class LinkEditor(LinkManager):
         y = self.canvas.canvasy(event.y)
         if self.state == 'start_state':
             point = Vertex(x, y, self.canvas, style='hidden')
-            if point in self.Vertices:
-                self.flipcheck=None
-                self.canvas.config(cursor='hand1')
-            elif point in self.CrossPoints:
-                self.flipcheck=None
-                self.canvas.config(cursor='exchange')
-            elif self.cursor_on_arrow(point):
-                now = time.time()
-                if self.flipcheck is None:
-                    self.flipcheck = now
-                elif now - self.flipcheck > 0.5:
-                    self.canvas.config(cursor='double_arrow')
-            else:
-                self.flipcheck=None
-                self.canvas.config(cursor='')
+            self.set_start_cursor(x,y)
         elif self.state == 'drawing_state':
             x0,y0,x1,y1 = self.canvas.coords(self.LiveArrow1)
             self.canvas.coords(self.LiveArrow1, x0, y0, x, y)
@@ -1185,12 +1222,25 @@ class LinkEditor(LinkManager):
         self.update_info()
         self.window.update_idletasks()
 
+    def key_release(self, event):
+        """
+        Handler for keyrelease events.
+        """
+        if not self.state == 'start_state':
+            return
+        if event.keysym in ('Shift_L', 'Shift_R'):
+            self.shift_down = False
+            self.set_start_cursor(self.cursorx, self.cursory)
+
     def key_press(self, event):
         """
         Handler for keypress events.
         """
         dx, dy = 0, 0
         key = event.keysym
+        if key in ('Shift_L', 'Shift_R') and self.state == 'start_state':
+            self.shift_down = True
+            self.set_start_cursor(self.cursorx, self.cursory)
         if key in ('Delete','BackSpace'):
             if self.state == 'drawing_state':
                 last_arrow = self.ActiveVertex.in_arrow
@@ -1909,6 +1959,7 @@ class Arrow:
         self.component = None
         self.style = 'normal'
         self.lines = []
+        self.dots = []
         self.cross_params = []
         if self.start != self.end:
             self.start.out_arrow = self
@@ -1990,12 +2041,11 @@ class Arrow:
             if c.under == self:
                 t = self ^ c.over
                 if t:
-                    cross_params.append((t, True))
+                    cross_params.append((t, not c.is_virtual))
             if c.over == self and include_overcrossings:
                 t = self ^ c.under
                 if t:
                     cross_params.append((t, False))
-            # Virtual crossings are False, but remember them.
         cross_params.sort()
         
         def r(t):
@@ -2033,6 +2083,8 @@ class Arrow:
         segments = self.find_segments(crossings)
         for line in self.lines:
             self.canvas.delete(line)
+        for dot in self.dots:
+            self.canvas.delete(dot)
         for x0, y0, x1, y1 in segments[:-1]:
             self.lines.append(self.canvas.create_line(
                     x0, y0, x1, y1,
@@ -2046,7 +2098,13 @@ class Arrow:
             under_arrows = [c.under for c in crossings if c.over == self]
             for arrow in under_arrows:
                 arrow.draw(crossings, recurse=False)
-        #Now drop the dots for virtual crossings.
+        for c in crossings:
+            if self == c.under and c.is_virtual:
+                self.dots.append(self.canvas.create_oval(
+                        c.x-5, c.y-5, c.x+5, c.y+5,
+                        fill='black', outline='black',
+                        tags=('dot', 'transformable')))
+        self.canvas.tag_raise('dot', Tk_.ALL)
     
     def set_start(self, vertex, crossings=[]):
         self.start = vertex
@@ -2101,11 +2159,11 @@ class Crossing:
         self.comp1 = None
         self.comp2 = None
         self.flipped = None
-        self.virtual = False
+        self.is_virtual = False
 
     def __repr__(self):
         self.locate()
-        if not self.virtual:
+        if not self.is_virtual:
             return '%s over %s at (%s,%s)'%(
                 self.over, self.under, self.x, self.y)
         else:
