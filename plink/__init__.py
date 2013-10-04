@@ -1487,7 +1487,6 @@ class LinkEditor(LinkManager):
 
     def unpickle(self,  vertices, arrows, crossings, hot=None):
         LinkManager.unpickle(self, vertices, arrows, crossings, hot)
-        self.canvas.wait_visibility()
         self.full_redraw()
         
     def clear_text(self):
@@ -1596,6 +1595,8 @@ class LinkEditor(LinkManager):
 
     def zoom_to_fit(self):
         W, H = self.canvas.winfo_width(), self.canvas.winfo_height()
+        if W < 10:
+            W, H = self.canvas.winfo_reqwidth(), self.canvas.winfo_reqheight()
         # To avoid round-off artifacts, compute a floating point bbox
         x0, y0, x1, y1 = W, H, 0, 0
         for V in self.Vertices:
