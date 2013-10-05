@@ -1758,8 +1758,9 @@ class LinkEditor(LinkViewer):
                     self.ActiveVertex = self.Vertices[hot]
                     self.goto_drawing_state(*self.canvas.winfo_pointerxy())
                 else:
-                    self.goto_start_state()
                     self.zoom_to_fit()
+                    self.goto_start_state()
+                    
 
     def save(self):
         savefile = asksaveasfile(
