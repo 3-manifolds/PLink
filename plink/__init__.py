@@ -701,7 +701,60 @@ class LinkViewer(LinkManager):
         # subclasses can override this method.
         pass
 
-class LinkEditor(LinkManager):
+    def save_image(self, file_type='eps', colormode='color', target=None):
+        savefile = asksaveasfile(
+            mode='w',
+            title='Save As %s (%s)'% (file_type.upper(), colormode),
+            defaultextension = "." + file_type)
+        if savefile:
+            file_name = savefile.name
+            savefile.close()
+            if target is None:
+                target = self.smoother
+            save_fn = getattr(target, 'save_as_' + file_type)
+            save_fn(file_name, colormode)
+
+    def save_as_eps(self, file_name, colormode):
+        smooth.save_as_eps(self.canvas, file_name, colormode)
+
+    def save_as_svg(self, file_name, colormode):
+        smooth.save_as_svg(self.canvas, file_name, colormode)
+
+    def save_as_pdf(self, file_name, colormode):
+        PDF = smooth.PDFPicture(self.canvas)
+        for polylines, color in self.polylines(break_at_overcrossings=False):
+            style = [pyx.style.linewidth(4), pyx.style.linecap.round,
+                     pyx.style.linejoin.round, pyx.color.rgbfromhexstring(color)]
+            for lines in polylines:
+                lines = [PDF.transform(xy) for xy in lines]
+                path_parts = [pyx.path.moveto(* lines[0])] + [pyx.path.lineto(*xy) for xy in lines]
+                PDF.canvas.stroke(pyx.path.path(*path_parts), style)
+        PDF.save(file_name)
+
+    def build_save_image_menu(self, menubar, parent_menu):
+        menu = self.save_image_menu = Tk_.Menu(menubar, tearoff=0)
+        save = self.save_image
+        for item_name, save_function in [
+                ('PostScript (color)', lambda : save('eps', 'color')), 
+                ('PostScript (grays)', lambda : save('eps', 'gray')),
+                ('SVG', lambda : save('svg', 'color')),
+                ('TikZ', lambda : save('tikz', 'color')),
+                ('PDF', lambda : save('pdf', 'color'))]:
+            menu.add_command(label=item_name, command=save_function)
+        self.disable_fancy_save_images()
+        self.enable_fancy_save_images()
+        parent_menu.add_cascade(label='Save Image...', menu=menu)
+
+    def disable_fancy_save_images(self):
+        for i in [3,4]:
+            self.save_image_menu.entryconfig(i, state='disabled')
+
+    def enable_fancy_save_images(self):
+        fancy = [3,4] if have_pyx else [3]
+        for i in fancy:
+            self.save_image_menu.entryconfig(i, state='active')
+
+class LinkEditor(LinkViewer):
     """
     A graphical link drawing tool based on the one embedded in Jeff Weeks'
     original SnapPea program.
@@ -788,7 +841,7 @@ class LinkEditor(LinkManager):
         file_menu = Tk_.Menu(menubar, tearoff=0)
         file_menu.add_command(label='Open File ...', command=self.load)
         file_menu.add_command(label='Save ...', command=self.save)
-        self.build_save_image_menu(file_menu)
+        self.build_save_image_menu(menubar, file_menu)
         file_menu.add_separator()
         if self.callback:
             file_menu.add_command(label=self.cb_menu, command=self.do_callback)
@@ -804,28 +857,7 @@ class LinkEditor(LinkManager):
         help_menu.add_command(label='Instructions ...', command=self.howto)
         menubar.add_cascade(label='Help', menu=help_menu)
         
-    def build_save_image_menu(self, parent_menu):
-        menu = self.save_image_menu = Tk_.Menu(self.menubar, tearoff=0)
-        save = self.save_image
-        for item_name, save_function in [
-                ('PostScript (color)', lambda : save('eps', 'color')), 
-                ('PostScript (grays)', lambda : save('eps', 'gray')),
-                ('SVG', lambda : save('svg', 'color')),
-                ('TikZ', lambda : save('tikz', 'color')),
-                ('PDF', lambda : save('pdf', 'color'))]:
-            menu.add_command(label=item_name, command=save_function)
-        self.disable_fancy_save_images()
-        self.enable_fancy_save_images()
-        parent_menu.add_cascade(label='Save Image', menu=menu)
 
-    def disable_fancy_save_images(self):
-        for i in [3,4]:
-            self.save_image_menu.entryconfig(i, state='disabled')
-
-    def enable_fancy_save_images(self):
-        fancy = [3,4] if have_pyx else [3]
-        for i in fancy:
-            self.save_image_menu.entryconfig(i, state='active')
         
     def build_plink_menus(self):
         menubar = self.menubar
@@ -917,7 +949,7 @@ class LinkEditor(LinkManager):
                     else:
                         break
 
-    def done(self):
+    def done(self, event=None):
         if self.callback is not None:
             self.window.withdraw()
             return
@@ -1744,34 +1776,9 @@ class LinkEditor(LinkManager):
             savefile.close()
 
     def save_image(self, file_type='eps', colormode='color'):
-        savefile = asksaveasfile(
-            mode='w',
-            title='Save As %s (%s)'% (file_type.upper(), colormode),
-            defaultextension = "." + file_type)
-        if savefile:
-            mode = self.view_var.get()
-            file_name = savefile.name
-            savefile.close()
-            target = self.smoother if mode == 'smooth' else self
-            save_fn = getattr(target, 'save_as_' + file_type)
-            save_fn(file_name, colormode)
-
-    def save_as_eps(self, file_name, colormode):
-        smooth.save_as_eps(self.canvas, file_name, colormode)
-
-    def save_as_svg(self, file_name, colormode):
-        smooth.save_as_svg(self.canvas, file_name, colormode)
-
-    def save_as_pdf(self, file_name, colormode):
-        PDF = smooth.PDFPicture(self.canvas)
-        for polylines, color in self.polylines(break_at_overcrossings=False):
-            style = [pyx.style.linewidth(4), pyx.style.linecap.round,
-                     pyx.style.linejoin.round, pyx.color.rgbfromhexstring(color)]
-            for lines in polylines:
-                lines = [PDF.transform(xy) for xy in lines]
-                path_parts = [pyx.path.moveto(* lines[0])] + [pyx.path.lineto(*xy) for xy in lines]
-                PDF.canvas.stroke(pyx.path.path(*path_parts), style)
-        PDF.save(file_name)
+        mode = self.view_var.get()
+        target = self.smoother if mode == 'smooth' else self
+        LinkViewer.save_image(self, file_type, colormode, target)
             
     def about(self):
         InfoDialog(self.window, 'About PLink', About)
