@@ -1132,7 +1132,7 @@ class LinkEditor(LinkViewer):
                     self.generic_arrow(next_arrow) ):
                 self.alert()
 #                next_vertex.hide()
-                next_arrow.hide()
+                self.destroy_arrow(next_arrow)
                 return
             self.update_crossings(next_arrow)
             self.update_crosspoints()
