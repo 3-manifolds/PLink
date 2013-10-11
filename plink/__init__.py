@@ -106,7 +106,7 @@ class LinkManager:
     def __init__(self):
         self.initialize()
 
-    def initialize(self):
+    def initialize(self, canvas=None):
         self.Arrows = []
         self.Vertices = []
         self.Crossings = []
@@ -118,7 +118,50 @@ class LinkManager:
         self.shift_stamp = time.time()
         self.shift_delta = (0,0)
         self.shifting = False
+        self.canvas = canvas
 
+    def _from_string(self, contents):
+        lines = [line for line in contents.split('\n') if len(line) > 0]
+        num_lines = len(lines)
+        first_line = lines.pop(0)
+        has_virtual_crossings = first_line.startswith('% Virtual Link Projection')
+        if not (first_line.startswith('% Link Projection') or first_line.startswith('% Virtual Link Projection')):
+            tkMessageBox.showwarning(
+                'Bad file',
+                'This is not a SnapPea link projection file')
+        else:
+            try:
+                vertices, arrows, crossings = [], [], []
+                num_components = int(lines.pop(0))
+                for n in range(num_components):
+                    lines.pop(0) # We don't need this
+                num_vertices = int(lines.pop(0))
+                for n in range(num_vertices):
+                    x, y = lines.pop(0).split()
+                    vertices.append( (x,y) )
+                num_arrows = int(lines.pop(0))
+                for n in range(num_arrows):
+                    s, e = lines.pop(0).split()
+                    arrows.append( (s,e) )
+                num_crossings = int(lines.pop(0))
+                for n in range(num_crossings):
+                    if has_virtual_crossings:
+                        v, u, o = lines.pop(0).split()
+                        crossings.append( (u,o,v) )
+                    else:
+                        u, o = lines.pop(0).split()
+                        crossings.append( (u,o,'r') )
+                h = int(lines[0])
+                hot = h if h != -1 else None
+            except:
+                tkMessageBox.showwarning(
+                    'Bad file',
+                    'Failed while parsing line %d'%(num_lines - len(lines)))
+            # make sure the window has been rendered before doing anything
+            self.unpickle(vertices, arrows, crossings)
+            self.update_crosspoints()
+            return hot
+    
     def update_crosspoints(self):
         for arrow in self.Arrows:
             arrow.vectorize()
@@ -128,11 +171,13 @@ class LinkManager:
         self.CrossPoints = [Vertex(c.x, c.y, self.canvas, style='hidden')
                             for c in self.Crossings]
             
-    def arrow_components(self, include_isolated_vertices=False):
+    def arrow_components(self, include_isolated_vertices=False, distinguish_closed=False):
         """
         Returns a list of components, given as lists of arrows.
         The closed components are sorted in DT order if they have
-        been marked.  The others are sorted by age.
+        been marked.  The others are sorted by age. If distinguish_closed 
+        is set to True then two lists are returned, the first has the closed
+        components the second has the non-closed components.
         """
         pool = [v.out_arrow for v in self.Vertices if v.in_arrow is None]
         pool += [v.out_arrow  for v in self.Vertices if v.in_arrow is not None]
@@ -163,7 +208,7 @@ class LinkManager:
             return min( [len(self.Vertices)] +  [oldest(a) for a in component])
         closed.sort(key=lambda x : (x[0].component, oldest_vertex(x)))
         nonclosed.sort(key=oldest_vertex)
-        return closed + nonclosed
+        return (closed, nonclosed) if distinguish_closed else closed + nonclosed
 
     def polylines(self, gapsize=default_gap_size, break_at_overcrossings=True):
         """
@@ -557,8 +602,10 @@ class LinkManager:
         Returns a string containing the contents of a SnapPea link
         projection file.
         """
+        has_virtual_crossings = any(crossing.is_virtual for crossing in self.Crossings)
+        
         result = ''
-        result += '% Link Projection\n'
+        result += '% Virtual Link Projection\n' if has_virtual_crossings else '% Link Projection\n'
         components = self.arrow_components()
         result += '%d\n'%len(components)
         for component in components:
@@ -577,11 +624,49 @@ class LinkManager:
         for crossing in self.Crossings:
             under = self.Arrows.index(crossing.under)
             over = self.Arrows.index(crossing.over)
-            result += '%4.1d %4.1d\n'%(under, over)
+            is_virtual = 'v' if crossing.is_virtual else 'r'
+            result += '%4s %4.1d %4.1d\n'%(is_virtual, under, over) if has_virtual_crossings else '%4.1d %4.1d\n'%(under, over)
         if self.ActiveVertex:
             result += '%d\n'%self.Vertices.index(self.ActiveVertex)
         else:
             result += '-1\n'
+        return result
+    
+    def Twister_surface_file(self):
+        """
+        Returns a string containing the contents of a Twister surface
+        file. Raises a ValueError if there are no virtual crossings.
+        """
+        result = ''
+        result += '# A Twister surface file produced in plink.\n'
+        virtual_crossings = [crossing for crossing in self.Crossings if crossing.is_virtual]
+        if len(virtual_crossings) == 0: 
+            raise ValueError('No virtual crossings present.')
+        
+        result += str(len(virtual_crossings)) + '#\n'
+        closed_components, nonclosed_components = self.arrow_components(distinguish_closed=True)
+        
+        def component_sequence(component):
+            sequence = []
+            for arrow in component:
+                this_arrows_crossings = []
+                for index, virtual_crossing in enumerate(virtual_crossings):
+                    if virtual_crossing.under == arrow or virtual_crossing.over == arrow:
+                        other_arrow = virtual_crossing.over if arrow == virtual_crossing.under else virtual_crossing.under
+                        this_arrows_crossings.append((arrow ^ other_arrow, index, arrow.dx * other_arrow.dy - arrow.dy * other_arrow.dx > 0))
+                this_arrows_crossings.sort()
+                sequence += [('+' if sign else '-') + str(index) for t, index, sign in this_arrows_crossings]
+            return sequence
+        
+        i = 0
+        for component in closed_components:
+            result += 'annulus,a_' + str(i) + ',A_' + str(i) + ',' + ','.join(component_sequence(component)) + '#\n'
+            i += 1
+        
+        for component in nonclosed_components:
+            result += 'rectangle,a_' + str(i) + ',A_' + str(i) + ',' + ','.join(component_sequence(component)) + '#\n'
+            i += 1
+        
         return result
 
     def save_as_tikz(self, file_name, colormode='color', width=282.0):
@@ -615,10 +700,9 @@ class LinkManager:
         for start, end in arrows:
             S, E = self.Vertices[int(start)], self.Vertices[int(end)]
             self.Arrows.append(Arrow(S, E, self.canvas))
-        for under, over in crossings:
-            U, O = self.Arrows[int(under)], self.Arrows[int(over)]
-            self.Crossings.append(Crossing(O, U))
-        self.create_colors()
+        for under, over, is_virtual in crossings:
+            U, O, V = self.Arrows[int(under)], self.Arrows[int(over)], is_virtual == 'v'
+            self.Crossings.append(Crossing(O, U, V))
 
     def pickle(self):
         """
@@ -628,7 +712,7 @@ class LinkManager:
         A = lambda a:self.Arrows.index(a)
         vertices = [(v.x, v.y) for v in self.Vertices]
         arrows = [(V(a.start), V(a.end)) for a in self.Arrows]
-        crossings = [(A(c.under), A(c.over)) for c in self.Crossings]
+        crossings = [(A(c.under), A(c.over), 'v' if c.is_virtual else 'r') for c in self.Crossings]
         hot = V(self.ActiveVertex) if self.ActiveVertex else None        
         return [vertices, arrows, crossings, hot]
     
@@ -1064,7 +1148,10 @@ class LinkEditor(LinkViewer):
             elif start_vertex in self.CrossPoints:
                 #print 'single click on a crossing'
                 crossing = self.Crossings[self.CrossPoints.index(start_vertex)]
-                crossing.reverse()
+                if crossing.is_virtual:
+                    crossing.is_virtual = False
+                else:
+                    crossing.reverse()
                 self.update_info()
                 crossing.under.draw(self.Crossings)
                 crossing.over.draw(self.Crossings)
@@ -1582,7 +1669,7 @@ class LinkEditor(LinkViewer):
             vertex.erase()
         self.canvas.delete('all')
         self.palette.reset()
-        self.initialize()
+        self.initialize(self.canvas)
         self.show_DT_var.set(0)
         self.info_var.set(0)
         self.clear_text()
@@ -1716,51 +1803,20 @@ class LinkEditor(LinkViewer):
         else:
             loadfile = askopenfile()
         if loadfile:
-            lines = [line for line in loadfile.readlines() if len(line) > 1]
+            contents = loadfile.read()
             loadfile.close()
-            num_lines = len(lines)
-            if not lines.pop(0).startswith('% Link Projection'):
-                tkMessageBox.showwarning(
-                    'Bad file',
-                    'This is not a SnapPea link projection file')
+            self.clear()
+            self.clear_text()
+            hot = self._from_string(contents)
+            self.create_colors()
+            # make sure the window has been rendered before doing anything
+            self.window.update()
+            if hot:
+                self.ActiveVertex = self.Vertices[hot]
+                self.goto_drawing_state(*self.canvas.winfo_pointerxy())
             else:
-                self.clear()
-                self.clear_text()
-                try:
-                    vertices, arrows, crossings = [], [], []
-                    num_components = int(lines.pop(0))
-                    for n in range(num_components):
-                        lines.pop(0) # We don't need this
-                    num_vertices = int(lines.pop(0))
-                    for n in range(num_vertices):
-                        x, y = lines.pop(0).split()
-                        vertices.append( (x,y) )
-                    num_arrows = int(lines.pop(0))
-                    for n in range(num_arrows):
-                        s, e = lines.pop(0).split()
-                        arrows.append( (s,e) )
-                    num_crossings = int(lines.pop(0))
-                    for n in range(num_crossings):
-                        u, o = lines.pop(0).split()
-                        crossings.append( (u,o) )
-                    h = int(lines[0])
-                    hot = h if h != -1 else None
-                except:
-                    tkMessageBox.showwarning(
-                        'Bad file',
-                        'Failed while parsing line %d'%(num_lines - len(lines)))
-                # make sure the window has been rendered before doing anything
-                self.window.update()
-                self.clear()
-                self.clear_text()
-                self.unpickle(vertices, arrows, crossings)
-                if hot:
-                    self.ActiveVertex = self.Vertices[hot]
-                    self.goto_drawing_state(*self.canvas.winfo_pointerxy())
-                else:
-                    self.zoom_to_fit()
-                    self.goto_start_state()
-                    
+                self.zoom_to_fit()
+                self.goto_start_state()
 
     def save(self):
         savefile = asksaveasfile(
@@ -2158,7 +2214,7 @@ class Crossing:
     """
     A pair of crossing arrows in a PL link diagram.
     """
-    def __init__(self, over, under):
+    def __init__(self, over, under, is_virtual=False):
         self.over = over
         self.under = under
         self.locked = False
@@ -2168,7 +2224,8 @@ class Crossing:
         self.comp1 = None
         self.comp2 = None
         self.flipped = None
-        self.is_virtual = False
+        self.is_virtual = is_virtual
+        self.locate()
 
     def __repr__(self):
         self.locate()
