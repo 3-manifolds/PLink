@@ -20,6 +20,7 @@ from __future__ import unicode_literals
 import os
 import sys
 import time
+import string
 import webbrowser
 from math import sqrt
 from random import random
@@ -643,7 +644,6 @@ class LinkManager:
         if len(virtual_crossings) == 0: 
             raise ValueError('No virtual crossings present.')
         
-        result += str(len(virtual_crossings)) + '#\n'
         closed_components, nonclosed_components = self.arrow_components(distinguish_closed=True)
         
         def component_sequence(component):
@@ -658,13 +658,16 @@ class LinkManager:
                 sequence += [('+' if sign else '-') + str(index) for t, index, sign in this_arrows_crossings]
             return sequence
         
+        num_components = len(closed_components) + len(nonclosed_components)
+        curve_names = list(string.ascii_lowercase) + ['%s%d' % (letter, index) for index in range((len(closed_components) + len(nonclosed_components)) // 26) for letter in string.ascii_lowercase]
+        
         i = 0
         for component in closed_components:
-            result += 'annulus,a_' + str(i) + ',A_' + str(i) + ',' + ','.join(component_sequence(component)) + '#\n'
+            result += 'annulus,%s,%s,%s#\n' % (curve_names[i], curve_names[i].swapcase(), ','.join(component_sequence(component)))
             i += 1
         
         for component in nonclosed_components:
-            result += 'rectangle,a_' + str(i) + ',A_' + str(i) + ',' + ','.join(component_sequence(component)) + '#\n'
+            result += 'rectangle,%s,%s,%s#\n' % (curve_names[i], curve_names[i].swapcase(), ','.join(component_sequence(component)))
             i += 1
         
         return result
