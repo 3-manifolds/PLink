@@ -743,6 +743,7 @@ class LinkViewer(LinkManager):
         self.palette = Palette()
         self.smoother = smooth.Smoother(self.canvas)
         self.unpickle(*data)
+        self.create_colors()
 
     def _zoom(self):
         W, H = self.canvas.winfo_width(), self.canvas.winfo_height()
@@ -1814,7 +1815,6 @@ class LinkEditor(LinkViewer):
             self.clear()
             self.clear_text()
             hot = self._from_string(contents)
-            self.create_colors()
             # make sure the window has been rendered before doing anything
             self.window.update()
             if hot:
