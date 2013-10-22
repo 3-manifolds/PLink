@@ -20,10 +20,10 @@ from __future__ import unicode_literals
 import os
 import sys
 import time
-import string
 import webbrowser
 from math import sqrt
 from random import random
+from string import ascii_lowercase
 from colorsys import hls_to_rgb
 try:
     import Tkinter as Tk_
@@ -148,10 +148,12 @@ class LinkManager:
                 for n in range(num_crossings):
                     if has_virtual_crossings:
                         v, u, o = lines.pop(0).split()
+                        v, u, o = v == 'v', int(u), int(o)
                         crossings.append( (u,o,v) )
                     else:
                         u, o = lines.pop(0).split()
-                        crossings.append( (u,o,'r') )
+                        u, o = int(u), int(o)
+                        crossings.append( (u,o,False) )
                 h = int(lines[0])
                 hot = h if h != -1 else None
             except:
@@ -659,7 +661,7 @@ class LinkManager:
             return sequence
         
         num_components = len(closed_components) + len(nonclosed_components)
-        curve_names = list(string.ascii_lowercase) + ['%s%d' % (letter, index) for index in range((len(closed_components) + len(nonclosed_components)) // 26) for letter in string.ascii_lowercase]
+        curve_names = list(ascii_lowercase) + ['%s%d' % (letter, index) for index in range((len(closed_components) + len(nonclosed_components)) // 26) for letter in ascii_lowercase]
         
         i = 0
         for component in closed_components:
@@ -691,8 +693,9 @@ class LinkManager:
            * arrows: a list of pairs of integers (start, end), giving
            the indices in the vertex list of the endpoints of each arrow;
 
-           * crossings: a list of pairs of integers (under, over), giving
-           the indices in the arrow list of each pair of crossing arrows.
+           * crossings: a list of triples (under, over, is_virtual), giving
+           the indices in the arrow list of each pair of crossing arrows and
+           a boolean indicating if the crossing is virtual.
 
            * an optional argument "hot" giving the index of one vertex
            which was being added at the time the diagram was pickled
@@ -704,7 +707,7 @@ class LinkManager:
             S, E = self.Vertices[int(start)], self.Vertices[int(end)]
             self.Arrows.append(Arrow(S, E, self.canvas))
         for under, over, is_virtual in crossings:
-            U, O, V = self.Arrows[int(under)], self.Arrows[int(over)], is_virtual == 'v'
+            U, O, V = self.Arrows[int(under)], self.Arrows[int(over)], bool(is_virtual)
             self.Crossings.append(Crossing(O, U, V))
 
     def pickle(self):
@@ -715,7 +718,7 @@ class LinkManager:
         A = lambda a:self.Arrows.index(a)
         vertices = [(v.x, v.y) for v in self.Vertices]
         arrows = [(V(a.start), V(a.end)) for a in self.Arrows]
-        crossings = [(A(c.under), A(c.over), 'v' if c.is_virtual else 'r') for c in self.Crossings]
+        crossings = [(A(c.under), A(c.over), c.is_virtual) for c in self.Crossings]
         hot = V(self.ActiveVertex) if self.ActiveVertex else None        
         return [vertices, arrows, crossings, hot]
     
