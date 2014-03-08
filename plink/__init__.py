@@ -25,18 +25,25 @@ from math import sqrt
 from random import random
 from string import ascii_lowercase
 from colorsys import hls_to_rgb
+try: 
+    if sys.version_info[0] < 3:
+        import Tkinter as Tk_
+        import tkFileDialog
+        import tkMessageBox
+        import tkSimpleDialog
+    else:
+        import tkinter as Tk_
+        import tkinter.filedialog as tkFileDialog
+        import tkinter.messagebox as tkMessageBox
+        import tkinter.simpledialog as tkSimpleDialog
+except ImportError:  # Tk unavailable or misconfigured
+    Tk_, tkFileDialog, tkMessageBox, tkSimpleDialog = None, None, None, None
+
 try:
-    import Tkinter as Tk_
-    import tkFileDialog
-    import tkMessageBox
-    import tkSimpleDialog
     from urllib import pathname2url
-except ImportError: # Python 3
-    import tkinter as Tk_
-    import tkinter.filedialog as tkFileDialog
-    import tkinter.messagebox as tkMessageBox
-    import tkinter.simpledialog as tkSimpleDialog
+except:  # Python 3
     from urllib.request import pathname2url
+    
 from . import smooth
 from . import canvasvg
 
@@ -2412,7 +2419,13 @@ class Colorizer:
             index = index>>1
         return float(num)/float(den)
 
-class InfoDialog(tkSimpleDialog.Dialog):
+# Hack for when Tkinter is unavailable or broken
+if tkSimpleDialog:
+    baseclass = tkSimpleDialog.Dialog
+else:
+    baseclass = object
+    
+class InfoDialog(baseclass):
     def __init__(self, parent, title, content=''):
         self.parent = parent
         self.content = content
