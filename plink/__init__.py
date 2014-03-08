@@ -36,8 +36,9 @@ try:
         import tkinter.filedialog as tkFileDialog
         import tkinter.messagebox as tkMessageBox
         import tkinter.simpledialog as tkSimpleDialog
+    from . import canvasvg
 except ImportError:  # Tk unavailable or misconfigured
-    Tk_, tkFileDialog, tkMessageBox, tkSimpleDialog = None, None, None, None
+    Tk_, tkFileDialog, tkMessageBox, tkSimpleDialog, canvasvg = None, None, None, None, None
 
 try:
     from urllib import pathname2url
@@ -45,7 +46,6 @@ except:  # Python 3
     from urllib.request import pathname2url
     
 from . import smooth
-from . import canvasvg
 
 try:
     import pyx
