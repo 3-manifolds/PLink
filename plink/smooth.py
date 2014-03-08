@@ -38,12 +38,18 @@
 #   * Hobby, John D., "Smooth, easy to compute interpolating splines,"
 #     Discrete and Computational Geometry 1:123-140 (1986).
 #
-# with caps on the velocities to remove some unnecessary inflection points.  
+# with caps on the velocities to remove some unnecessary inflection points.
 
-try:
-    import Tkinter as Tk_
-except ImportError: # Python 3
-    import tkinter as Tk_
+import sys
+
+try: 
+    if sys.version_info[0] < 3:
+        import Tkinter as Tk_
+    else:
+        import tkinter as Tk_
+    from . import canvasvg
+except ImportError:  # Tk unavailable or misconfigured
+    Tk_, canvasvg= None, None
 
 try:
     import pyx
@@ -51,7 +57,7 @@ except ImportError:
     pass
 
 from math import sqrt, cos, sin, atan2, pi
-from . import canvasvg
+
 
 def in_twos(L):
     assert len(L) % 2 == 0
