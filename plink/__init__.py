@@ -942,7 +942,6 @@ class LinkEditor(LinkViewer):
         self.build_save_image_menu(menubar, file_menu)
         file_menu.add_separator()
         if self.callback:
-            file_menu.add_command(label=self.cb_menu, command=self.do_callback)
             file_menu.add_command(label='Close', command=self.done)
         else:
             file_menu.add_command(label='Exit', command=self.done)
@@ -1014,6 +1013,8 @@ class LinkEditor(LinkViewer):
         tools_menu.add_cascade(label='Zoom', menu=zoom_menu)
         tools_menu.add_cascade(label='Pan', menu=pan_menu)
         tools_menu.add_command(label='Clear', command=self.clear)
+        if self.callback:
+            tools_menu.add_command(label=self.cb_menu, command=self.do_callback)
         menubar.add_cascade(label='Tools', menu=tools_menu)
         view_menu = Tk_.Menu(menubar, tearoff=0)
         view_menu.add_radiobutton(label='PL', value='pl',
