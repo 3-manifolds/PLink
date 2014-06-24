@@ -858,11 +858,12 @@ class LinkEditor(LinkViewer):
     original SnapPea program.
     """
     def __init__(self, root=None, no_arcs=False, callback=None, cb_menu='',
-                 file_name=None, title='PLink Editor'):
+                 manifold=None, file_name=None, title='PLink Editor'):
         self.initialize()
         self.no_arcs = no_arcs
         self.callback = callback
         self.cb_menu = cb_menu
+        self.manifold = manifold
         self.title = title
         self.cursorx = 0
         self.cursory = 0
@@ -1060,7 +1061,7 @@ class LinkEditor(LinkViewer):
     def do_callback(self):
         if self.warn_arcs() == 'oops':
             return
-        self.callback()
+        self.callback(self)
 
     def reopen(self):
         self.window.deiconify()
