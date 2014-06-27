@@ -38,6 +38,7 @@ setup(name='plink',
       package_data={'plink': doc_files},
       entry_points = {'console_scripts': ['plink = plink.app:main']},
       cmdclass =  {'clean' : clean},
+      zip_safe = False
      )
 
 with open('version.txt', 'w') as output:
