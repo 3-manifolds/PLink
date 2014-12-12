@@ -818,8 +818,8 @@ class LinkViewer(LinkManager):
     def save_as_svg(self, file_name, colormode):
         smooth.save_as_svg(self.canvas, file_name, colormode)
 
-    def save_as_pdf(self, file_name, colormode):
-        PDF = smooth.PDFPicture(self.canvas)
+    def save_as_pdf(self, file_name, colormode,  width=312.0):
+        PDF = smooth.PDFPicture(self.canvas, width)
         for polylines, color in self.polylines(break_at_overcrossings=False):
             style = [pyx.style.linewidth(4), pyx.style.linecap.round,
                      pyx.style.linejoin.round, pyx.color.rgbfromhexstring(color)]
@@ -2466,10 +2466,13 @@ class InfoDialog(baseclass):
         self.destroy()
 
 
-try:
-    import version
-except ImportError: # Python 3
-    from . import version
+
+from . import version as _version
+
+def version():
+    return _version.version
+
+__version__ = version()
 
 About = """PLink version %s
 
@@ -2485,7 +2488,7 @@ Development supported by the National Science Foundation.
 
 Inspired by SnapPea (written by Jeff Weeks) and
 LinkSmith (written by Jim Hoste and Morwen Thistlethwaite).
-""" % version.version
+""" % version()
 
 if __name__ == '__main__':
     LE = LinkEditor()
