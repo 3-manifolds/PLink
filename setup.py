@@ -30,7 +30,6 @@ exec(open('plink/version.py').read())
 
 setup(name='plink',
       version=version,
-      summary='Link Projection Editor',
       description='A full featured Tk-based knot and link editor', 
       author='Marc Culler and Nathan Dunfield',
       author_email='culler@math.uic.edu, nmd@illinois.edu',
@@ -41,7 +40,6 @@ setup(name='plink',
       cmdclass =  {'clean' : clean},
       license = 'GPL v2+',
       keywords = 'knot link editor',
-      platform = 'Linux, OS X, other Unixes, Windows', 
       zip_safe = False, 
      )
 
