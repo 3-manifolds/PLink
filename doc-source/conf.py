@@ -38,7 +38,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'PLink'
-copyright = u'2009, Marc Culler, Nathan Dunfield and others'
+copyright = u'2009-present, Marc Culler, Nathan Dunfield and others'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -46,9 +46,8 @@ copyright = u'2009, Marc Culler, Nathan Dunfield and others'
 #
 # The short X.Y version.
 
-import plink.version as pversion
+from plink import __version__ as version
 
-version = pversion.version
 # The full version, including alpha/beta/rc tags.
 release = version
 

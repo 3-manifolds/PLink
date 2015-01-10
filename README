@@ -1,49 +1,34 @@
-Copyright (C) 2008 Marc Culler and others
+PLink is a full featured graphical editor for knot and link projections,
+using the cross-platform GUI toolkit Tk.  The primary focus is on
+piecewise-linear link projections, but it also supports a "smooth
+mode" and can export images in PostScript, PDF, SVG, and TikZ formats.
+See the `PLink home page <http://www.math.uic.edu/t3m/plink/doc/>`_
+for complete details.
 
-This program is distributed under the terms of the 
-GNU General Public License, version 2 or later, as published by
-the Free Software Foundation.  See the file GPL.txt for details.
-The URL for this program is
-  http://www.math.uic.edu/~t3m/plink
-A copy of the license file may be found at:
-  http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
+This is a pure Python module and you can install it via either
+`pip <https://pip.pypa.io/en/latest/>`_ or
+`easy_install <http://pythonhosted.org//setuptools/easy_install.html>`_;
+See `the documentation
+<http://www.math.uic.edu/t3m/plink/doc/installing.html>`_
+for more.
 
-The development of this program was partially supported by
-the National Science Foundation under grants DMS0608567,
-DMS0504975and DMS0204142.
+You can browse the source code `here <https://bitbucket.org/t3m/plink>`_.
 
-This program requires a Python interpreter and the Tkinter module.
-It was tested with Python 2.6.
 
-Installation Instructions:
+License
+========================
 
-* download plink-1.0.tgz to a temporary location (e.g. /tmp)
-* change to the temporary directory (cd /tmp)
-* unpack the archive. (tar xfvz plink.tgz)
-* change to the new subdirectory named plink-1.0
+Copyright 2008-present by Marc Culler, Nathan Dunfield, and others.
 
-IF YOU ARE A SUPERUSER and would like to install plink for
-use by all users, type:
-   sudo python setup.py install
-or su as root and type
-   python setup.py install
+All parts of this package are released under the
+`GNU General Public License, version 2 <http://www.gnu.org/licenses/gpl-2.0.txt>`
+or (at your discretion) any later version as
+published by the Free Software Foundation.
 
-IF YOU ARE NOT A SUPERUSER and want to install plink in your home
-directory, type:
-   python setup.py install --home ~
-This will install the executable script in the directory ~/bin and
-the other files will be installed in ~/lib/python .
-For this to work conveniently, you will need the directory ~/bin to
-be included in your environment variable PATH, and you will need
-~/lib/python to be included in your environment variable PYTHON_PATH. 
-You can arrange this by typing the two commands below or, to have it
-done automatically, by adding the commands to the appropriate startup
-file (e.g. ~/.profile or ~/.cshrc):
 
-(for the bash shell)
-export PATH=~/bin:$PATH
-export PYTHON_PATH=~/lib/python:$PYTHON_PATH
+Acknowledgements
+========================
 
-(for the csh or tcsh shell)
-setenv PATH "~/bin:$PATH"
-setenv PYTHON_PATH "~/lib/python:$PYTHON_PATH"
+The development of this program was partially supported by the US
+National Science Foundation under grants DMS0608567, DMS0504975,
+DMS0204142, and others.
