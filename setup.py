@@ -2,6 +2,7 @@ from setuptools import setup, Command
 from pkg_resources import load_entry_point
 import os
 
+src = 'plink-src'
 
 # A real clean
 
@@ -32,13 +33,13 @@ class build_docs(Command):
 # We need to collect the names of the Sphinx-generated documentation files to add
 
 pjoin = os.path.join
-doc_path = pjoin('plink', 'doc')
+doc_path = pjoin(src, 'doc')
 doc_files = [pjoin('doc', file) for file in os.listdir(doc_path) if file[0] != "_"]
 for dir_name in [file for file in os.listdir(doc_path) if file[0] == "_"]:
-    doc_files += [pjoin('doc', dir_name, file) for file in os.listdir(pjoin('plink', 'doc', dir_name))]
+    doc_files += [pjoin('doc', dir_name, file) for file in os.listdir(pjoin(src, 'doc', dir_name))]
 
 # Get version number.
-exec(open('plink/version.py').read())
+exec(open('plink-src/version.py').read())
 
 # Get long description from README
 long_description = open('README').read().split('License')[0]
@@ -46,6 +47,7 @@ long_description = open('README').read().split('License')[0]
 setup(name='plink',
       version=version,
       packages=['plink'],
+      package_dir = {'plink': src}, 
       package_data={'plink': doc_files},
       entry_points = {'console_scripts': ['plink = plink.app:main']},
       cmdclass =  {'clean' : clean, 'build_docs':build_docs},
