@@ -1,4 +1,5 @@
 from setuptools import setup, Command
+from pkg_resources import load_entry_point
 import os
 
 
@@ -13,6 +14,20 @@ class clean(Command):
     def run(self):
         os.system("rm -rf build dist *.pyc")
         os.system("rm -rf plink*.egg-info")
+
+# Building the documentation
+
+class build_docs(Command):
+    user_options = []
+    def initialize_options(self):
+        pass 
+    def finalize_options(self):
+        pass
+    def run(self):
+        sphinx_cmd = load_entry_point('Sphinx>=0.6.1', 'console_scripts', 'sphinx-build')
+        sphinx_args = ['sphinx', '-a', '-E', '-d', 'doc-source/_build/doctrees',
+                       'doc-source', 'plink/doc']
+        sphinx_cmd(sphinx_args)
 
 # We need to collect the names of the Sphinx-generated documentation files to add
 
@@ -33,7 +48,7 @@ setup(name='plink',
       packages=['plink'],
       package_data={'plink': doc_files},
       entry_points = {'console_scripts': ['plink = plink.app:main']},
-      cmdclass =  {'clean' : clean},
+      cmdclass =  {'clean' : clean, 'build_docs':build_docs},
       zip_safe = False,
 
       description='A full featured Tk-based knot and link editor', 

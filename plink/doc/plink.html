@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
@@ -8,15 +6,15 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>plink – A Python/Tk link editor &mdash; PLink 1.4 documentation</title>
+    <title>plink – A Python/Tk link editor &mdash; PLink 1.8a1 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    '',
-        VERSION:     '1.4',
+        URL_ROOT:    './',
+        VERSION:     '1.8a1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -25,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="PLink 1.4 documentation" href="index.html" />
+    <link rel="top" title="PLink 1.8a1 documentation" href="index.html" />
     <link rel="prev" title="Installing and running PLink" href="installing.html" /> 
   </head>
   <body>
@@ -41,7 +39,7 @@
         <li class="right" >
           <a href="installing.html" title="Installing and running PLink"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">PLink 1.4 documentation</a> &raquo;</li> 
+        <li><a href="index.html">PLink 1.8a1 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -56,123 +54,13 @@
 interest only to Marc, Nathan, or similar folks.</p>
 <span class="target" id="module-plink"></span><dl class="class">
 <dt id="plink.LinkEditor">
-<em class="property">class </em><tt class="descclassname">plink.</tt><tt class="descname">LinkEditor</tt><big>(</big><em>root=None</em>, <em>no_arcs=False</em>, <em>callback=None</em>, <em>cb_menu=u''</em>, <em>file_name=None</em>, <em>title=u'PLink Editor'</em><big>)</big><a class="headerlink" href="#plink.LinkEditor" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">plink.</tt><tt class="descname">LinkEditor</tt><big>(</big><em>root=None</em>, <em>no_arcs=False</em>, <em>callback=None</em>, <em>cb_menu=u''</em>, <em>manifold=None</em>, <em>file_name=None</em>, <em>title=u'PLink Editor'</em><big>)</big><a class="headerlink" href="#plink.LinkEditor" title="Permalink to this definition">¶</a></dt>
 <dd><p>A graphical link drawing tool based on the one embedded in Jeff Weeks&#8217;
 original SnapPea program.</p>
-<dl class="method">
-<dt id="plink.LinkEditor.BB_framing">
-<tt class="descname">BB_framing</tt><big>(</big><big>)</big><a class="headerlink" href="#plink.LinkEditor.BB_framing" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return the standard meridian-longitude coordinates of the
-blackboard longitude (i.e. the peripheral element obtained
-by following the top of a tubular neighborhood of the knot).</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="plink.LinkEditor.BB_info">
-<tt class="descname">BB_info</tt><big>(</big><big>)</big><a class="headerlink" href="#plink.LinkEditor.BB_info" title="Permalink to this definition">¶</a></dt>
-<dd><p>Displays the meridian-longitude coordinates of the blackboard
-longitudes of the components of the link</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="plink.LinkEditor.DT_alpha">
-<tt class="descname">DT_alpha</tt><big>(</big><big>)</big><a class="headerlink" href="#plink.LinkEditor.DT_alpha" title="Permalink to this definition">¶</a></dt>
-<dd><p>Displays an alphabetical Dowker-Thistlethwaite code, as used in
-the knot tabulations.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="plink.LinkEditor.DT_code">
-<tt class="descname">DT_code</tt><big>(</big><em>alpha=False</em>, <em>signed=True</em>, <em>return_sizes=False</em><big>)</big><a class="headerlink" href="#plink.LinkEditor.DT_code" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return the Dowker-Thistlethwaite code as a list of tuples of
-even integers.  Requires that all components be closed.</p>
-<p>If alpha is set to True, this method returns the alphabetical
-Dowker-Thistlethwaite code as used in Oliver Goodman&#8217;s Snap
-and in the tabulations by Jim Hoste and Morwen Thistlethwaite.</p>
-<p>If return_sizes is set to True, a list of the number of crossings
-in each component is returned (this is for use by Gauss_code).</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="plink.LinkEditor.DT_normal">
-<tt class="descname">DT_normal</tt><big>(</big><big>)</big><a class="headerlink" href="#plink.LinkEditor.DT_normal" title="Permalink to this definition">¶</a></dt>
-<dd><p>Displays a Dowker-Thistlethwaite code as a list of tuples of
-signed even integers.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="plink.LinkEditor.Gauss_code">
-<tt class="descname">Gauss_code</tt><big>(</big><big>)</big><a class="headerlink" href="#plink.LinkEditor.Gauss_code" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return a Gauss code for the link.  The Gauss code is computed
-from a DT code, so the Gauss code will use the same indexing
-of crossings as is used for the DT code.  Requires that all
-components be closed.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="plink.LinkEditor.Gauss_info">
-<tt class="descname">Gauss_info</tt><big>(</big><big>)</big><a class="headerlink" href="#plink.LinkEditor.Gauss_info" title="Permalink to this definition">¶</a></dt>
-<dd><p>Displays a Gauss code as a list of tuples of signed
-integers.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="plink.LinkEditor.PD_code">
-<tt class="descname">PD_code</tt><big>(</big><big>)</big><a class="headerlink" href="#plink.LinkEditor.PD_code" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return the PD (Planar Diagram) code for the link projection,
-as a list of 4-tuples.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="plink.LinkEditor.PD_info">
-<tt class="descname">PD_info</tt><big>(</big><big>)</big><a class="headerlink" href="#plink.LinkEditor.PD_info" title="Permalink to this definition">¶</a></dt>
-<dd><p>Displays a PD code as a list of 4-tuples.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="plink.LinkEditor.SnapPea_KLPProjection">
-<tt class="descname">SnapPea_KLPProjection</tt><big>(</big><big>)</big><a class="headerlink" href="#plink.LinkEditor.SnapPea_KLPProjection" title="Permalink to this definition">¶</a></dt>
-<dd><p>Constructs a python simulation of a SnapPea KLPProjection
-(Kernel Link Projection) structure.  See Jeff Weeks&#8217; SnapPea
-file link_projection.h for definitions.  Here the KLPCrossings
-are modeled by dictionaries.  This method requires that all
-components be closed.  A side effect is that the KLP attributes
-of all crossings are updated.</p>
-<p>The following excerpt from link_projection.h describes the
-main convention:</p>
-<p>If you view a crossing (from above) so that the strands go in the
-direction of the positive x- and y-axes, then the strand going in
-the x-direction is the KLPStrandX, and the strand going in the
-y-direction is the KLPStrandY.  Note that this definition does not
-depend on which is the overstrand and which is the understrand:</p>
-<div class="highlight-python"><pre>KLPStrandY
-    ^
-    |
-----+---&gt; KLPStrandX
-    |
-    |</pre>
-</div>
-<p></p>
-</dd></dl>
-
-<dl class="method">
-<dt id="plink.LinkEditor.SnapPea_projection_file">
-<tt class="descname">SnapPea_projection_file</tt><big>(</big><big>)</big><a class="headerlink" href="#plink.LinkEditor.SnapPea_projection_file" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns a string containing the contents of a SnapPea link
-projection file.</p>
-</dd></dl>
-
 <dl class="method">
 <dt id="plink.LinkEditor.about">
 <tt class="descname">about</tt><big>(</big><big>)</big><a class="headerlink" href="#plink.LinkEditor.about" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
-
-<dl class="method">
-<dt id="plink.LinkEditor.adjust_colors">
-<tt class="descname">adjust_colors</tt><big>(</big><big>)</big><a class="headerlink" href="#plink.LinkEditor.adjust_colors" title="Permalink to this definition">¶</a></dt>
-<dd><p>Recolors and redraws all components, in DT order, and displays
-the legend linking colors to cusp indices.</p>
-</dd></dl>
 
 <dl class="method">
 <dt id="plink.LinkEditor.alert">
@@ -180,16 +68,13 @@ the legend linking colors to cusp indices.</p>
 <dd></dd></dl>
 
 <dl class="method">
-<dt id="plink.LinkEditor.arrow_components">
-<tt class="descname">arrow_components</tt><big>(</big><em>include_isolated_vertices=False</em><big>)</big><a class="headerlink" href="#plink.LinkEditor.arrow_components" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns a list of components, given as lists of arrows.
-The closed components are sorted in DT order if they have
-been marked.  The others are sorted by age.</p>
-</dd></dl>
-
-<dl class="method">
 <dt id="plink.LinkEditor.build_menus">
 <tt class="descname">build_menus</tt><big>(</big><big>)</big><a class="headerlink" href="#plink.LinkEditor.build_menus" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="plink.LinkEditor.build_plink_menus">
+<tt class="descname">build_plink_menus</tt><big>(</big><big>)</big><a class="headerlink" href="#plink.LinkEditor.build_plink_menus" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -208,19 +93,6 @@ been marked.  The others are sorted by age.</p>
 <dd></dd></dl>
 
 <dl class="method">
-<dt id="plink.LinkEditor.create_colors">
-<tt class="descname">create_colors</tt><big>(</big><big>)</big><a class="headerlink" href="#plink.LinkEditor.create_colors" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="plink.LinkEditor.crossing_components">
-<tt class="descname">crossing_components</tt><big>(</big><big>)</big><a class="headerlink" href="#plink.LinkEditor.crossing_components" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns a list of lists of ECrossings, one per component,
-where the corresponding crossings are ordered consecutively
-through the component.  Requires that all components be closed.</p>
-</dd></dl>
-
-<dl class="method">
 <dt id="plink.LinkEditor.cursor_on_arrow">
 <tt class="descname">cursor_on_arrow</tt><big>(</big><em>point</em><big>)</big><a class="headerlink" href="#plink.LinkEditor.cursor_on_arrow" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
@@ -237,7 +109,7 @@ through the component.  Requires that all components be closed.</p>
 
 <dl class="method">
 <dt id="plink.LinkEditor.done">
-<tt class="descname">done</tt><big>(</big><big>)</big><a class="headerlink" href="#plink.LinkEditor.done" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">done</tt><big>(</big><em>event=None</em><big>)</big><a class="headerlink" href="#plink.LinkEditor.done" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -260,6 +132,13 @@ through the component.  Requires that all components be closed.</p>
 <dt id="plink.LinkEditor.focus_out">
 <tt class="descname">focus_out</tt><big>(</big><em>event</em><big>)</big><a class="headerlink" href="#plink.LinkEditor.focus_out" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
+
+<dl class="method">
+<dt id="plink.LinkEditor.full_redraw">
+<tt class="descname">full_redraw</tt><big>(</big><big>)</big><a class="headerlink" href="#plink.LinkEditor.full_redraw" title="Permalink to this definition">¶</a></dt>
+<dd><p>Recolors and redraws all components, in DT order, and displays
+the legend linking colors to cusp indices.</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="plink.LinkEditor.generic_arrow">
@@ -292,14 +171,15 @@ through the component.  Requires that all components be closed.</p>
 <dd></dd></dl>
 
 <dl class="method">
-<dt id="plink.LinkEditor.initialize">
-<tt class="descname">initialize</tt><big>(</big><big>)</big><a class="headerlink" href="#plink.LinkEditor.initialize" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
 <dt id="plink.LinkEditor.key_press">
 <tt class="descname">key_press</tt><big>(</big><em>event</em><big>)</big><a class="headerlink" href="#plink.LinkEditor.key_press" title="Permalink to this definition">¶</a></dt>
 <dd><p>Handler for keypress events.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="plink.LinkEditor.key_release">
+<tt class="descname">key_release</tt><big>(</big><em>event</em><big>)</big><a class="headerlink" href="#plink.LinkEditor.key_release" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handler for keyrelease events.</p>
 </dd></dl>
 
 <dl class="method">
@@ -321,6 +201,11 @@ Requires that all components be closed.</p>
 </dd></dl>
 
 <dl class="method">
+<dt id="plink.LinkEditor.move_active">
+<tt class="descname">move_active</tt><big>(</big><em>x</em>, <em>y</em><big>)</big><a class="headerlink" href="#plink.LinkEditor.move_active" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
 <dt id="plink.LinkEditor.not_done">
 <tt class="descname">not_done</tt><big>(</big><big>)</big><a class="headerlink" href="#plink.LinkEditor.not_done" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
@@ -329,15 +214,6 @@ Requires that all components be closed.</p>
 <dt id="plink.LinkEditor.notice_focus">
 <tt class="descname">notice_focus</tt><big>(</big><big>)</big><a class="headerlink" href="#plink.LinkEditor.notice_focus" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
-
-<dl class="method">
-<dt id="plink.LinkEditor.polylines">
-<tt class="descname">polylines</tt><big>(</big><big>)</big><a class="headerlink" href="#plink.LinkEditor.polylines" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns a list of lists of polylines, one per component, that
-make up the drawing of the link diagram.  Each polyline is a
-list of coordinates [(x0,y0), (x1,y1), ...]  Isolated vertices are
-ignored.</p>
-</dd></dl>
 
 <dl class="method">
 <dt id="plink.LinkEditor.reflect">
@@ -356,13 +232,29 @@ ignored.</p>
 
 <dl class="method">
 <dt id="plink.LinkEditor.save_image">
-<tt class="descname">save_image</tt><big>(</big><em>color_mode=u'color'</em><big>)</big><a class="headerlink" href="#plink.LinkEditor.save_image" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">save_image</tt><big>(</big><em>file_type=u'eps'</em>, <em>colormode=u'color'</em><big>)</big><a class="headerlink" href="#plink.LinkEditor.save_image" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="plink.LinkEditor.set_info">
 <tt class="descname">set_info</tt><big>(</big><big>)</big><a class="headerlink" href="#plink.LinkEditor.set_info" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
+
+<dl class="method">
+<dt id="plink.LinkEditor.set_start_cursor">
+<tt class="descname">set_start_cursor</tt><big>(</big><em>x</em>, <em>y</em><big>)</big><a class="headerlink" href="#plink.LinkEditor.set_start_cursor" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="plink.LinkEditor.set_view_mode">
+<tt class="descname">set_view_mode</tt><big>(</big><big>)</big><a class="headerlink" href="#plink.LinkEditor.set_view_mode" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="plink.LinkEditor.shift_click">
+<tt class="descname">shift_click</tt><big>(</big><em>event</em><big>)</big><a class="headerlink" href="#plink.LinkEditor.shift_click" title="Permalink to this definition">¶</a></dt>
+<dd><p>Event handler for mouse shift-clicks.</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="plink.LinkEditor.show_DT">
@@ -379,31 +271,24 @@ asterisk.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="plink.LinkEditor.sorted_components">
-<tt class="descname">sorted_components</tt><big>(</big><big>)</big><a class="headerlink" href="#plink.LinkEditor.sorted_components" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns a list of crossing components which have been sorted
-and cyclically permuted, following the scheme used in &#8220;standard&#8221;
-DT codes.</p>
-<p>The sorting process also sets the hit counters on all
-crossings, for use in computing DT and Gauss codes, and
-sets the component attribute of each arrow in each
-component.</p>
-<p>Requires that all components be closed.</p>
-</dd></dl>
+<dt id="plink.LinkEditor.unpickle">
+<tt class="descname">unpickle</tt><big>(</big><em>vertices</em>, <em>arrows</em>, <em>crossings</em>, <em>hot=None</em><big>)</big><a class="headerlink" href="#plink.LinkEditor.unpickle" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 <dl class="method">
 <dt id="plink.LinkEditor.update_crossings">
 <tt class="descname">update_crossings</tt><big>(</big><em>this_arrow</em><big>)</big><a class="headerlink" href="#plink.LinkEditor.update_crossings" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="plink.LinkEditor.update_crosspoints">
-<tt class="descname">update_crosspoints</tt><big>(</big><big>)</big><a class="headerlink" href="#plink.LinkEditor.update_crosspoints" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Redraw any arrows which were changed by moving this_arrow.</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="plink.LinkEditor.update_info">
 <tt class="descname">update_info</tt><big>(</big><big>)</big><a class="headerlink" href="#plink.LinkEditor.update_info" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="plink.LinkEditor.update_smooth">
+<tt class="descname">update_smooth</tt><big>(</big><big>)</big><a class="headerlink" href="#plink.LinkEditor.update_smooth" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -440,16 +325,16 @@ component.</p>
 
 <dl class="class">
 <dt id="plink.Arrow">
-<em class="property">class </em><tt class="descclassname">plink.</tt><tt class="descname">Arrow</tt><big>(</big><em>start</em>, <em>end</em>, <em>canvas=None</em>, <em>hidden=False</em>, <em>color=u'black'</em><big>)</big><a class="headerlink" href="#plink.Arrow" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">plink.</tt><tt class="descname">Arrow</tt><big>(</big><em>start</em>, <em>end</em>, <em>canvas=None</em>, <em>style=u'normal'</em>, <em>color=u'black'</em><big>)</big><a class="headerlink" href="#plink.Arrow" title="Permalink to this definition">¶</a></dt>
 <dd><p>An arrow in a PL link diagram.</p>
 <dl class="method">
 <dt id="plink.Arrow.draw">
-<tt class="descname">draw</tt><big>(</big><em>crossings=</em><span class="optional">[</span><span class="optional">]</span>, <em>recurse=True</em>, <em>skip_frozen=True</em><big>)</big><a class="headerlink" href="#plink.Arrow.draw" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">draw</tt><big>(</big><em>crossings=[]</em>, <em>recurse=True</em>, <em>skip_frozen=True</em><big>)</big><a class="headerlink" href="#plink.Arrow.draw" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
 <dt id="plink.Arrow.epsilon">
-<tt class="descname">epsilon</tt><em class="property"> = 12</em><a class="headerlink" href="#plink.Arrow.epsilon" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">epsilon</tt><em class="property"> = 8</em><a class="headerlink" href="#plink.Arrow.epsilon" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -460,19 +345,19 @@ component.</p>
 
 <dl class="method">
 <dt id="plink.Arrow.expose">
-<tt class="descname">expose</tt><big>(</big><em>crossings=</em><span class="optional">[</span><span class="optional">]</span><big>)</big><a class="headerlink" href="#plink.Arrow.expose" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">expose</tt><big>(</big><em>crossings=[]</em><big>)</big><a class="headerlink" href="#plink.Arrow.expose" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="plink.Arrow.find_segments">
-<tt class="descname">find_segments</tt><big>(</big><em>crossings</em>, <em>split_at_overcrossings=False</em><big>)</big><a class="headerlink" href="#plink.Arrow.find_segments" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">find_segments</tt><big>(</big><em>crossings</em>, <em>include_overcrossings=False</em>, <em>gapsize=9.0</em><big>)</big><a class="headerlink" href="#plink.Arrow.find_segments" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return a list of segments that make up this arrow, each
 segment being a list of 4 coordinates [x0,y0,x1,y1].  The
 first segment starts at the start vertex, and the last one
-ends at the end vertex.  Otherwise, endpoints are either near
+ends at the end vertex.  Otherwise, endpoints are near
 crossings where this arrow goes under, leaving a gap between
 the endpoint and the crossing point.  If the
-split_at_overcrossings flag is True, then the segments are
+include_overcrossings flag is True, then the segments are
 also split at overcrossings, with no gap.</p>
 </dd></dl>
 
@@ -481,14 +366,29 @@ also split at overcrossings, with no gap.</p>
 <tt class="descname">freeze</tt><big>(</big><big>)</big><a class="headerlink" href="#plink.Arrow.freeze" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
+<dl class="attribute">
+<dt id="plink.Arrow.frozen">
+<tt class="descname">frozen</tt><a class="headerlink" href="#plink.Arrow.frozen" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="plink.Arrow.hidden">
+<tt class="descname">hidden</tt><a class="headerlink" href="#plink.Arrow.hidden" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 <dl class="method">
 <dt id="plink.Arrow.hide">
 <tt class="descname">hide</tt><big>(</big><big>)</big><a class="headerlink" href="#plink.Arrow.hide" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
+<dt id="plink.Arrow.make_faint">
+<tt class="descname">make_faint</tt><big>(</big><big>)</big><a class="headerlink" href="#plink.Arrow.make_faint" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
 <dt id="plink.Arrow.reverse">
-<tt class="descname">reverse</tt><big>(</big><em>crossings=</em><span class="optional">[</span><span class="optional">]</span><big>)</big><a class="headerlink" href="#plink.Arrow.reverse" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">reverse</tt><big>(</big><em>crossings=[]</em><big>)</big><a class="headerlink" href="#plink.Arrow.reverse" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -498,12 +398,12 @@ also split at overcrossings, with no gap.</p>
 
 <dl class="method">
 <dt id="plink.Arrow.set_end">
-<tt class="descname">set_end</tt><big>(</big><em>vertex</em>, <em>crossings=</em><span class="optional">[</span><span class="optional">]</span><big>)</big><a class="headerlink" href="#plink.Arrow.set_end" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">set_end</tt><big>(</big><em>vertex</em>, <em>crossings=[]</em><big>)</big><a class="headerlink" href="#plink.Arrow.set_end" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="plink.Arrow.set_start">
-<tt class="descname">set_start</tt><big>(</big><em>vertex</em>, <em>crossings=</em><span class="optional">[</span><span class="optional">]</span><big>)</big><a class="headerlink" href="#plink.Arrow.set_start" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">set_start</tt><big>(</big><em>vertex</em>, <em>crossings=[]</em><big>)</big><a class="headerlink" href="#plink.Arrow.set_start" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -520,7 +420,7 @@ also split at overcrossings, with no gap.</p>
 
 <dl class="class">
 <dt id="plink.Crossing">
-<em class="property">class </em><tt class="descclassname">plink.</tt><tt class="descname">Crossing</tt><big>(</big><em>over</em>, <em>under</em><big>)</big><a class="headerlink" href="#plink.Crossing" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">plink.</tt><tt class="descname">Crossing</tt><big>(</big><em>over</em>, <em>under</em>, <em>is_virtual=False</em><big>)</big><a class="headerlink" href="#plink.Crossing" title="Permalink to this definition">¶</a></dt>
 <dd><p>A pair of crossing arrows in a PL link diagram.</p>
 <dl class="method">
 <dt id="plink.Crossing.DT_hit">
@@ -630,12 +530,12 @@ The ECrossings correspond 1-1 with edges of the link diagram.</p>
         <li class="right" >
           <a href="installing.html" title="Installing and running PLink"
              >previous</a> |</li>
-        <li><a href="index.html">PLink 1.4 documentation</a> &raquo;</li> 
+        <li><a href="index.html">PLink 1.8a1 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">
-        &copy; Copyright 2009, Marc Culler, Nathan Dunfield and others.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+        &copy; Copyright 2009-present, Marc Culler, Nathan Dunfield and others.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
     </div>
   </body>
 </html>
