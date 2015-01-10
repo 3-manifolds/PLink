@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 from setuptools import setup, Command
 import os
 
@@ -24,24 +22,34 @@ doc_files = [pjoin('doc', file) for file in os.listdir(doc_path) if file[0] != "
 for dir_name in [file for file in os.listdir(doc_path) if file[0] == "_"]:
     doc_files += [pjoin('doc', dir_name, file) for file in os.listdir(pjoin('plink', 'doc', dir_name))]
 
-# Get version number:
-
+# Get version number.
 exec(open('plink/version.py').read())
+
+# Get long description from README
+long_description = open('README').read().split('License')[0]
 
 setup(name='plink',
       version=version,
-      description='A full featured Tk-based knot and link editor', 
-      author='Marc Culler and Nathan Dunfield',
-      author_email='culler@math.uic.edu, nmd@illinois.edu',
-      url='http://www.math.uic.edu/~t3m',
       packages=['plink'],
       package_data={'plink': doc_files},
       entry_points = {'console_scripts': ['plink = plink.app:main']},
       cmdclass =  {'clean' : clean},
-      license = 'GPL v2+',
-      keywords = 'knot link editor',
-      zip_safe = False, 
-     )
+      zip_safe = False,
 
-with open('version.txt', 'w') as output:
-    output.write(version)
+      description='A full featured Tk-based knot and link editor', 
+      long_description = long_description,
+      author = 'Marc Culler and Nathan M. Dunfield',
+      author_email = 'culler@uic.edu, nathan@dunfield.info',
+      license='GPLv2+',
+      url = 'http://www.math.uic.edu/t3m/plink/doc/',
+      classifiers = [
+        'Development Status :: 5 - Production/Stable',
+        'Intended Audience :: Science/Research',
+        'License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)',
+        'Operating System :: OS Independent',
+        'Programming Language :: C',
+        'Programming Language :: Python',
+        'Topic :: Scientific/Engineering :: Mathematics',
+        ],
+        keywords = 'knot, link, editor, SnapPy',
+     )
