@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
@@ -8,15 +6,15 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Installing and running PLink &mdash; PLink 1.4 documentation</title>
+    <title>Installing and running PLink &mdash; PLink 1.8a1 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    '',
-        VERSION:     '1.4',
+        URL_ROOT:    './',
+        VERSION:     '1.8a1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -25,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="PLink 1.4 documentation" href="index.html" />
+    <link rel="top" title="PLink 1.8a1 documentation" href="index.html" />
     <link rel="next" title="plink – A Python/Tk link editor" href="plink.html" />
     <link rel="prev" title="How to use PLink" href="index.html" /> 
   </head>
@@ -45,7 +43,7 @@
         <li class="right" >
           <a href="index.html" title="How to use PLink"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">PLink 1.4 documentation</a> &raquo;</li> 
+        <li><a href="index.html">PLink 1.8a1 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -64,34 +62,31 @@ it, just like any other application.</p>
 </div>
 <div class="section" id="windows">
 <h2>Windows<a class="headerlink" href="#windows" title="Permalink to this headline">¶</a></h2>
-<p>To be improved, but for now the following works: Install <a class="reference external" href="http://python.org">Python</a>, and then get the source code below and expand
-it.  Then double-click the file:</p>
-<div class="highlight-python"><pre>plink\plink\__init__.py</pre>
+<p>Install <a class="reference external" href="http://python.org">Python</a> and use <a class="reference external" href="https://pip.pypa.io/en/latest/">pip</a> (included in recent versions) to
+get plink.  For example:</p>
+<div class="highlight-python"><div class="highlight"><pre>pip install plink
+python -m plink.app
+</pre></div>
 </div>
-</div>
-<div class="section" id="linux-and-other-unixes">
-<h2>Linux and other Unixes<a class="headerlink" href="#linux-and-other-unixes" title="Permalink to this headline">¶</a></h2>
+<hr class="docutils" />
 <p>You will need to have Python (&gt; 2.4), Tk (&gt;= 8.4), and Tkinter
 installed to run plink; for instance, if you are using Debian or
 Ubuntu, just install the package &#8220;python-tk&#8221;.</p>
-<p>If you have root privileges and <a class="reference external" href="http://peak.telecommunity.com/DevCenter/setuptools">setuptools</a> installed (the
-Linux package is usually called &#8220;python-setuptools&#8221;), simply do:</p>
-<div class="highlight-python"><pre>sudo python -m easy_install -f http://math.uic.edu/t3m/plink plink</pre>
+<p>If you have root privileges and <a class="reference external" href="https://pip.pypa.io/en/latest/">pip</a>, simply do:</p>
+<div class="highlight-python"><div class="highlight"><pre>pip install plink
+</pre></div>
 </div>
 <p>This installs a shell-command called &#8220;plink&#8221; which starts PLink.</p>
-<p>If you don&#8217;t have root privileges, download the source-code below and do:</p>
-<div class="highlight-python"><pre>tar xfz plink.tar.gz
-cd plink
-python -m plink.app</pre>
+<p>If you don&#8217;t have root privileges, add the &#8220;&#8211;user&#8221; flag to the end of
+the above install command.  You can then run plink via:</p>
+<div class="highlight-python"><div class="highlight"><pre>python -m plink.app
+</pre></div>
 </div>
-<p>to start PLink.</p>
 </div>
 <div class="section" id="source-code">
 <h2>Source code<a class="headerlink" href="#source-code" title="Permalink to this headline">¶</a></h2>
-<p>The complete source code for all platforms: <a class="reference external" href="http://math.uic.edu/t3m/plink.tar.gz">plink.tar.gz</a></p>
-<p>You can also get it straight from the <a class="reference external" href="http://www.selenic.com/mercurial">Mercurial</a> repository:</p>
-<div class="highlight-python"><pre>hg clone static-http://math.uic.edu/t3m/hg/plink</pre>
-</div>
+<p>You can download and browse the source code
+<a class="reference external" href="https://bitbucket.org/t3m/plink">here</a>.</p>
 </div>
 </div>
 
@@ -106,7 +101,6 @@ python -m plink.app</pre>
 <li><a class="reference internal" href="#">Installing and running PLink</a><ul>
 <li><a class="reference internal" href="#mac-os-x">Mac OS X</a></li>
 <li><a class="reference internal" href="#windows">Windows</a></li>
-<li><a class="reference internal" href="#linux-and-other-unixes">Linux and other Unixes</a></li>
 <li><a class="reference internal" href="#source-code">Source code</a></li>
 </ul>
 </li>
@@ -155,12 +149,12 @@ python -m plink.app</pre>
         <li class="right" >
           <a href="index.html" title="How to use PLink"
              >previous</a> |</li>
-        <li><a href="index.html">PLink 1.4 documentation</a> &raquo;</li> 
+        <li><a href="index.html">PLink 1.8a1 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">
-        &copy; Copyright 2009, Marc Culler, Nathan Dunfield and others.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+        &copy; Copyright 2009-present, Marc Culler, Nathan Dunfield and others.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
     </div>
   </body>
 </html>
