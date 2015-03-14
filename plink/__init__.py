@@ -1587,7 +1587,7 @@ class LinkEditor(LinkViewer):
         for key in self.color_keys:
             self.canvas.delete(key)
         self.color_keys = []
-        x, y, n = 10, 24, 0
+        x, y, n = 10, 5, 0
         self.palette.reset()
         for component in components:
             color = self.palette.new()
@@ -1602,7 +1602,7 @@ class LinkEditor(LinkViewer):
                     self.canvas.create_text(x, y,
                                             text=str(n),
                                             fill=color,
-                                            anchor=Tk_.SW,
+                                            anchor=Tk_.NW,
                                             font='Helvetica 16 bold'))
             x, n = x+16, n+1
         for vertex in self.Vertices:
