@@ -1051,7 +1051,7 @@ class LinkEditor(LinkViewer):
 
     def done(self, event=None):
         if self.callback is not None:
-            self.window.withdraw()
+            self.window.iconify()
             return
         if self.warn_arcs() == 'oops':
             return
