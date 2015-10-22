@@ -917,6 +917,8 @@ class LinkEditor(LinkViewer):
         self.info_var = Tk_.IntVar(self.window)
         self.view_var = Tk_.StringVar(self.window)
         self.view_var.set('pl')
+        self.lock_var = Tk_.BooleanVar(self.window)
+        self.lock_var.set(False)
         self.current_info = 0
         self.has_focus = True
         # Menus
@@ -936,6 +938,7 @@ class LinkEditor(LinkViewer):
         self.flipcheck = None
         self.shift_down = False
         self.state='start_state'
+        self.drag_save = None
         if file_name:
             self.load(file_name=file_name)
     
@@ -960,8 +963,6 @@ class LinkEditor(LinkViewer):
         help_menu.add_command(label='Instructions ...', command=self.howto)
         menubar.add_cascade(label='Help', menu=help_menu)
         
-
-        
     def build_plink_menus(self):
         menubar = self.menubar
         info_menu = Tk_.Menu(menubar, tearoff=0)
@@ -983,6 +984,7 @@ class LinkEditor(LinkViewer):
         tools_menu.add_command(label='Make alternating',
                        command=self.make_alternating)
         tools_menu.add_command(label='Reflect', command=self.reflect)
+        tools_menu.add_checkbutton(label="Lock diagram", var=self.lock_var)
         zoom_menu = Tk_.Menu(tools_menu, tearoff=0)
         pan_menu = Tk_.Menu(tools_menu, tearoff=0)
         # Accelerators are really slow on the Mac.  Bad UX
@@ -1349,8 +1351,13 @@ class LinkEditor(LinkViewer):
                                  self.canvas.canvasy(event.y))
 
     def move_active(self, x, y):
-        x, y = float(x), float(y)
-        self.ActiveVertex.x, self.ActiveVertex.y = x, y
+        active = self.ActiveVertex
+        active.x, active.y = x, y = float(x), float(y)
+        if self.lock_var.get():
+            old_x, old_y = active.x, active.y
+            if not self.verify_drag():
+                active.x, active.y = old_x, old_y
+                return
         self.ActiveVertex.draw()
         if self.LiveArrow1:
             x0,y0,x1,y1 = self.canvas.coords(self.LiveArrow1)
@@ -2227,7 +2234,7 @@ class Arrow:
             B = (Dy*self.dx - Dx*self.dy)/self.length
             return -e < A < self.length + e and -e < B < e
         except:
-            #print vertex
+            print 'exception at', vertex
             return False
 
 class Crossing:
