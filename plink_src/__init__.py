@@ -642,17 +642,15 @@ class LinkManager:
             result += '-1\n'
         return result
     
-    def Twister_surface_file(self):
+    def twister_surface_file(self):
         """
         Returns a string containing the contents of a Twister surface
         file. Raises a ValueError if there are no virtual crossings.
         """
-        result = ''
-        result += '# A Twister surface file produced in plink.\n'
+        result = '# A Twister surface file produced by PLink.\n'
         virtual_crossings = [crossing for crossing in self.Crossings if crossing.is_virtual]
         if len(virtual_crossings) == 0: 
             raise ValueError('No virtual crossings present.')
-        
         closed_components, nonclosed_components = self.arrow_components(distinguish_closed=True)
         
         def component_sequence(component):
@@ -660,25 +658,32 @@ class LinkManager:
             for arrow in component:
                 this_arrows_crossings = []
                 for index, virtual_crossing in enumerate(virtual_crossings):
-                    if virtual_crossing.under == arrow or virtual_crossing.over == arrow:
-                        other_arrow = virtual_crossing.over if arrow == virtual_crossing.under else virtual_crossing.under
-                        this_arrows_crossings.append((arrow ^ other_arrow, index, arrow.dx * other_arrow.dy - arrow.dy * other_arrow.dx > 0))
+                    if arrow == virtual_crossing.under:
+                        other_arrow = virtual_crossing.over
+                    elif arrow == virtual_crossing.over:
+                        other_arrow = virtual_crossing.under
+                    else:
+                        continue
+                    sign = (arrow.dx * other_arrow.dy - arrow.dy * other_arrow.dx > 0)
+                    this_arrows_crossings.append(
+                        (arrow ^ other_arrow, index, '+' if sign else '-'))
                 this_arrows_crossings.sort()
-                sequence += [('+' if sign else '-') + str(index) for t, index, sign in this_arrows_crossings]
+                sequence += [pm + str(index) for _, index, pm in this_arrows_crossings]
             return sequence
         
         num_components = len(closed_components) + len(nonclosed_components)
-        curve_names = list(ascii_lowercase) + ['%s%d' % (letter, index) for index in range((len(closed_components) + len(nonclosed_components)) // 26) for letter in ascii_lowercase]
-        
+        curves = list(ascii_lowercase) + ['%s%d' % (letter, index)
+            for index in range((len(closed_components) + len(nonclosed_components)) // 26)
+            for letter in ascii_lowercase]
         i = 0
         for component in closed_components:
-            result += 'annulus,%s,%s,%s#\n' % (curve_names[i], curve_names[i].swapcase(), ','.join(component_sequence(component)))
+            result += 'annulus,%s,%s,%s#\n' % (
+                curves[i], curves[i].swapcase(), ','.join(component_sequence(component)))
             i += 1
-        
         for component in nonclosed_components:
-            result += 'rectangle,%s,%s,%s#\n' % (curve_names[i], curve_names[i].swapcase(), ','.join(component_sequence(component)))
+            result += 'rectangle,%s,%s,%s#\n' % (
+                curves[i], curves[i].swapcase(), ','.join(component_sequence(component)))
             i += 1
-        
         return result
 
     def save_as_tikz(self, file_name, colormode='color', width=282.0):
