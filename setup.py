@@ -2,7 +2,7 @@ from setuptools import setup, Command
 from pkg_resources import load_entry_point
 import os
 
-src = 'plink-src'
+src = 'plink_src'
 
 # A real clean
 
@@ -26,8 +26,8 @@ class build_docs(Command):
         pass
     def run(self):
         sphinx_cmd = load_entry_point('Sphinx>=0.6.1', 'console_scripts', 'sphinx-build')
-        sphinx_args = ['sphinx', '-a', '-E', '-d', 'doc-source/_build/doctrees',
-                       'doc-source', 'plink/doc']
+        sphinx_args = ['sphinx', '-a', '-E', '-d', 'doc_source/_build/doctrees',
+                       'doc_source', 'plink/doc']
         sphinx_cmd(sphinx_args)
 
 # We need to collect the names of the Sphinx-generated documentation files to add
@@ -39,7 +39,7 @@ for dir_name in [file for file in os.listdir(doc_path) if file[0] == "_"]:
     doc_files += [pjoin('doc', dir_name, file) for file in os.listdir(pjoin(src, 'doc', dir_name))]
 
 # Get version number.
-exec(open('plink-src/version.py').read())
+exec(open('plink_src/version.py').read())
 
 # Get long description from README
 long_description = open('README').read().split('License')[0]

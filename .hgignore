@@ -1,13 +1,13 @@
 build
 dist
-doc-source/_build
+doc_source/_build
 .DS_Store
-plink-app/dmg-maker/PLink.dmg
+plink_app/dmg-maker/PLink.dmg
 
 syntax: glob
 *~
 *.pyc
-plink-app/*.egg/
+plink_app/*.egg/
 plink/doc/_static/*
 plink.egg-info/*
 dev/*
