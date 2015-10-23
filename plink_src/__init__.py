@@ -133,7 +133,8 @@ class LinkManager:
         num_lines = len(lines)
         first_line = lines.pop(0)
         has_virtual_crossings = first_line.startswith('% Virtual Link Projection')
-        if not (first_line.startswith('% Link Projection') or first_line.startswith('% Virtual Link Projection')):
+        if not (first_line.startswith('% Link Projection') or
+                first_line.startswith('% Virtual Link Projection')):
             tkMessageBox.showwarning(
                 'Bad file',
                 'This is not a SnapPea link projection file')
@@ -1336,10 +1337,7 @@ class LinkEditor(LinkViewer):
         self.cursorx, self.cursory = event.x, event.y
         x = self.canvas.canvasx(event.x)
         y = self.canvas.canvasy(event.y)
-        if self.state == 'start_state':
-            point = Vertex(x, y, self.canvas, style='hidden')
-            self.set_start_cursor(x,y)
-        elif self.state == 'drawing_state':
+        if self.state == 'drawing_state':
             x0,y0,x1,y1 = self.canvas.coords(self.LiveArrow1)
             self.canvas.coords(self.LiveArrow1, x0, y0, x, y)
         elif self.state == 'dragging_state':
