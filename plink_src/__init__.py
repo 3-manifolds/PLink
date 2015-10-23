@@ -919,6 +919,7 @@ class LinkEditor(LinkViewer):
         self.view_var.set('pl')
         self.lock_var = Tk_.BooleanVar(self.window)
         self.lock_var.set(False)
+        self.last_good_drag = None
         self.current_info = 0
         self.has_focus = True
         # Menus
@@ -1352,13 +1353,15 @@ class LinkEditor(LinkViewer):
 
     def move_active(self, x, y):
         active = self.ActiveVertex
-        old_x, old_y = active.x, active.y
         active.x, active.y = x, y = float(x), float(y)
         if self.lock_var.get():
-            if not self.verify_drag():
-                active.x, active.y = old_x, old_y
+            tolerance = None if self.last_good_drag is None else 25
+            if not self.verify_drag(tolerance=tolerance):
+                active.x, active.y = self.last_good_drag
                 self.end_dragging_state()
+                self.last_good_drag = None
                 return
+            self.last_good_drag = (x,y)
         self.ActiveVertex.draw()
         if self.LiveArrow1:
             x0,y0,x1,y1 = self.canvas.coords(self.LiveArrow1)
@@ -1494,13 +1497,14 @@ class LinkEditor(LinkViewer):
         self.hide_DT()
         self.clear_text()
 
-    def verify_drag(self):
-        self.ActiveVertex.update_arrows()
-        self.update_crossings(self.ActiveVertex.in_arrow)
-        self.update_crossings(self.ActiveVertex.out_arrow)
+    def verify_drag(self, tolerance=None):
+        active = self.ActiveVertex
+        active.update_arrows()
+        self.update_crossings(active.in_arrow)
+        self.update_crossings(active.out_arrow)
         self.update_crosspoints()
-        return (self.generic_arrow(self.ActiveVertex.in_arrow) and
-                self.generic_arrow(self.ActiveVertex.out_arrow) )
+        return (self.generic_arrow(active.in_arrow, tolerance=tolerance) and
+                self.generic_arrow(active.out_arrow, tolerance=tolerance) )
 
     def end_dragging_state(self):
         if not self.verify_drag():
@@ -1536,16 +1540,16 @@ class LinkEditor(LinkViewer):
                 return False
         return True
 
-    def generic_arrow(self, arrow):
+    def generic_arrow(self, arrow, tolerance=None):
         if arrow == None:
             return True
         for vertex in self.Vertices:
-            if arrow.too_close(vertex):
+            if arrow.too_close(vertex, tolerance=tolerance):
                 #print 'arrow too close to vertex %s'%vertex
                 return False
         for crossing in self.Crossings:
             point = self.CrossPoints[self.Crossings.index(crossing)]
-            if arrow not in crossing and arrow.too_close(point):
+            if arrow not in crossing and arrow.too_close(point, tolerance=tolerance):
                 #print 'arrow too close to crossing %s'%crossing
                 return False
         return True
@@ -2224,11 +2228,11 @@ class Arrow:
         self.end = None
         self.hide()
 
-    def too_close(self, vertex):
+    def too_close(self, vertex, tolerance=None):
         if vertex == self.start or vertex == self.end:
             return False
         try:
-            e = Arrow.epsilon
+            e = tolerance if tolerance else Arrow.epsilon
             Dx = vertex.x - self.start.x
             Dy = vertex.y - self.start.y
             A = (Dx*self.dx + Dy*self.dy)/self.length
