@@ -1356,7 +1356,8 @@ class LinkEditor(LinkViewer):
         active.x, active.y = x, y = float(x), float(y)
         if self.lock_var.get():
             tolerance = None if self.last_good_drag is None else 25
-            if not self.verify_drag(tolerance=tolerance):
+            if not (self.verify_drag(tolerance=tolerance) and
+                    self.generic_vertex(active, tolerance=tolerance)):
                 active.x, active.y = self.last_good_drag
                 self.end_dragging_state()
                 self.last_good_drag = None
@@ -1531,11 +1532,11 @@ class LinkEditor(LinkViewer):
                 self.ActiveVertex.out_arrow.expose()
         self.goto_start_state()
 
-    def generic_vertex(self, vertex):
+    def generic_vertex(self, vertex, tolerance=None):
         if vertex in [v for v in self.Vertices if v is not vertex]:
             return False
         for arrow in self.Arrows:
-            if arrow.too_close(vertex):
+            if arrow.too_close(vertex, tolerance=tolerance):
                 #print 'non-generic vertex'
                 return False
         return True
