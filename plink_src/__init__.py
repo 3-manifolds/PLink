@@ -919,6 +919,7 @@ class LinkEditor(LinkViewer):
         self.view_var.set('pl')
         self.lock_var = Tk_.BooleanVar(self.window)
         self.lock_var.set(False)
+        self.cursor_attached = True
         self.last_good_drag = None
         self.current_info = 0
         self.has_focus = True
@@ -1114,6 +1115,8 @@ class LinkEditor(LinkViewer):
         """
         if self.view_var.get() == 'smooth':
             return
+        if self.lock_var.get():
+            return
         if self.state == 'start_state':
             if not self.has_focus:
                 return
@@ -1168,6 +1171,8 @@ class LinkEditor(LinkViewer):
                     self.ActiveVertex.out_arrow.freeze()
                     self.LiveArrow2 = self.canvas.create_line(x0,y0,x1,y1,
                                                              fill='red')
+                return
+            elif self.lock_var.get():
                 return
             elif start_vertex in self.CrossPoints:
                 #print 'single click on a crossing'
@@ -1265,6 +1270,8 @@ class LinkEditor(LinkViewer):
         """
         if self.view_var.get() == 'smooth':
             return
+        if self.lock_var.get():
+            return
         x = self.canvas.canvasx(event.x)
         y = self.canvas.canvasy(event.y)
         self.clear_text()
@@ -1312,12 +1319,14 @@ class LinkEditor(LinkViewer):
             else:
                 self.canvas.config(cursor='')
         else:
-            if point in self.CrossPoints:
-                self.flipcheck=None
-                self.canvas.config(cursor='exchange')
-            elif point in self.Vertices:
+            if point in self.Vertices:
                 self.flipcheck=None
                 self.canvas.config(cursor='hand1')
+            elif self.lock_var.get():
+                return
+            elif point in self.CrossPoints:
+                self.flipcheck=None
+                self.canvas.config(cursor='exchange')
             elif self.cursor_on_arrow(point):
                 now = time.time()
                 if self.flipcheck is None:
@@ -1334,6 +1343,9 @@ class LinkEditor(LinkViewer):
         """
         if self.view_var.get() == 'smooth':
             return
+        if self.lock_var.get():
+            if abs(event.x - self.cursorx) + abs(event.y - self.cursory) > 6:
+                self.cursor_attached = False
         self.cursorx, self.cursory = event.x, event.y
         x = self.canvas.canvasx(event.x)
         y = self.canvas.canvasy(event.y)
@@ -1353,16 +1365,21 @@ class LinkEditor(LinkViewer):
 
     def move_active(self, x, y):
         active = self.ActiveVertex
-        active.x, active.y = x, y = float(x), float(y)
         if self.lock_var.get():
-            tolerance = None if self.last_good_drag is None else 25
-            if not (self.verify_drag(tolerance=tolerance) and
-                    self.generic_vertex(active, tolerance=tolerance)):
-                active.x, active.y = self.last_good_drag
-                self.end_dragging_state()
-                self.last_good_drag = None
+            if abs(active.x - x) + abs(active.y - y) < 3:
+                self.cursor_attached = True
+            if not self.cursor_attached:
                 return
-            self.last_good_drag = (x,y)
+            x0, y0 = active.x, active.y
+            active.x, active.y = x, y = float(x), float(y)
+            if not self.verify_drag() or not self.generic_vertex(active):
+                active.x, active.y = x0, y0 
+                self.cursor_attached = False
+                return
+            # else:
+            #     self.canvas.delete('lock_error')
+        else:
+            active.x, active.y = float(x), float(y)
         self.ActiveVertex.draw()
         if self.LiveArrow1:
             x0,y0,x1,y1 = self.canvas.coords(self.LiveArrow1)
@@ -1470,6 +1487,8 @@ class LinkEditor(LinkViewer):
         return False
 
     def cursor_on_arrow(self, point):
+        if self.lock_var.get():
+            return False
         for arrow in self.Arrows:
             if arrow.too_close(point):
                 return True
@@ -1498,14 +1517,14 @@ class LinkEditor(LinkViewer):
         self.hide_DT()
         self.clear_text()
 
-    def verify_drag(self, tolerance=None):
+    def verify_drag(self):
         active = self.ActiveVertex
         active.update_arrows()
         self.update_crossings(active.in_arrow)
         self.update_crossings(active.out_arrow)
         self.update_crosspoints()
-        return (self.generic_arrow(active.in_arrow, tolerance=tolerance) and
-                self.generic_arrow(active.out_arrow, tolerance=tolerance) )
+        return (self.generic_arrow(active.in_arrow) and
+                self.generic_arrow(active.out_arrow) )
 
     def end_dragging_state(self):
         if not self.verify_drag():
@@ -1532,25 +1551,41 @@ class LinkEditor(LinkViewer):
                 self.ActiveVertex.out_arrow.expose()
         self.goto_start_state()
 
-    def generic_vertex(self, vertex, tolerance=None):
+    def generic_vertex(self, vertex):
         if vertex in [v for v in self.Vertices if v is not vertex]:
             return False
         for arrow in self.Arrows:
-            if arrow.too_close(vertex, tolerance=tolerance):
-                #print 'non-generic vertex'
-                return False
+            if arrow.too_close(vertex):
+                if self.lock_var.get():
+                    # x, y, delta = vertex.x, vertex.y, 4
+                    # self.canvas.delete('lock_error')
+                    # self.canvas.create_oval(x-delta , y-delta, x+delta, y+delta,
+                    #                         outline='black', fill=None, width=2,
+                    #                         tags='lock_error')
+                    #print 'non-generic vertex'
+                    return False
         return True
 
-    def generic_arrow(self, arrow, tolerance=None):
+    def generic_arrow(self, arrow):
         if arrow == None:
             return True
         for vertex in self.Vertices:
-            if arrow.too_close(vertex, tolerance=tolerance):
+            if arrow.too_close(vertex):
+                # x, y, delta = vertex.x, vertex.y, 4
+                # self.canvas.delete('lock_error')
+                # self.canvas.create_oval(x-delta , y-delta, x+delta, y+delta,
+                #                         outline='black', fill=None, width=2,
+                #                         tags='lock_error')
                 #print 'arrow too close to vertex %s'%vertex
                 return False
         for crossing in self.Crossings:
             point = self.CrossPoints[self.Crossings.index(crossing)]
-            if arrow not in crossing and arrow.too_close(point, tolerance=tolerance):
+            if arrow not in crossing and arrow.too_close(point):
+                # x, y, delta = point.x, point.y, 4
+                # self.canvas.delete('lock_error')
+                # self.canvas.create_oval(x-delta , y-delta, x+delta, y+delta,
+                #                         outline='black', fill=None, width=2,
+                #                         tags='lock_error')
                 #print 'arrow too close to crossing %s'%crossing
                 return False
         return True
@@ -2229,16 +2264,16 @@ class Arrow:
         self.end = None
         self.hide()
 
-    def too_close(self, vertex, tolerance=None):
+    def too_close(self, vertex):
         if vertex == self.start or vertex == self.end:
             return False
         try:
-            e = tolerance if tolerance else Arrow.epsilon
+            e = Arrow.epsilon
             Dx = vertex.x - self.start.x
             Dy = vertex.y - self.start.y
             A = (Dx*self.dx + Dy*self.dy)/self.length
             B = (Dy*self.dx - Dx*self.dy)/self.length
-            return -e < A < self.length + e and -e < B < e
+            return (-e < A < self.length + e and -e < B < e)
         except:
             print 'exception at', vertex
             return False
