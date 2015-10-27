@@ -55,6 +55,11 @@ except ImportError:
 
 default_gap_size = 9.0
 
+if sys.platform == 'linux2':
+    closed_hand_cursor = 'fleur'
+else:
+    closed_hand_cursor = 'hand2'
+    
 # Make the Tk file dialog work better with file extensions on OX
 
 def asksaveasfile(mode='w',**options):
@@ -940,7 +945,6 @@ class LinkEditor(LinkViewer):
         self.flipcheck = None
         self.shift_down = False
         self.state='start_state'
-        self.drag_save = None
         if file_name:
             self.load(file_name=file_name)
     
@@ -1156,7 +1160,7 @@ class LinkEditor(LinkViewer):
                 self.state = 'dragging_state'
                 self.hide_DT()
                 self.update_info()
-                self.canvas.config(cursor='circle')
+                self.canvas.config(cursor=closed_hand_cursor)
                 self.ActiveVertex = self.Vertices[
                     self.Vertices.index(start_vertex)]
                 self.ActiveVertex.freeze()
@@ -1315,17 +1319,22 @@ class LinkEditor(LinkViewer):
         point = Vertex(x, y, self.canvas, style='hidden')
         if self.shift_down:
             if point in self.CrossPoints:
+                print 'dot cursor', self.state
                 self.canvas.config(cursor='dot')
+            else:
+                self.canvas.config(cursor='')
+        elif self.lock_var.get():
+            if point in self.Vertices:
+                self.flipcheck = None
+                self.canvas.config(cursor='hand1')
             else:
                 self.canvas.config(cursor='')
         else:
             if point in self.Vertices:
-                self.flipcheck=None
-                self.canvas.config(cursor='fleur')
-            elif self.lock_var.get():
-                return
+                self.flipcheck = None
+                self.canvas.config(cursor='hand1')
             elif point in self.CrossPoints:
-                self.flipcheck=None
+                self.flipcheck = None
                 self.canvas.config(cursor='exchange')
             elif self.cursor_on_arrow(point):
                 now = time.time()
@@ -1334,7 +1343,7 @@ class LinkEditor(LinkViewer):
                 elif now - self.flipcheck > 0.5:
                     self.canvas.config(cursor='double_arrow')
             else:
-                self.flipcheck=None
+                self.flipcheck = None
                 self.canvas.config(cursor='')
  
     def mouse_moved(self,event):
@@ -1404,7 +1413,7 @@ class LinkEditor(LinkViewer):
         if self.cursor_attached == False:
             self.cursor_attached = True
             if self.ActiveVertex:
-                self.ActiveVertex.set_delta(6)
+                self.ActiveVertex.set_delta(8)
 
     def detach_cursor(self):
         if self.cursor_attached == True:
