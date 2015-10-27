@@ -57,8 +57,13 @@ default_gap_size = 9.0
 
 if sys.platform == 'linux2':
     closed_hand_cursor = 'fleur'
+    open_hand_cursor = 'hand1'
+elif sys.platform == 'darwin':
+    closed_hand_cursor = 'closedhand'
+    open_hand_cursor = 'openhand'
 else:
     closed_hand_cursor = 'hand2'
+    open_hand_cursor = 'hand1'
     
 # Make the Tk file dialog work better with file extensions on OX
 
@@ -1319,20 +1324,19 @@ class LinkEditor(LinkViewer):
         point = Vertex(x, y, self.canvas, style='hidden')
         if self.shift_down:
             if point in self.CrossPoints:
-                print 'dot cursor', self.state
                 self.canvas.config(cursor='dot')
             else:
                 self.canvas.config(cursor='')
         elif self.lock_var.get():
             if point in self.Vertices:
                 self.flipcheck = None
-                self.canvas.config(cursor='hand1')
+                self.canvas.config(cursor=open_hand_cursor)
             else:
                 self.canvas.config(cursor='')
         else:
             if point in self.Vertices:
                 self.flipcheck = None
-                self.canvas.config(cursor='hand1')
+                self.canvas.config(cursor=open_hand_cursor)
             elif point in self.CrossPoints:
                 self.flipcheck = None
                 self.canvas.config(cursor='exchange')
