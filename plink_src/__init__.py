@@ -1281,8 +1281,8 @@ class LinkEditor(LinkViewer):
             return
         if self.lock_var.get():
             return
-        x = self.canvas.canvasx(event.x)
-        y = self.canvas.canvasy(event.y)
+        x = x1 = self.canvas.canvasx(event.x)
+        y = y1 = self.canvas.canvasy(event.y)
         self.clear_text()
         vertex = Vertex(x, y, self.canvas, style='hidden')
         #print 'double-click in %s'%self.state
@@ -1356,14 +1356,18 @@ class LinkEditor(LinkViewer):
         """
         if self.view_var.get() == 'smooth':
             return
+        canvas = self.canvas
+        X, Y = event.x, event.y
+        x, y = canvas.canvasx(X), canvas.canvasy(Y)
         if self.lock_var.get():
-            if abs(event.x - self.cursorx) + abs(event.y - self.cursory) > 12:
-                self.detach_cursor()
-        self.cursorx, self.cursory = event.x, event.y
-        x = self.canvas.canvasx(event.x)
-        y = self.canvas.canvasy(event.y)
+            cur_x, cur_y = canvas.canvasx(self.cursorx), canvas.canvasy(self.cursory)
+            test_arrow = Arrow(Vertex(x, y), Vertex(cur_x, cur_y))
+            for arrow in self.Arrows:
+                if arrow ^ test_arrow:
+                    self.detach_cursor()
+                    break
+        self.cursorx, self.cursory = X, Y
         if self.state == 'start_state':
-            point = Vertex(x, y, self.canvas, style='hidden')
             self.set_start_cursor(x,y)
         elif self.state == 'drawing_state':
             x0,y0,x1,y1 = self.canvas.coords(self.LiveArrow1)
@@ -1385,11 +1389,11 @@ class LinkEditor(LinkViewer):
                 return
             x0, y0 = active.x, active.y
             active.x, active.y = x, y = float(x), float(y)
+            self.canvas.delete('lock_error')
             if not self.generic_vertex(active):
                 active.x, active.y = x0, y0 
                 self.detach_cursor()
                 delta = 6
-                self.canvas.delete('lock_error')
                 self.canvas.create_oval(x0-delta , y0-delta, x0+delta, y0+delta,
                                         outline='gray', fill=None, width=3,
                                         tags='lock_error')
@@ -1398,8 +1402,6 @@ class LinkEditor(LinkViewer):
                 active.x, active.y = x0, y0 
                 self.detach_cursor()
                 return
-            else:
-                self.canvas.delete('lock_error')
         else:
             active.x, active.y = float(x), float(y)
         self.ActiveVertex.draw()
@@ -1593,18 +1595,17 @@ class LinkEditor(LinkViewer):
             return False
         for arrow in self.Arrows:
             if arrow.too_close(vertex):
-                #print 'non-generic vertex'
                 return False
         return True
 
     def generic_arrow(self, arrow):
         if arrow == None:
             return True
+        locked = self.lock_var.get()
         for vertex in self.Vertices:
             if arrow.too_close(vertex):
-                if self.lock_var.get():
+                if locked:
                     x, y, delta = vertex.x, vertex.y, 6
-                    self.canvas.delete('lock_error')
                     self.canvas.create_oval(x-delta , y-delta, x+delta, y+delta,
                                             outline='gray', fill=None, width=3,
                                             tags='lock_error')
@@ -1613,9 +1614,8 @@ class LinkEditor(LinkViewer):
         for crossing in self.Crossings:
             point = self.CrossPoints[self.Crossings.index(crossing)]
             if arrow not in crossing and arrow.too_close(point):
-                if self.lock_var.get():
+                if locked:
                     x, y, delta = point.x, point.y, 6
-                    self.canvas.delete('lock_error')
                     self.canvas.create_oval(x-delta , y-delta, x+delta, y+delta,
                                             outline='gray', fill=None, width=3,
                                             tags='lock_error')
@@ -1956,7 +1956,7 @@ class Vertex:
     """
     epsilon = 8
     
-    def __init__(self, x, y, canvas, style='normal', color='black'):
+    def __init__(self, x, y, canvas=None, style='normal', color='black'):
         self.x, self.y = float(x), float(y)
         self.in_arrow = None
         self.out_arrow = None
