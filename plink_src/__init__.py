@@ -1561,12 +1561,13 @@ class LinkEditor(LinkViewer):
                 self.generic_arrow(active.out_arrow) )
 
     def end_dragging_state(self):
-        if self.lock_var.get():
-            self.detach_cursor()
         if not self.verify_drag():
             raise ValueError
-        x, y = float(self.cursorx), float(self.cursory)
-        self.ActiveVertex.x, self.ActiveVertex.y = x, y
+        if self.lock_var.get():
+            self.detach_cursor()
+        else:
+            x, y = float(self.cursorx), float(self.cursory)
+            self.ActiveVertex.x, self.ActiveVertex.y = x, y
         endpoint = None
         if self.ActiveVertex.is_endpoint():
             other_ends = [v for v in self.Vertices if
