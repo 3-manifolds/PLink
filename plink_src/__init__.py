@@ -1613,6 +1613,12 @@ class LinkEditor(LinkViewer):
         for crossing in self.Crossings:
             point = self.CrossPoints[self.Crossings.index(crossing)]
             if arrow not in crossing and arrow.too_close(point):
+                if self.lock_var.get():
+                    x, y, delta = point.x, point.y, 6
+                    self.canvas.delete('lock_error')
+                    self.canvas.create_oval(x-delta , y-delta, x+delta, y+delta,
+                                            outline='gray', fill=None, width=3,
+                                            tags='lock_error')
                 #print 'arrow too close to crossing %s'%crossing
                 return False
         return True
