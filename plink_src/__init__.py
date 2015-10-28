@@ -1531,6 +1531,7 @@ class LinkEditor(LinkViewer):
         return False
 
     def goto_start_state(self):
+        self.canvas.delete("lock_error")
         self.canvas.delete(self.LiveArrow1)
         self.LiveArrow1 = None
         self.canvas.delete(self.LiveArrow2)
@@ -1594,7 +1595,8 @@ class LinkEditor(LinkViewer):
         if vertex in [v for v in self.Vertices if v is not vertex]:
             return False
         for arrow in self.Arrows:
-            if arrow.too_close(vertex):
+            if arrow.too_close(vertex, tolerance=Arrow.epsilon + 2):
+                #print 'non-generic vertex'
                 return False
         return True
 
@@ -1765,6 +1767,7 @@ class LinkEditor(LinkViewer):
         self.update_smooth()
 
     def clear(self):
+        self.lock_var.set(False)
         for arrow in self.Arrows:
             arrow.erase()
         for vertex in self.Vertices:
@@ -2302,19 +2305,15 @@ class Arrow:
         self.end = None
         self.hide()
 
-    def too_close(self, vertex):
+    def too_close(self, vertex, tolerance=None):
         if vertex == self.start or vertex == self.end:
             return False
-        try:
-            e = Arrow.epsilon
-            Dx = vertex.x - self.start.x
-            Dy = vertex.y - self.start.y
-            A = (Dx*self.dx + Dy*self.dy)/self.length
-            B = (Dy*self.dx - Dx*self.dy)/self.length
-            return (-e < A < self.length + e and -e < B < e)
-        except:
-            print 'exception at', vertex
-            return False
+        e = tolerance if tolerance else Arrow.epsilon
+        Dx = vertex.x - self.start.x
+        Dy = vertex.y - self.start.y
+        A = (Dx*self.dx + Dy*self.dy)/self.length
+        B = (Dy*self.dx - Dx*self.dy)/self.length
+        return (-e < A < self.length + e and -e < B < e)
 
 class Crossing:
     """
