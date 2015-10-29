@@ -929,8 +929,8 @@ class LinkEditor(LinkViewer):
         self.view_var.set('pl')
         self.lock_var = Tk_.BooleanVar(self.window)
         self.lock_var.set(False)
-        self.cursor_attached = True
-        self.last_good_drag = None
+        self.cursor_attached = False
+        self.saved_crossing_data = None
         self.current_info = 0
         self.has_focus = True
         # Menus
@@ -995,7 +995,7 @@ class LinkEditor(LinkViewer):
         tools_menu.add_command(label='Make alternating',
                        command=self.make_alternating)
         tools_menu.add_command(label='Reflect', command=self.reflect)
-        tools_menu.add_checkbutton(label="Lock diagram", var=self.lock_var)
+        tools_menu.add_checkbutton(label="Preserve diagram", var=self.lock_var)
         zoom_menu = Tk_.Menu(tools_menu, tearoff=0)
         pan_menu = Tk_.Menu(tools_menu, tearoff=0)
         # Accelerators are really slow on the Mac.  Bad UX
@@ -1114,7 +1114,7 @@ class LinkEditor(LinkViewer):
             self.enable_fancy_save_images()
             for vertex in self.Vertices:
                 vertex.expose()
-            for arrow in self.Arrows: 
+            for arrow in self.Arrows:
                 arrow.expose()
         self.full_redraw()
     
@@ -1169,6 +1169,7 @@ class LinkEditor(LinkViewer):
                 self.ActiveVertex = self.Vertices[
                     self.Vertices.index(start_vertex)]
                 self.ActiveVertex.freeze()
+                self.saved_crossing_data = self.active_crossing_data()
                 x1, y1 = self.ActiveVertex.point()
                 if self.ActiveVertex.in_arrow:
                     x0, y0 = self.ActiveVertex.in_arrow.start.point()
@@ -1179,7 +1180,7 @@ class LinkEditor(LinkViewer):
                     self.ActiveVertex.out_arrow.freeze()
                     self.LiveArrow2 = self.canvas.create_line(x0, y0, x1, y1, fill='red')
                 if self.lock_var.get():
-                    self.attach_cursor()
+                    self.attach_cursor('start')
                 return
             elif self.lock_var.get():
                 return
@@ -1256,7 +1257,6 @@ class LinkEditor(LinkViewer):
             if not (self.generic_vertex(next_vertex) and
                     self.generic_arrow(next_arrow) ):
                 self.alert()
-#                next_vertex.hide()
                 self.destroy_arrow(next_arrow)
                 return
             self.update_crossings(next_arrow)
@@ -1359,13 +1359,6 @@ class LinkEditor(LinkViewer):
         canvas = self.canvas
         X, Y = event.x, event.y
         x, y = canvas.canvasx(X), canvas.canvasy(Y)
-        if self.lock_var.get():
-            cur_x, cur_y = canvas.canvasx(self.cursorx), canvas.canvasy(self.cursory)
-            test_arrow = Arrow(Vertex(x, y), Vertex(cur_x, cur_y))
-            for arrow in self.Arrows:
-                if arrow ^ test_arrow:
-                    self.detach_cursor()
-                    break
         self.cursorx, self.cursory = X, Y
         if self.state == 'start_state':
             self.set_start_cursor(x,y)
@@ -1380,28 +1373,53 @@ class LinkEditor(LinkViewer):
                 self.move_active(self.canvas.canvasx(event.x),
                                  self.canvas.canvasy(event.y))
 
+    def active_crossing_data(self):
+        """
+        Return the tuple of edges crossed by the in and out
+        arrows of the active vertex.
+        """
+        assert self.ActiveVertex is not None
+        active = self.ActiveVertex
+        ignore = [active.in_arrow, active.out_arrow]
+        return (self.crossed_arrows(active.in_arrow, ignore),
+                self.crossed_arrows(active.out_arrow, ignore))
+
+    def move_is_ok(self):
+        return self.active_crossing_data() == self.saved_crossing_data
+    
     def move_active(self, x, y):
         active = self.ActiveVertex
         if self.lock_var.get():
-            if abs(active.x - x) + abs(active.y - y) < 3:
-                self.attach_cursor()
-            if not self.cursor_attached:
+            x0, y0 = active.point()
+            active.x, active.y = float(x), float(y)
+            if self.move_is_ok():
+                if not self.generic_vertex(active):
+                    active.x, active.y = x0, y0
+                    if self.cursor_attached:
+                        self.detach_cursor('non-generic active vertex')
+                    self.canvas.delete('lock_error')
+                    delta = 6
+                    self.canvas.create_oval(x0-delta , y0-delta, x0+delta, y0+delta,
+                                            outline='gray', fill=None, width=3,
+                                            tags='lock_error')
+                    return
+                if not self.verify_drag():
+                    active.x, active.y = x0, y0
+                    if self.cursor_attached:
+                        self.detach_cursor('non-generic diagram')
+                    return
+                if not self.cursor_attached:
+                    self.attach_cursor('move is ok')
+            else:
+                # The move is bad, but we don't know exactly how genericity
+                # failed because the cursor was moving too fast.  In this
+                # case we need to redraw the vertex.
+                if self.cursor_attached:
+                    self.detach_cursor('bad move')
+                active.x, active.y = x0, y0
+                self.ActiveVertex.draw()
                 return
-            x0, y0 = active.x, active.y
-            active.x, active.y = x, y = float(x), float(y)
             self.canvas.delete('lock_error')
-            if not self.generic_vertex(active):
-                active.x, active.y = x0, y0 
-                self.detach_cursor()
-                delta = 6
-                self.canvas.create_oval(x0-delta , y0-delta, x0+delta, y0+delta,
-                                        outline='gray', fill=None, width=3,
-                                        tags='lock_error')
-                return
-            if not self.verify_drag():
-                active.x, active.y = x0, y0 
-                self.detach_cursor()
-                return
         else:
             active.x, active.y = float(x), float(y)
         self.ActiveVertex.draw()
@@ -1415,17 +1433,15 @@ class LinkEditor(LinkViewer):
         self.update_info()
         self.window.update_idletasks()
 
-    def attach_cursor(self):
-        if self.cursor_attached == False:
-            self.cursor_attached = True
-            if self.ActiveVertex:
-                self.ActiveVertex.set_delta(8)
+    def attach_cursor(self, reason=''):
+        #print 'attaching:', reason
+        self.cursor_attached = True
+        self.ActiveVertex.set_delta(8)
 
-    def detach_cursor(self):
-        if self.cursor_attached == True:
-            self.cursor_attached = False
-            if self.ActiveVertex:
-                self.ActiveVertex.set_delta(2)
+    def detach_cursor(self, reason=''):
+        #print 'detaching:', reason
+        self.cursor_attached = False
+        self.ActiveVertex.set_delta(2)
         
     def key_release(self, event):
         """
@@ -1568,6 +1584,7 @@ class LinkEditor(LinkViewer):
             raise ValueError
         if self.lock_var.get():
             self.detach_cursor()
+            self.saved_crossing_data = None
         else:
             x, y = float(self.cursorx), float(self.cursory)
             self.ActiveVertex.x, self.ActiveVertex.y = x, y
@@ -1608,6 +1625,7 @@ class LinkEditor(LinkViewer):
             if arrow.too_close(vertex):
                 if locked:
                     x, y, delta = vertex.x, vertex.y, 6
+                    self.canvas.delete('lock_error')
                     self.canvas.create_oval(x-delta , y-delta, x+delta, y+delta,
                                             outline='gray', fill=None, width=3,
                                             tags='lock_error')
@@ -1618,6 +1636,7 @@ class LinkEditor(LinkViewer):
             if arrow not in crossing and arrow.too_close(point):
                 if locked:
                     x, y, delta = point.x, point.y, 6
+                    self.canvas.delete('lock_error')
                     self.canvas.create_oval(x-delta , y-delta, x+delta, y+delta,
                                             outline='gray', fill=None, width=3,
                                             tags='lock_error')
@@ -1664,6 +1683,23 @@ class LinkEditor(LinkViewer):
                     self.Crossings.remove(new_crossing)
         for arrow in damage_list:
             arrow.draw(self.Crossings)
+
+    def crossed_arrows(self, arrow, ignore_list=[]):
+        """
+        Return a tuple containing the arrows of the diagram which are
+        crossed by the given arrow, in order along the given arrow.
+        """
+        if arrow is None:
+            return tuple()
+        arrow.vectorize()
+        crosslist = []
+        for n, diagram_arrow in enumerate(self.Arrows):
+            if arrow == diagram_arrow or diagram_arrow in ignore_list:
+                continue
+            t = arrow ^ diagram_arrow
+            if t is not None:
+                crosslist.append((t, n))
+        return tuple(n for _, n in sorted(crosslist))
 
     def full_redraw(self):
         """
