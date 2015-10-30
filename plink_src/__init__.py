@@ -944,6 +944,8 @@ class LinkEditor(LinkViewer):
         self.window.bind('<FocusOut>', self.focus_out)
         self.window.bind('<Key>', self.key_press)
         self.window.bind('<KeyRelease>', self.key_release)
+        self.window.bind('<Leave>', self.mouse_leave)
+        self.window.bind('<Enter>', self.mouse_enter)
         self.infotext.bind('<<Copy>>', lambda event : None)
         self.window.protocol("WM_DELETE_WINDOW", self.done)
         # Go
@@ -1442,6 +1444,12 @@ class LinkEditor(LinkViewer):
         #print 'detaching:', reason
         self.cursor_attached = False
         self.ActiveVertex.set_delta(2)
+
+    def mouse_leave(self, event=None):
+        pass
+
+    def mouse_enter(self, event=None):
+        pass
         
     def key_release(self, event):
         """
