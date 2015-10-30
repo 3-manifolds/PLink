@@ -16,13 +16,13 @@ os.system("hg pull")
 os.system("hg up")
 os.system(python27 + " setup.py clean")
 os.system(python27 + " setup.py install")
-os.chdir("doc-source")
+os.chdir("doc_source")
 os.system("make install")
 os.chdir("../")
 
 # Now build the .app
 
-os.chdir("plink-app")
+os.chdir("plink_app")
 os.system(python27 + " setup.py py2app")
 
 # Make things a little smaller.
