@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 import sys
-from colorsys import hls_to_rgb
 
 try: 
     if sys.version_info[0] < 3:
