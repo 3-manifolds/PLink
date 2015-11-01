@@ -28,6 +28,8 @@ from . import smooth
 from .vertex import Vertex
 from .arrow import Arrow, default_gap_size
 from .crossings import Crossing, ECrossing
+from .colors import Palette
+from .dialog import InfoDialog
 
 class LinkManager:
     """
@@ -1902,107 +1904,6 @@ class LinkEditor(LinkViewer):
             tkMessageBox.showwarning('Not found!', 'Could not open URL\n(%s)'%url)
 
 DT_alphabet = '_abcdefghijklmnopqrstuvwxyzZYXWVUTSRQPONMLKJIHGFEDCBA'
-
-class Palette:
-    """
-    Dispenses colors.
-    """
-    def __init__(self):
-        self.colorizer = Colorizer()
-        self.reset()
-
-    def reset(self):
-        self.free_colors = [self.colorizer(n) for n in range(6)]
-        self.active_colors = []
-
-    def new(self):
-        if len(self.free_colors) == 0:
-            for n in range(10):
-                color = self.colorizer(len(self.active_colors))
-                if color not in self.free_colors + self.active_colors:
-                    self.free_colors.append(color)
-        try:
-            color = self.free_colors.pop(0)
-            self.active_colors.append(color)
-            return color
-        except IndexError:
-            self.active_colors.append('black')
-            return 'black'
-
-    def recycle(self, color):
-        self.active_colors.remove(color)
-        self.free_colors.append(color)
-
-# Pure python version of the Colorizer class from snappy.CyOpenGL
-class Colorizer:
-    """
-    Callable class which returns an RGB color string when passed an
-    index.  Uses the same algorithm as the SnapPea kernel.
-    """
-    def __init__(self, lightness=0.5, saturation=0.7):
-        self.base_hue = [0,4,2,3,5,1]
-        self.lightness = lightness
-        self.saturation = saturation
-
-    def __call__(self, index):
-        hue = (self.base_hue[index%6] + self.index_to_hue(index//6)) / 6.0
-        rgb = hls_to_rgb(hue, self.lightness, self.saturation)  
-        return '#%.2x%.2x%.2x'%tuple(int(x*255) for x in rgb)
-
-    def index_to_hue(self, index):
-        num, den= 0, 1
-        while index:
-            num = num<<1
-            den = den<<1
-            if index & 0x1:
-                num += 1
-            index = index>>1
-        return float(num)/float(den)
-
-# Hack for when Tkinter is unavailable or broken
-if tkSimpleDialog:
-    baseclass = tkSimpleDialog.Dialog
-else:
-    baseclass = object
-    
-class InfoDialog(baseclass):
-    def __init__(self, parent, title, content=''):
-        self.parent = parent
-        self.content = content
-        Tk_.Toplevel.__init__(self, parent)
-        NW = Tk_.N+Tk_.W
-        if title:
-            self.title(title)
-#        self.icon = PhotoImage(data=icon_string)
-        canvas = Tk_.Canvas(self, width=58, height=58)
-#        canvas.create_image(10, 10, anchor=NW, image=self.icon)
-        canvas.grid(row=0, column=0, sticky=NW)
-        text = Tk_.Text(self, font='Helvetica 14',
-                    width=50, height=16, padx=10)
-        text.insert(Tk_.END, self.content)
-        text.grid(row=0, column=1, sticky=NW,
-                  padx=10, pady=10)
-        text.config(state=Tk_.DISABLED)
-        self.buttonbox()
-        self.grab_set()
-        self.protocol('WM_DELETE_WINDOW', self.ok)
-        self.focus_set()
-        self.wait_window(self)
-
-    def buttonbox(self):
-        box = Tk_.Frame(self)
-        w = Tk_.Button(box, text="OK", width=10, command=self.ok,
-                   default=Tk_.ACTIVE)
-        w.pack(side=Tk_.LEFT, padx=5, pady=5)
-        self.bind("<Return>", self.ok)
-        self.bind("<Escape>", self.ok)
-        box.grid(row=1, columnspan=2)
-
-    def ok(self, event=None):
-        self.parent.focus_set()
-        self.app = None
-        self.destroy()
-
 
 
 from . import version as _version
