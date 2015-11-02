@@ -34,12 +34,16 @@ Drawing Basics
   either create a circle component or join together two arc
   components.
 
-* When the cursor hovers over a vertex it changes to the pointing
-  finger.  From this state you can drag a vertex to a new location
-  with a click-and-release on the vertex. The vertex will become
-  enclosed in a circular cursor.  Move it to where you want it to go
-  and click the left (or middle) button to place it.  If you drag one
-  endpoint on top of another, they will meld.
+* When the cursor hovers over a vertex it changes to the open hand.
+  From this state you can drag a vertex to a new location with a
+  click-and-release on the vertex. The vertex will become enclosed in
+  a circular cursor.  Move it to where you want it to go and click the
+  left (or middle) button to place it.  If you drag one endpoint on
+  top of another, they will meld.
+
+* Shift-clicking on a vertex will transform the crossing to a virtual
+  crossing, indicated by a black dot.  Virtual link diagrams can be
+  used as input to Twister.
 
 * When the cursor hovers over an edge, not too close to a vertex or
   crossing, it changes to the push-me-pull-you cursor.  Clicking in
@@ -78,10 +82,16 @@ diagram to fit the size of the window.
 The "Tools" menu can be used to make the projection alternating
 (provided that all components are circles), or to clear the screen, or
 to reflect the projection in the xy-plane, changing all crossings.
-There also are menu options for zooming or panning the diagram.  The
-"Smooth" option opens a new window with a smooth version of the
-diagram, rendered with cubic Bezier splines.  When used within SnapPy,
-this menu includes the "send to SnapPy" command.
+The "Preserve diagram" option disables any operation which could
+change the combinatorics of the diagram; a vertex can be moved, but it
+cannot be moved across an edge and its adjacent edges cannot be moved
+across a vertex. The "Smooth" option opens a new window with a smooth
+version of the diagram, rendered with cubic Bezier splines.  When used
+within SnapPy, the "Tools" menu includes the "Send to SnapPy" command.
+
+There also are options in the "Tools" menu for zooming or panning
+the diagram, but these operations are usually more easily done with
+the arrow keys or the '+', '-', and '0' keys.
 
 The "File" menu can be used to save the projection as a SnapPea
 link projection file.  (This can be done from the drawing state as
