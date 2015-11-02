@@ -8,6 +8,6 @@ syntax: glob
 *~
 *.pyc
 plink_app/*.egg/
-plink/doc/_static/*
+plink_src/doc/_static/*
 plink.egg-info/*
 dev/*
