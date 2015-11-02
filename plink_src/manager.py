@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 # -*- coding: utf-8 -*-
 #
-#   Copyright (C) 2007-2009 Marc Culler, Nathan Dunfield and others.
+#   Copyright (C) 2007-present Marc Culler, Nathan Dunfield and others.
 #
 #   This program is distributed under the terms of the 
 #   GNU General Public License, version 2 or later, as published by
