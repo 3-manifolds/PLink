@@ -26,6 +26,7 @@ from .arrow import Arrow, default_gap_size
 from .crossings import Crossing, ECrossing
 from .colors import Palette
 from .dialog import InfoDialog
+from .manager import LinkManager
 from .viewer import LinkViewer
 from .version import version
 
