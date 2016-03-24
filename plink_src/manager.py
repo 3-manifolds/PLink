@@ -45,6 +45,7 @@ class LinkManager:
         self.LiveArrow2 = None
         self.ActiveVertex = None
         self.DTlabels = []
+        self.labels = []
         self.shift_stamp = time.time()
         self.shift_delta = (0,0)
         self.shifting = False
@@ -627,9 +628,10 @@ class LinkManager:
            * arrows: a list of pairs of integers (start, end), giving
            the indices in the vertex list of the endpoints of each arrow;
 
-           * crossings: a list of triples (under, over, is_virtual), giving
-           the indices in the arrow list of each pair of crossing arrows and
-           a boolean indicating if the crossing is virtual.
+           * crossings: a list of quadruples (under, over, is_virtual, label),
+           giving the indices in the arrow list of each pair of crossing
+           arrows, a boolean indicating if the crossing is virtual, 
+           and an assigned label.
 
            * an optional argument "hot" giving the index of one vertex
            which was being added at the time the diagram was pickled
@@ -640,9 +642,9 @@ class LinkManager:
         for start, end in arrows:
             S, E = self.Vertices[int(start)], self.Vertices[int(end)]
             self.Arrows.append(Arrow(S, E, self.canvas))
-        for under, over, is_virtual in crossings:
-            U, O, V = self.Arrows[int(under)], self.Arrows[int(over)], bool(is_virtual)
-            self.Crossings.append(Crossing(O, U, V))
+        for under, over, is_virtual,label in crossings:
+            U, O, V, L = self.Arrows[int(under)], self.Arrows[int(over)], bool(is_virtual), str(label)
+            self.Crossings.append(Crossing(O, U, V, L))
 
     def pickle(self):
         """
@@ -652,7 +654,7 @@ class LinkManager:
         A = lambda a:self.Arrows.index(a)
         vertices = [(v.x, v.y) for v in self.Vertices]
         arrows = [(V(a.start), V(a.end)) for a in self.Arrows]
-        crossings = [(A(c.under), A(c.over), c.is_virtual) for c in self.Crossings]
+        crossings = [(A(c.under), A(c.over), c.is_virtual, c.label) for c in self.Crossings]
         hot = V(self.ActiveVertex) if self.ActiveVertex else None        
         return [vertices, arrows, crossings, hot]
     

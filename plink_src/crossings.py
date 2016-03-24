@@ -21,7 +21,7 @@ class Crossing:
     """
     A pair of crossing arrows in a PL link diagram.
     """
-    def __init__(self, over, under, is_virtual=False):
+    def __init__(self, over, under, is_virtual=False, label=None):
         self.over = over
         self.under = under
         self.locked = False
@@ -33,6 +33,7 @@ class Crossing:
         self.flipped = None
         self.is_virtual = is_virtual
         self.locate()
+        self.label = label
 
     def __repr__(self):
         self.locate()
