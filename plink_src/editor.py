@@ -103,6 +103,7 @@ class LinkEditor(LinkViewer):
         self.canvas.pack(padx=0, pady=0, fill=Tk_.BOTH, expand=Tk_.YES)
         self.infotext.pack(padx=5, pady=0, fill=Tk_.X, expand=Tk_.YES)
         self.show_DT_var = Tk_.IntVar(self.window)
+        self.show_labels_var = Tk_.IntVar(self.window)
         self.info_var = Tk_.IntVar(self.window)
         self.view_var = Tk_.StringVar(self.window)
         self.view_var.set('pl')
@@ -168,6 +169,8 @@ class LinkEditor(LinkViewer):
                                   command=self.set_info, value=5)
         info_menu.add_separator()
         info_menu.add_checkbutton(label='DT labels', var=self.show_DT_var,
+                                  command = self.update_info)
+        info_menu.add_checkbutton(label='Labels', var=self.show_labels_var,
                                   command = self.update_info)
         menubar.add_cascade(label='Info', menu=info_menu)
         self.tools_menu = tools_menu = Tk_.Menu(menubar, tearoff=0)
@@ -343,6 +346,7 @@ class LinkEditor(LinkViewer):
                 #print 'single click on a vertex'
                 self.state = 'dragging_state'
                 self.hide_DT()
+                self.hide_labels()
                 self.update_info()
                 self.canvas.config(cursor=closed_hand_cursor)
                 self.ActiveVertex = self.Vertices[
@@ -747,6 +751,7 @@ class LinkEditor(LinkViewer):
         self.state = 'drawing_state'
         self.canvas.config(cursor='pencil')
         self.hide_DT()
+        self.hide_labels()
         self.clear_text()
 
     def verify_drag(self):
@@ -991,6 +996,7 @@ class LinkEditor(LinkViewer):
         self.palette.reset()
         self.initialize(self.canvas)
         self.show_DT_var.set(0)
+        self.show_labels_var.set(0)
         self.info_var.set(0)
         self.clear_text()
         self.goto_start_state()
@@ -1060,6 +1066,7 @@ class LinkEditor(LinkViewer):
 
     def update_info(self):
         self.hide_DT()
+        self.hide_labels()
         self.clear_text()
         if self.state == 'dragging_state':
             x, y = self.cursorx, self.canvas.winfo_height()-self.cursory
@@ -1070,6 +1077,8 @@ class LinkEditor(LinkViewer):
             dt = self.DT_code()
             if dt is not None:
                 self.show_DT()
+        if self.show_labels_var.get():
+            self.show_labels()
         info_value = self.info_var.get()
         if info_value == 1:
             self.DT_normal()
@@ -1081,6 +1090,24 @@ class LinkEditor(LinkViewer):
             self.PD_info()
         elif info_value == 5:
             self.BB_info()
+
+    def show_labels(self):
+        """
+        Display the assigned labels next to each crossing.
+        """
+        for crossing in self.Crossings:
+            crossing.locate()
+            yshift = 0
+            for arrow in crossing.over, crossing.under:
+                arrow.vectorize()
+                if abs(arrow.dy) < .3*abs(arrow.dx):
+                    yshift = 8
+            flip = ' *' if crossing.flipped else ''
+            self.labels.append(self.canvas.create_text(
+                    (crossing.x - 1, crossing.y - yshift),
+                    anchor=Tk_.E,
+                    text=str(crossing.label)
+                    ))
 
     def show_DT(self):
         """
@@ -1106,6 +1133,11 @@ class LinkEditor(LinkViewer):
                     anchor=Tk_.W,
                     text=str(crossing.hit2) + flip
                     ))
+
+    def hide_labels(self):
+        for text_item in self.labels:
+            self.canvas.delete(text_item)
+        self.labels = []        
 
     def hide_DT(self):
         for text_item in self.DTlabels:
