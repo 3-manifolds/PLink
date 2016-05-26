@@ -170,7 +170,7 @@ class LinkEditor(LinkViewer):
         info_menu.add_separator()
         info_menu.add_checkbutton(label='DT labels', var=self.show_DT_var,
                                   command = self.update_info)
-        info_menu.add_checkbutton(label='Labels', var=self.show_labels_var,
+        info_menu.add_checkbutton(label='Other labels', var=self.show_labels_var,
                                   command = self.update_info)
         menubar.add_cascade(label='Info', menu=info_menu)
         self.tools_menu = tools_menu = Tk_.Menu(menubar, tearoff=0)

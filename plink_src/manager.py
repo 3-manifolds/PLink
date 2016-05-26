@@ -79,11 +79,11 @@ class LinkManager:
                     if has_virtual_crossings:
                         v, u, o = lines.pop(0).split()
                         v, u, o = v == 'v', int(u), int(o)
-                        crossings.append( (u,o,v) )
+                        crossings.append((u ,o, v, None))
                     else:
                         u, o = lines.pop(0).split()
                         u, o = int(u), int(o)
-                        crossings.append( (u,o,False) )
+                        crossings.append((u,o, False, None))
                 h = int(lines[0])
                 hot = h if h != -1 else None
             except:
@@ -642,7 +642,7 @@ class LinkManager:
         for start, end in arrows:
             S, E = self.Vertices[int(start)], self.Vertices[int(end)]
             self.Arrows.append(Arrow(S, E, self.canvas))
-        for under, over, is_virtual,label in crossings:
+        for under, over, is_virtual, label in crossings:
             U, O, V, L = self.Arrows[int(under)], self.Arrows[int(over)], bool(is_virtual), str(label)
             self.Crossings.append(Crossing(O, U, V, L))
 
