@@ -256,6 +256,11 @@ class LinkEditor(LinkViewer):
         if self.warn_arcs() == 'oops':
             return
         else:
+            # Avoid errors caused by running the "after" task after
+            # the window has been destroyed, e.g. if the window is
+            # closed while it does not have focus.
+            if self.focus_after:
+                self.window.after_cancel(self.focus_after)
             self.window.destroy()
 
     def do_callback(self):
@@ -267,9 +272,12 @@ class LinkEditor(LinkViewer):
         self.window.deiconify()
 
     def focus_in(self, event):
-        self.window.after(100, self.notice_focus) 
+        self.focus_after = self.window.after(100, self.notice_focus) 
     
     def notice_focus(self):
+        # This is used to avoid starting a new link when the user is just
+        # clicking on the window to focus it.
+        self.focus_after = None
         self.has_focus = True
                
     def focus_out(self, event):
