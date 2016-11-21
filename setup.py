@@ -34,6 +34,8 @@ class build_docs(Command):
 
 # We need to collect the names of the Sphinx-generated documentation files to add
 
+if not os.path.exists(doc_path):
+    os.mkdir(doc_path)
 doc_files = [pjoin('doc', file) for file in os.listdir(doc_path) if file[0] != "_"]
 for dir_name in [file for file in os.listdir(doc_path) if file[0] == "_"]:
     doc_files += [pjoin('doc', dir_name, file) for file in os.listdir(pjoin(src, 'doc', dir_name))]
