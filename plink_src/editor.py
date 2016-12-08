@@ -67,7 +67,7 @@ class LinkEditor(LinkViewer):
             self.window = root = Tk_.Tk(className='plink')
         else:
             self.window = Tk_.Toplevel(root)
-        if sys.platform == 'linux2':
+        if sys.platform == 'linux2' or sys.platform == 'linux':
             root.tk.call('namespace', 'import', '::tk::dialog::file::')
             root.tk.call('set', '::tk::dialog::file::showHiddenBtn',  '1')
             root.tk.call('set', '::tk::dialog::file::showHiddenVar',  '0')

@@ -46,7 +46,7 @@ try:
 except ImportError:
     have_pyx = False
 
-if sys.platform == 'linux2':
+if sys.platform == 'linux2' or sys.platform == 'linux':
     closed_hand_cursor = 'fleur'
     open_hand_cursor = 'hand1'
 elif sys.platform == 'darwin':
