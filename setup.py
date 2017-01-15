@@ -1,6 +1,6 @@
 from setuptools import setup, Command
 from pkg_resources import load_entry_point
-import os
+import os, re, site, shutil, subprocess, sys, sysconfig
 
 pjoin = os.path.join
 src = 'plink_src'
@@ -8,7 +8,7 @@ doc_path = pjoin(src, 'doc')
 
 # A real clean
 
-class clean(Command):
+class PLinkClean(Command):
     user_options = []
     def initialize_options(self):
         pass 
@@ -20,7 +20,7 @@ class clean(Command):
 
 # Building the documentation
 
-class build_docs(Command):
+class PLinkBuildDocs(Command):
     user_options = []
     def initialize_options(self):
         pass 
@@ -31,6 +31,86 @@ class build_docs(Command):
         sphinx_args = ['sphinx', '-a', '-E', '-d', 'doc_source/_build/doctrees',
                        'doc_source', doc_path]
         sphinx_cmd(sphinx_args)
+
+if sys.platform == 'win32':
+    pythons = [
+        r'C:\Python27\python.exe',
+        r'C:\Python27-x64\python.exe',
+# Appveyor has these:
+#        r'C:\Python34\python.exe',
+#        r'C:\Python34-x64\python.exe',
+#        r'C:\Python35\python.exe',
+#        r'C:\Python35-x64\python.exe',
+#        r'C:\Python36\python.exe',
+#        r'C:\Python36-x64\python.exe',
+        ]
+elif sys.platform == 'darwin':
+    pythons = [
+        'python2.7',
+        'python3.4',
+        'python3.5',
+        'python3.6',
+        ]
+elif site.__file__.startswith('/opt/python/cp'):
+    pythons = [
+        'python2.7',
+        'python3.4',
+        'python3.5',
+        'python3.6',
+        ]
+else:
+    pythons = [
+        'python2.7',
+        'python3.5'
+    ]
+
+class PLinkRelease(Command):
+    # The -rX option modifies the wheel name by adding rcX to the version string.
+    # This is for uploading to testpypi, which will not allow uploading two
+    # wheels with the same name.
+    user_options = [('rctag=', 'r', 'index for rc tag to be appended to version (e.g. -r2 -> rc2)')]
+    def initialize_options(self):
+        self.rctag = None
+    def finalize_options(self):
+        if self.rctag:
+            self.rctag = 'rc%s'%self.rctag
+    def run(self):
+        if os.path.exists('build'):
+            shutil.rmtree('build')
+        if os.path.exists('dist'):
+            shutil.rmtree('dist')
+        for python in pythons:
+            try:
+                subprocess.check_call([python, 'setup.py', 'build'])
+            except subprocess.CalledProcessError:
+                raise RuntimeError('Build failed for %s.'%python)
+                sys.exit(1)
+            try:
+                subprocess.check_call([python, 'setup.py', 'build_docs'])
+            except subprocess.CalledProcessError:
+                raise RuntimeError('Failed to build documentation for %s.'%python)
+                sys.exit(1)
+            try:
+                subprocess.check_call([python, 'setup.py', 'bdist_wheel'])
+            except subprocess.CalledProcessError:
+                raise RuntimeError('Error building wheel for %s.'%python)
+        if self.rctag:
+            version_tag = re.compile('-([^-]*)-')
+            for wheel_name in [name for name in os.listdir('dist') if name.endswith('.whl')]:
+                new_name = wheel_name
+                new_name = version_tag.sub('-\g<1>%s-'%self.rctag, new_name, 1)
+                os.rename(os.path.join('dist', wheel_name), os.path.join('dist', new_name))
+
+        try:
+            subprocess.check_call(['python', 'setup.py', 'sdist'])
+        except subprocess.CalledProcessError:
+            raise RuntimeError('Error building sdist archive for %s.'%python)
+        sdist_version = re.compile('-([^-]*)(.tar.gz)|-([^-]*)(.zip)')
+        for archive_name in [name for name in os.listdir('dist')
+                             if name.endswith('tar.gz') or name.endswith('.zip')]:
+            if self.rctag:
+                new_name = sdist_version.sub('-\g<1>%s\g<2>'%self.rctag, archive_name, 1)
+                os.rename(os.path.join('dist', archive_name), os.path.join('dist', new_name))
 
 # We need to collect the names of the Sphinx-generated documentation files to add
 
@@ -52,9 +132,10 @@ setup(name='plink',
       package_dir = {'plink': src}, 
       package_data={'plink': doc_files},
       entry_points = {'console_scripts': ['plink = plink.app:main']},
-      cmdclass =  {'clean': clean, 'build_docs': build_docs},
+      cmdclass =  {'clean': PLinkClean,
+                   'build_docs': PLinkBuildDocs,
+                   'release': PLinkRelease},
       zip_safe = False,
-
       description='A full featured Tk-based knot and link editor', 
       long_description = long_description,
       author = 'Marc Culler and Nathan M. Dunfield',
