@@ -46,7 +46,7 @@ copyright = u'2009-present, Marc Culler, Nathan Dunfield and others'
 #
 # The short X.Y version.
 
-from plink import __version__ as version
+from plink.version import version
 
 # The full version, including alpha/beta/rc tags.
 release = version
