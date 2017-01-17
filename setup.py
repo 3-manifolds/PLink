@@ -1,8 +1,6 @@
 from setuptools import setup, Command
 from pkg_resources import load_entry_point
 import os, re, site, shutil, subprocess, sys, sysconfig
-from glob import glob
-from distutils.command.build import build
 
 pjoin = os.path.join
 src = 'plink_src'
@@ -14,24 +12,11 @@ class PLinkClean(Command):
     user_options = []
     def initialize_options(self):
         pass 
-
     def finalize_options(self):
         pass
-
     def run(self):
-        junkdirs = (glob('build/lib*') + glob('build/bdist*') + glob('plink*.egg-info') +
-                    ['__pycache__', doc_path])
-        for dir in junkdirs:
-            try:
-                shutil.rmtree(dir)
-            except OSError:
-                pass
-        junkfiles = glob('*/*.pyc') 
-        for file in junkfiles:
-            try:
-                os.remove(file)
-            except OSError:
-                pass
+        os.system("rm -rf build dist *.pyc")
+        os.system("rm -rf plink*.egg-info")
 
 # Building the documentation
 
@@ -46,11 +31,6 @@ class PLinkBuildDocs(Command):
         sphinx_args = ['sphinx', '-a', '-E', '-d', 'doc_source/_build/doctrees',
                        'doc_source', doc_path]
         sphinx_cmd(sphinx_args)
-        
-class PLinkBuild(build):
-    def run(self, *args, **kwargs):
-        subprocess.call(['python', 'setup.py', 'build_docs'])
-        build.run(self)
 
 if sys.platform == 'win32':
     pythons = [
@@ -154,7 +134,6 @@ setup(name='plink',
       entry_points = {'console_scripts': ['plink = plink.app:main']},
       cmdclass =  {'clean': PLinkClean,
                    'build_docs': PLinkBuildDocs,
-                   'build': PLinkBuild,
                    'release': PLinkRelease},
       zip_safe = False,
       description='A full featured Tk-based knot and link editor', 
