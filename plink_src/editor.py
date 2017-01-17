@@ -52,11 +52,13 @@ class LinkEditor(LinkViewer):
     original SnapPea program.
     """
     def __init__(self, root=None, no_arcs=False, callback=None, cb_menu='',
-                 manifold=None, file_name=None, title='PLink Editor'):
+                 manifold=None, file_name=None, title='PLink Editor',
+                 show_crossing_labels=False):
         self.initialize()
         self.no_arcs = no_arcs
         self.callback = callback
         self.cb_menu = cb_menu
+        self.show_crossing_labels=show_crossing_labels
         self.manifold = manifold
         self.title = title
         self.cursorx = 0
@@ -170,8 +172,9 @@ class LinkEditor(LinkViewer):
         info_menu.add_separator()
         info_menu.add_checkbutton(label='DT labels', var=self.show_DT_var,
                                   command = self.update_info)
-        info_menu.add_checkbutton(label='Other labels', var=self.show_labels_var,
-                                  command = self.update_info)
+        if self.show_crossing_labels:
+            info_menu.add_checkbutton(label='Crossing labels', var=self.show_labels_var,
+                                      command = self.update_info)
         menubar.add_cascade(label='Info', menu=info_menu)
         self.tools_menu = tools_menu = Tk_.Menu(menubar, tearoff=0)
         tools_menu.add_command(label='Make alternating',

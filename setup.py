@@ -32,6 +32,24 @@ class PLinkBuildDocs(Command):
                        'doc_source', doc_path]
         sphinx_cmd(sphinx_args)
 
+class PLinkBuildAll(Command):
+    user_options = []
+    def initialize_options(self):
+        pass 
+    def finalize_options(self):
+        pass
+    def run(self):
+        subprocess.call(['python', 'setup.py', 'build'])
+        build_lib_dir = os.path.join(
+            'build',
+            'lib.{platform}-{version_info[0]}.{version_info[1]}'.format(
+                platform=sysconfig.get_platform(),
+                version_info=sys.version_info)
+        )
+        sys.path.insert(0, build_lib_dir)
+        subprocess.call(['python', 'setup.py', 'build_docs'])
+        subprocess.call(['python', 'setup.py', 'build'])
+
 if sys.platform == 'win32':
     pythons = [
         r'C:\Python27\python.exe',
@@ -134,6 +152,7 @@ setup(name='plink',
       entry_points = {'console_scripts': ['plink = plink.app:main']},
       cmdclass =  {'clean': PLinkClean,
                    'build_docs': PLinkBuildDocs,
+                   'build_all': PLinkBuildAll,
                    'release': PLinkRelease},
       zip_safe = False,
       description='A full featured Tk-based knot and link editor', 
