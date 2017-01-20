@@ -1,6 +1,6 @@
 from setuptools import setup, Command
 from pkg_resources import load_entry_point
-import os, re, site, shutil, subprocess, sys, sysconfig
+import os, re, site, shutil, subprocess, sys, sysconfig, glob
 
 pjoin = os.path.join
 src = 'plink_src'
@@ -15,8 +15,11 @@ class PLinkClean(Command):
     def finalize_options(self):
         pass
     def run(self):
-        os.system("rm -rf build dist *.pyc")
-        os.system("rm -rf plink*.egg-info")
+        for dir in ['build', 'dist', 'plink.egg-info']:
+            shutil.rmtree(dir, ignore_errors=True)
+        for file in glob.glob('*.pyc'):
+            if os.path.exists(file):
+                os.remove(file)
 
 # Building the documentation
 
@@ -50,85 +53,37 @@ class PLinkBuildAll(Command):
         subprocess.call(['python', 'setup.py', 'build_docs'])
         subprocess.call(['python', 'setup.py', 'build'])
 
-if sys.platform == 'win32':
-    pythons = [
-        r'C:\Python27\python.exe',
-        r'C:\Python27-x64\python.exe',
-# Appveyor has these:
-#        r'C:\Python34\python.exe',
-#        r'C:\Python34-x64\python.exe',
-#        r'C:\Python35\python.exe',
-#        r'C:\Python35-x64\python.exe',
-#        r'C:\Python36\python.exe',
-#        r'C:\Python36-x64\python.exe',
-        ]
-elif sys.platform == 'darwin':
-    pythons = [
-        'python2.7',
-        'python3.4',
-        'python3.5',
-        'python3.6',
-        ]
-elif site.__file__.startswith('/opt/python/cp'):
-    pythons = [
-        'python2.7',
-        'python3.4',
-        'python3.5',
-        'python3.6',
-        ]
-else:
-    pythons = [
-        'python2.7',
-        'python3.5'
-    ]
+def check_call(args):
+    try:
+        subprocess.check_call(args)
+    except subprocess.CalledProcessError:
+        executable = args[0]
+        command = [a for a in args if not a.startswith('-')][-1]
+        raise RuntimeError(command + ' failed for ' + executable)
 
 class PLinkRelease(Command):
-    # The -rX option modifies the wheel name by adding rcX to the version string.
-    # This is for uploading to testpypi, which will not allow uploading two
-    # wheels with the same name.
-    user_options = [('rctag=', 'r', 'index for rc tag to be appended to version (e.g. -r2 -> rc2)')]
+    user_options = [('install', 'i', 'install the release into each Python')]
     def initialize_options(self):
-        self.rctag = None
+        self.install = False
     def finalize_options(self):
-        if self.rctag:
-            self.rctag = 'rc%s'%self.rctag
+        pass
     def run(self):
         if os.path.exists('build'):
             shutil.rmtree('build')
         if os.path.exists('dist'):
             shutil.rmtree('dist')
-        for python in pythons:
-            try:
-                subprocess.check_call([python, 'setup.py', 'build'])
-            except subprocess.CalledProcessError:
-                raise RuntimeError('Build failed for %s.'%python)
-                sys.exit(1)
-            try:
-                subprocess.check_call([python, 'setup.py', 'build_docs'])
-            except subprocess.CalledProcessError:
-                raise RuntimeError('Failed to build documentation for %s.'%python)
-                sys.exit(1)
-            try:
-                subprocess.check_call([python, 'setup.py', 'bdist_wheel'])
-            except subprocess.CalledProcessError:
-                raise RuntimeError('Error building wheel for %s.'%python)
-        if self.rctag:
-            version_tag = re.compile('-([^-]*)-')
-            for wheel_name in [name for name in os.listdir('dist') if name.endswith('.whl')]:
-                new_name = wheel_name
-                new_name = version_tag.sub('-\g<1>%s-'%self.rctag, new_name, 1)
-                os.rename(os.path.join('dist', wheel_name), os.path.join('dist', new_name))
 
-        try:
-            subprocess.check_call(['python', 'setup.py', 'sdist'])
-        except subprocess.CalledProcessError:
-            raise RuntimeError('Error building sdist archive for %s.'%python)
-        sdist_version = re.compile('-([^-]*)(.tar.gz)|-([^-]*)(.zip)')
-        for archive_name in [name for name in os.listdir('dist')
-                             if name.endswith('tar.gz') or name.endswith('.zip')]:
-            if self.rctag:
-                new_name = sdist_version.sub('-\g<1>%s\g<2>'%self.rctag, archive_name, 1)
-                os.rename(os.path.join('dist', archive_name), os.path.join('dist', new_name))
+        pythons = os.environ.get('RELEASE_PYTHONS', sys.executable).split(',')
+        for python in pythons:
+            check_call([python, 'setup.py', 'build'])
+            check_call([python, 'setup.py', 'build_docs'])
+            check_call([python, 'setup.py', 'build'])
+            if self.install:
+                check_call([python, 'setup.py', 'install'])
+
+        # Build sdist/universal wheels using the *first* specified Python
+        check_call([pythons[0], 'setup.py', 'sdist'])
+        check_call([pythons[0], 'setup.py', 'bdist_wheel', '--universal'])
 
 # We need to collect the names of the Sphinx-generated documentation files to add
 
