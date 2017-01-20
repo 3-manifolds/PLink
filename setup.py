@@ -44,13 +44,7 @@ class PLinkBuildAll(Command):
     def run(self):
         python = sys.executable
         subprocess.call([python, 'setup.py', 'build'])
-        build_lib_dir = os.path.join(
-            'build',
-            'lib.{platform}-{version_info[0]}.{version_info[1]}'.format(
-                platform=sysconfig.get_platform(),
-                version_info=sys.version_info)
-        )
-        sys.path.insert(0, build_lib_dir)
+        build_lib_dir = os.path.join('build','lib')
         subprocess.call([python, 'setup.py', 'build_docs'])
         subprocess.call([python, 'setup.py', 'build'])
 
