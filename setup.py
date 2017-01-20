@@ -42,7 +42,8 @@ class PLinkBuildAll(Command):
     def finalize_options(self):
         pass
     def run(self):
-        subprocess.call(['python', 'setup.py', 'build'])
+        python = sys.executable
+        subprocess.call([python, 'setup.py', 'build'])
         build_lib_dir = os.path.join(
             'build',
             'lib.{platform}-{version_info[0]}.{version_info[1]}'.format(
@@ -50,8 +51,8 @@ class PLinkBuildAll(Command):
                 version_info=sys.version_info)
         )
         sys.path.insert(0, build_lib_dir)
-        subprocess.call(['python', 'setup.py', 'build_docs'])
-        subprocess.call(['python', 'setup.py', 'build'])
+        subprocess.call([python, 'setup.py', 'build_docs'])
+        subprocess.call([python, 'setup.py', 'build'])
 
 def check_call(args):
     try:
