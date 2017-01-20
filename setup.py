@@ -75,9 +75,7 @@ class PLinkRelease(Command):
 
         pythons = os.environ.get('RELEASE_PYTHONS', sys.executable).split(',')
         for python in pythons:
-            check_call([python, 'setup.py', 'build'])
-            check_call([python, 'setup.py', 'build_docs'])
-            check_call([python, 'setup.py', 'build'])
+            check_call([python, 'setup.py', 'build_all'])
             if self.install:
                 check_call([python, 'setup.py', 'install'])
 
