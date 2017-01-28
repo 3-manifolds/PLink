@@ -39,7 +39,7 @@
 #     Discrete and Computational Geometry 1:123-140 (1986).
 #
 # with caps on the velocities to remove some unnecessary inflection points.
-
+from builtins import range
 import sys
 
 try: 
@@ -103,11 +103,11 @@ class SmoothArc:
         self.canvas_items = []
         self.spline_knots = K = (
             [ V[0] ] +
-            [ 0.5*(V[k] + V[k+1]) for k in xrange(1, len(V)-2) ] +
+            [ 0.5*(V[k] + V[k+1]) for k in range(1, len(V)-2) ] +
             [ V[-1] ] )
         self.tangents = (
             [ V[1]-K[0] ] +
-            [ V[k+1]-K[k] for k in xrange(1, len(V)-2) ] +
+            [ V[k+1]-K[k] for k in range(1, len(V)-2) ] +
             [ V[-1]-V[-2] ])
         assert len(self.spline_knots) == len(self.tangents)
 
@@ -151,7 +151,7 @@ class SmoothArc:
         spline, in format [ ... Knot, Control, Control, Knot ...]
         """
         path = []
-        for k in xrange(len(self.spline_knots)-1):
+        for k in range(len(self.spline_knots)-1):
             path += self._curve_to(k)
         path.append(self.spline_knots[-1])
         return path
@@ -171,7 +171,7 @@ class SmoothArc:
     def pyx_draw(self, canvas, transform):
         XY = [transform(xy) for xy in self.bezier()]
         arc_parts = [pyx.path.moveto(*XY[0])]
-        for i in xrange(1, len(XY), 3):
+        for i in range(1, len(XY), 3):
             arc_parts.append(pyx.path.curveto(XY[i][0], XY[i][1],
                 XY[i+1][0], XY[i+1][1], XY[i+2][0], XY[i+2][1]))
             style = [pyx.style.linewidth(4), pyx.style.linecap.round,
@@ -202,9 +202,9 @@ class SmoothLoop(SmoothArc):
         self.tension1, self.tension2 = tension1, tension2
         self.color = color
         self.canvas_items = []
-        self.spline_knots = [0.5*(V[k] + V[k+1]) for k in xrange(len(V)-1)]
+        self.spline_knots = [0.5*(V[k] + V[k+1]) for k in range(len(V)-1)]
         self.spline_knots.append(self.spline_knots[0])
-        self.tangents = [(V[k+1] - V[k]) for k in xrange(len(V)-1)]
+        self.tangents = [(V[k+1] - V[k]) for k in range(len(V)-1)]
         self.tangents.append(self.tangents[0])
         assert len(self.spline_knots) == len(self.tangents)
 
