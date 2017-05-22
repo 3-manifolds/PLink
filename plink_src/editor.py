@@ -126,7 +126,9 @@ class LinkEditor(LinkViewer):
         self.window.bind('<FocusOut>', self.focus_out)
         self.window.bind('<Key>', self.key_press)
         self.window.bind('<KeyRelease>', self.key_release)
-        self.infotext.bind('<<Copy>>', lambda event : None)
+        self.infotext.bind('<Control-Shift-C>',
+                           lambda event : self.infotext.event_generate('<<Copy>>'))
+        self.infotext.bind('<<Copy>>', self.copy_info)
         self.window.protocol("WM_DELETE_WINDOW", self.done)
         # Go
         self.flipcheck = None
@@ -928,6 +930,10 @@ class LinkEditor(LinkViewer):
             vertex.draw()
         self.update_smooth()
 
+    def unpickle(self,  vertices, arrows, crossings, hot=None):
+        LinkManager.unpickle(self, vertices, arrows, crossings, hot)
+        self.full_redraw()
+
     def set_info(self):
         self.clear_text()
         which_info = self.info_var.get()
@@ -938,10 +944,14 @@ class LinkEditor(LinkViewer):
         else:
             self.current_info = which_info
             self.update_info()
-
-    def unpickle(self,  vertices, arrows, crossings, hot=None):
-        LinkManager.unpickle(self, vertices, arrows, crossings, hot)
-        self.full_redraw()
+            
+    def copy_info(self, event):
+        self.window.clipboard_clear()
+        try:
+            self.window.clipboard_append(self.infotext.selection_get())
+            self.infotext.selection_clear()
+        except Tk_.TclError:
+            pass
         
     def clear_text(self):
         self.infotext_contents.set('')
