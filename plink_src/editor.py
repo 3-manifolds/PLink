@@ -947,11 +947,9 @@ class LinkEditor(LinkViewer):
             
     def copy_info(self, event):
         self.window.clipboard_clear()
-        try:
+        if self.infotext.selection_present():
             self.window.clipboard_append(self.infotext.selection_get())
             self.infotext.selection_clear()
-        except Tk_.TclError:
-            pass
         
     def clear_text(self):
         self.infotext_contents.set('')
