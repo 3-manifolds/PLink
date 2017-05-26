@@ -14,7 +14,7 @@
 #   the National Science Foundation under grants DMS0608567,
 #   DMS0504975 and DMS0204142.
 
-from . import version as __version__
+from .version import version as __version__
 from .manager import LinkManager
 from .viewer import LinkViewer
 from .editor import LinkEditor
