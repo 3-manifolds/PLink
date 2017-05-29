@@ -27,6 +27,7 @@ from string import ascii_lowercase
 from .vertex import Vertex
 from .arrow import Arrow, default_gap_size
 from .crossings import Crossing, ECrossing
+from .smooth import TikZPicture
 DT_alphabet = '_abcdefghijklmnopqrstuvwxyzZYXWVUTSRQPONMLKJIHGFEDCBA'
 
 class LinkManager:
@@ -612,7 +613,7 @@ class LinkManager:
     def save_as_tikz(self, file_name, colormode='color', width=282.0):
         polylines = self.polylines(break_at_overcrossings=True)
         colors = [polyline[-1] for polyline in polylines]
-        tikz = smooth.TikZPicture(self.canvas, colors, width)
+        tikz = TikZPicture(self.canvas, colors, width)
         for polyline in polylines:
             for line in polyline[0]:
                 points = ['(%.2f, %.2f)' % tikz.transform(xy) for xy in line]
