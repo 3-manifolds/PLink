@@ -72,11 +72,27 @@ class PLinkRelease(Command):
         for python in pythons:
             check_call([python, 'setup.py', 'build_all'])
             if self.install:
-                check_call([python, 'setup.py', 'install'])
+                check_call([python, 'setup.py', 'pip_install'])
 
         # Build sdist/universal wheels using the *first* specified Python
         check_call([pythons[0], 'setup.py', 'sdist'])
         check_call([pythons[0], 'setup.py', 'bdist_wheel', '--universal'])
+
+class PLinkPipInstall(Command):
+    user_options = []
+    def initialize_options(self):
+        pass
+    def finalize_options(self):
+        pass
+    def run(self):
+        python = sys.executable
+        check_call([python, 'setup.py', 'bdist_wheel', '--universal'])
+        egginfo = 'plink.egg-info'
+        if os.path.exists(egginfo):
+            shutil.rmtree(egginfo)
+        check_call([python, '-m', 'pip', 'install', '--upgrade',
+                    '--no-index', '--no-cache-dir', '--find-links=dist',
+                    'plink'])
 
 # We need to collect the names of the Sphinx-generated documentation files to add
 
@@ -102,7 +118,9 @@ setup(name='plink',
       cmdclass =  {'clean': PLinkClean,
                    'build_docs': PLinkBuildDocs,
                    'build_all': PLinkBuildAll,
-                   'release': PLinkRelease},
+                   'release': PLinkRelease,
+                   'pip_install':PLinkPipInstall,
+      },
       zip_safe = False,
       description='A full featured Tk-based knot and link editor', 
       long_description = long_description,
