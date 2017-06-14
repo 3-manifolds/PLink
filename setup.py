@@ -90,9 +90,11 @@ class PLinkPipInstall(Command):
         egginfo = 'plink.egg-info'
         if os.path.exists(egginfo):
             shutil.rmtree(egginfo)
+        wheels = glob.glob('dist' + os.sep + '*.whl')
+        new_wheel = max(wheels, key=os.path.getmtime)            
         check_call([python, '-m', 'pip', 'install', '--upgrade',
-                    '--no-index', '--no-cache-dir', '--find-links=dist',
-                    'plink'])
+                    '--upgrade-strategy', 'only-if-needed',
+                    new_wheel])
 
 # We need to collect the names of the Sphinx-generated documentation files to add
 
