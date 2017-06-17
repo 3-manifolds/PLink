@@ -72,7 +72,7 @@ class Arrow:
     def hide(self):
         for line in self.lines:
             self.canvas.delete(line)
-            self.style = 'hidden'
+        self.style = 'hidden'
 
     @property
     def hidden(self):
