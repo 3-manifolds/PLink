@@ -17,8 +17,8 @@
 from .version import version as __version__
 from .manager import LinkManager
 from .viewer import LinkViewer
-from .editor import LinkEditor
-__all__ = ['LinkManager', 'LinkViewer', 'LinkEditor']
+from .editor import LinkDisplay, LinkEditor
+__all__ = ['LinkManager', 'LinkViewer', 'LinkDisplay', 'LinkEditor']
 
 if __name__ == '__main__':
     LE = LinkEditor()
