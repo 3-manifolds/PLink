@@ -43,6 +43,10 @@ class Vertex:
         Use the "is" operator to test if they are identical.
         """
         return abs(self.x - other.x) + abs(self.y - other.y) < Vertex.epsilon
+    
+    def __hash__(self):
+        # Since we redefined __eq__ we need to define __hash__
+        return id(self)
 
     def hide(self):
         self.canvas.delete(self.dot)

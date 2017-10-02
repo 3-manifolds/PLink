@@ -116,12 +116,12 @@ class LinkManager:
         pool = [v.out_arrow for v in self.Vertices if v.in_arrow is None]
         pool += [v.out_arrow  for v in self.Vertices if v.in_arrow is not None]
         closed, nonclosed = [], []
-        while len(pool):
+        while pool:
             first_arrow = pool.pop(0)
-            if first_arrow == None:
+            if first_arrow is None:
                 continue
             component = [first_arrow]
-            while component[-1].end != component[0].start:
+            while component[-1].end is not component[0].start:
                 next_arrow = component[-1].end.out_arrow
                 if next_arrow is None:
                     break
