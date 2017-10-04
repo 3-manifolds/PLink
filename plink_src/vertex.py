@@ -44,6 +44,10 @@ class Vertex:
         """
         return abs(self.x - other.x) + abs(self.y - other.y) < Vertex.epsilon
     
+    def __ne__(self, other):
+        """Redundant for Python 3, but needed for Python 2"""
+        return not (self == other)
+    
     def __hash__(self):
         # Since we redefined __eq__ we need to define __hash__
         return id(self)
