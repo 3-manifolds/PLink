@@ -727,26 +727,13 @@ class LinkEditor(PLinkBase):
                 'Error',
                 'Please close up all components first.')
             return
-        for component in crossing_components:
-            if len(component) == 0:
-                continue
-            cross0, arrow0 = component[0].pair()
-            for ecrossing in component[1:]:
-                cross, arrow = ecrossing.pair()
-                if ( (arrow0 == cross0.under and arrow == cross.under) or 
-                     (arrow0 == cross0.over and arrow == cross.over) ):
-                    if cross.locked:
-                        for ecrossing2 in component:
-                            if ecrossing2.crossing == cross:
-                                break
-                            ecrossing2.crossing.reverse()
-                    else:
-                        cross.reverse()
-                cross0, arrow0 = cross, arrow
-            for ecrossing in component:
-                ecrossing.crossing.locked = True
+        need_flipping = set()
+        for component in self.DT_code()[0]:
+            need_flipping.update(c for c in component if c < 0)
         for crossing in self.Crossings:
-            crossing.locked = False
+            if crossing.hit2 in need_flipping or crossing.hit1 in need_flipping:
+                crossing.reverse()
+
         self.clear_text()
         self.update_info()
         for arrow in self.Arrows:
