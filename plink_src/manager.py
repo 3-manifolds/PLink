@@ -23,7 +23,7 @@ of the link.
 
 import time
 from string import ascii_lowercase
-
+from .gui import tkMessageBox
 from .vertex import Vertex
 from .arrow import Arrow, default_gap_size
 from .crossings import Crossing, ECrossing
