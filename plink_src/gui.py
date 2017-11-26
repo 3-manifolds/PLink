@@ -71,13 +71,15 @@ def asksaveasfile(mode='w',**options):
     return tkFileDialog.asksaveasfile(mode=mode, **options)
 
 if sys.platform == 'linux2':
-    def askopenfile():
+    def askopenfile(parent=None):
         return tkFileDialog.askopenfile(
+            parent=parent,
             mode='r',
             title='Open SnapPea Projection File')
 else:
-    def askopenfile():
+    def askopenfile(parent=None):
         return tkFileDialog.askopenfile(
+            parent=parent,
             mode='r',
             title='Open SnapPea Projection File',
             defaultextension = ".lnk",

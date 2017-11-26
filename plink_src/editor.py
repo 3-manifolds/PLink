@@ -359,7 +359,10 @@ class PLinkBase(LinkViewer):
                 self.canvas.coords(livearrow, x0, y0, x1, y1)
 
     def _zoom(self, xfactor, yfactor):
-        ulx, uly, lrx, lry = self.canvas.bbox('transformable')
+        try:
+            ulx, uly, lrx, lry = self.canvas.bbox('transformable')
+        except TypeError:
+            return
         for vertex in self.Vertices:
             vertex.x = ulx + xfactor*(vertex.x - ulx)
             vertex.y = uly + yfactor*(vertex.y - uly)
@@ -398,8 +401,11 @@ class PLinkBase(LinkViewer):
         xfactor, yfactor = round(factor*w)/w, round(factor*h)/h
         self._zoom(xfactor, yfactor)
         # Now center the picture
-        x0, y0, x1, y1 = self.canvas.bbox('transformable')
-        self._shift( (W - x1 + x0)/2 - x0, (H - y1 + y0)/2 - y0 )
+        try:
+            x0, y0, x1, y1 = self.canvas.bbox('transformable')
+            self._shift( (W - x1 + x0)/2 - x0, (H - y1 + y0)/2 - y0 )
+        except TypeError:
+            pass
 
     def update_smooth(self):
         self.smoother.clear()
@@ -499,7 +505,7 @@ class PLinkBase(LinkViewer):
         if file_name:
             loadfile = open(file_name, "r")
         else:
-            loadfile = askopenfile()
+            loadfile = askopenfile(parent=self.window)
         if loadfile:
             contents = loadfile.read()
             loadfile.close()
@@ -517,6 +523,7 @@ class PLinkBase(LinkViewer):
 
     def save(self):
         savefile = asksaveasfile(
+            parent=self.window,
             mode='w',
             title='Save As Snappea Projection File',
             defaultextension = '.lnk',
