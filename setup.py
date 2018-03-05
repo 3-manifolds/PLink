@@ -31,8 +31,11 @@ class PLinkBuildDocs(Command):
         pass
     def run(self):
         sphinx_cmd = load_entry_point('Sphinx>=0.6.1', 'console_scripts', 'sphinx-build')
-        sphinx_args = ['sphinx', '-a', '-E', '-d', 'doc_source/_build/doctrees',
+        sphinx_args = ['-a', '-E', '-d', 'doc_source/_build/doctrees',
                        'doc_source', doc_path]
+        import sphinx
+        if sphinx.version_info < (1, 7):
+            sphinx_args = ['sphinx'] + sphinx_args
         sphinx_cmd(sphinx_args)
 
 class PLinkBuildAll(Command):
