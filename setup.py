@@ -111,7 +111,7 @@ for dir_name in [file for file in os.listdir(doc_path) if file[0] == "_"]:
 exec(open('plink_src/version.py').read())
 
 # Get long description from README
-long_description = open('README').read().split('License')[0]
+long_description = open('README.rst').read().split('License')[0]
 
 setup(name='plink',
       version=version,
