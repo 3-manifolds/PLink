@@ -103,8 +103,8 @@ class PLinkBase(LinkViewer):
         self.show_DT_var = Tk_.IntVar(self.window)
         self.show_labels_var = Tk_.IntVar(self.window)
         self.info_var = Tk_.IntVar(self.window)
-        self.view_var = Tk_.StringVar(self.window)
-        self.view_var.set('pl')
+        self.style_var = Tk_.StringVar(self.window)
+        self.style_var.set('pl')
         self.cursor_attached = False
         self.saved_crossing_data = None
         self.current_info = 0
@@ -151,7 +151,7 @@ class PLinkBase(LinkViewer):
         self._add_file_menu()
         self._add_info_menu()
         self._add_tools_menu()
-        self._add_view_menu()
+        self._add_style_menu()
         self.window.config(menu=menubar)
         help_menu = Tk_.Menu(menubar, tearoff=0)
         help_menu.add_command(label='About PLink...', command=self.about)
@@ -190,25 +190,25 @@ class PLinkBase(LinkViewer):
     def _add_tools_menu(self):
         pass
 
-    def _add_view_menu(self):
-        view_menu = Tk_.Menu(self.menubar, tearoff=0)
-        view_menu.add_radiobutton(label='PL', value='pl',
-                              command=self.set_view_mode,
-                              variable=self.view_var)
-        view_menu.add_radiobutton(label='Smooth',  value='smooth',
-                              command=self.set_view_mode,
-                              variable=self.view_var)
-        self._extend_view_menu(view_menu)
-        self.menubar.add_cascade(label='View', menu=view_menu)
-        self._add_zoom_and_pan(view_menu)
+    def _add_style_menu(self):
+        style_menu = Tk_.Menu(self.menubar, tearoff=0)
+        style_menu.add_radiobutton(label='PL', value='pl',
+                              command=self.set_style,
+                              variable=self.style_var)
+        style_menu.add_radiobutton(label='Smooth',  value='smooth',
+                              command=self.set_style,
+                              variable=self.style_var)
+        self._extend_style_menu(style_menu)
+        self.menubar.add_cascade(label='Style', menu=style_menu)
+        self._add_zoom_and_pan(style_menu)
 
-    # Override to add additional view menu items
-    def _extend_view_menu(self, view_menu):
+    # Override to add additional style menu items
+    def _extend_style_menu(self, style_menu):
         pass
 
-    def _add_zoom_and_pan(self, view_menu):
-        zoom_menu = Tk_.Menu(view_menu, tearoff=0)
-        pan_menu = Tk_.Menu(view_menu, tearoff=0)
+    def _add_zoom_and_pan(self, style_menu):
+        zoom_menu = Tk_.Menu(style_menu, tearoff=0)
+        pan_menu = Tk_.Menu(style_menu, tearoff=0)
         # Accelerators are really slow on the Mac.  Bad UX
         if sys.platform == 'darwin':
             zoom_menu.add_command(label='Zoom in    \t+',
@@ -240,9 +240,9 @@ class PLinkBase(LinkViewer):
                                  command=lambda : self._shift(5,0))
             pan_menu.add_command(label='Down', accelerator=scut['Down'],
                                  command=lambda : self._shift(0,5))
-        view_menu.add_separator()
-        view_menu.add_cascade(label='Zoom', menu=zoom_menu)
-        view_menu.add_cascade(label='Pan', menu=pan_menu)
+        style_menu.add_separator()
+        style_menu.add_cascade(label='Zoom', menu=zoom_menu)
+        style_menu.add_cascade(label='Pan', menu=pan_menu)
         
     def alert(self):
         background = self.canvas.cget('bg')
@@ -257,8 +257,8 @@ class PLinkBase(LinkViewer):
     def reopen(self):
         self.window.deiconify()
 
-    def set_view_mode(self):
-        mode = self.view_var.get()
+    def set_style(self):
+        mode = self.style_var.get()
         if mode == 'smooth':
             self.canvas.config(background='#ffffff')
             self.infotext.config(readonlybackground='#f0f0f0')
@@ -305,7 +305,7 @@ class PLinkBase(LinkViewer):
                 arrow.color = color
                 arrow.end.color = color
                 arrow.draw(self.Crossings)
-            if self.view_var.get() != 'smooth':
+            if self.style_var.get() != 'smooth':
                 self.color_keys.append(
                     self.canvas.create_text(x, y,
                                             text=str(n),
@@ -319,7 +319,7 @@ class PLinkBase(LinkViewer):
 
     def unpickle(self,  vertices, arrows, crossings, hot=None):
         LinkManager.unpickle(self, vertices, arrows, crossings, hot)
-        self.set_view_mode()
+        self.set_style()
         self.full_redraw()
 
     def set_info(self):
@@ -409,7 +409,7 @@ class PLinkBase(LinkViewer):
 
     def update_smooth(self):
         self.smoother.clear()
-        mode = self.view_var.get()
+        mode = self.style_var.get()
         if mode == 'smooth':
             self.smoother.set_polylines(self.polylines())
         elif mode == 'both': 
@@ -537,7 +537,7 @@ class PLinkBase(LinkViewer):
             savefile.close()
 
     def save_image(self, file_type='eps', colormode='color'):
-        mode = self.view_var.get()
+        mode = self.style_var.get()
         target = self.smoother if mode == 'smooth' else self
         LinkViewer.save_image(self, file_type, colormode, target)
             
@@ -561,7 +561,7 @@ class LinkDisplay(PLinkBase):
         if 'title' not in kwargs:
             kwargs['title'] = 'PLink Viewer'
         PLinkBase.__init__(self, *args, **kwargs)
-        self.view_var.set('smooth')
+        self.style_var.set('smooth')
         
 class LinkEditor(PLinkBase):
     """
@@ -610,10 +610,10 @@ class LinkEditor(PLinkBase):
             file_menu.add_command(label='Exit', command=self.done)
         self.menubar.add_cascade(label='File', menu=file_menu)
 
-    def _extend_view_menu(self, view_menu):
-        view_menu.add_radiobutton(label='Smooth edit', value='both',
-                                  command=self.set_view_mode,
-                                  variable=self.view_var)
+    def _extend_style_menu(self, style_menu):
+        style_menu.add_radiobutton(label='Smooth edit', value='both',
+                                  command=self.set_style,
+                                  variable=self.style_var)
     
     def _add_tools_menu(self):
         self.lock_var = Tk_.BooleanVar(self.window)
@@ -787,7 +787,7 @@ class LinkEditor(PLinkBase):
         """
         Event handler for mouse shift-clicks.
         """
-        if self.view_var.get() == 'smooth':
+        if self.style_var.get() == 'smooth':
             return
         if self.lock_var.get():
             return
@@ -813,7 +813,7 @@ class LinkEditor(PLinkBase):
         """
         Event handler for mouse clicks.
         """
-        if self.view_var.get() == 'smooth':
+        if self.style_var.get() == 'smooth':
             return
         if self.state == 'start_state':
             if not self.has_focus:
@@ -943,7 +943,7 @@ class LinkEditor(PLinkBase):
         """
         Event handler for mouse double-clicks.
         """
-        if self.view_var.get() == 'smooth':
+        if self.style_var.get() == 'smooth':
             return
         if self.lock_var.get():
             return
@@ -1020,7 +1020,7 @@ class LinkEditor(PLinkBase):
         """
         Handler for mouse motion events.
         """
-        if self.view_var.get() == 'smooth':
+        if self.style_var.get() == 'smooth':
             return
         canvas = self.canvas
         X, Y = event.x, event.y
@@ -1154,7 +1154,7 @@ class LinkEditor(PLinkBase):
         self.ActiveVertex = None
         self.update_crosspoints()
         self.state = 'start_state'
-        self.set_view_mode()
+        self.set_style()
         self.update_info()
         self.canvas.config(cursor='')
 
@@ -1200,7 +1200,7 @@ class LinkEditor(PLinkBase):
         if endpoint is None and not self.generic_vertex(self.ActiveVertex):
             raise ValueError
         self.ActiveVertex.expose()
-        if self.view_var.get() != 'smooth':
+        if self.style_var.get() != 'smooth':
             if self.ActiveVertex.in_arrow:
                 self.ActiveVertex.in_arrow.expose()
             if self.ActiveVertex.out_arrow:
