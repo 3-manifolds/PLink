@@ -18,7 +18,9 @@ line segment in a PL link diagram.
 """
 from math import sqrt
 from .gui import *
-default_gap_size = 9.0
+
+default_abs_gap_size = 9.0
+default_rel_gap_size = 0.2
 
 class Arrow:
     """
@@ -26,7 +28,9 @@ class Arrow:
     """
     epsilon = 8
     
-    def __init__(self, start, end, canvas=None, style='normal', color='black'):
+    def __init__(self, start, end, canvas=None, style='normal', color='black',
+                 abs_gap_size=default_abs_gap_size,
+                 rel_gap_size=default_rel_gap_size):
         self.start, self.end = start, end
         self.canvas = canvas
         self.color = color
@@ -35,6 +39,8 @@ class Arrow:
         self.lines = []
         self.dots = []
         self.cross_params = []
+        self.abs_gap_size = abs_gap_size
+        self.rel_gap_size = rel_gap_size
         if self.start != self.end:
             self.start.out_arrow = self
             self.end.in_arrow = self
@@ -96,8 +102,7 @@ class Arrow:
         self.style = 'normal'
         self.draw(crossings)
 
-    def find_segments(self, crossings, include_overcrossings=False,
-                      gapsize=default_gap_size):
+    def find_segments(self, crossings, include_overcrossings=False):
         """
         Return a list of segments that make up this arrow, each
         segment being a list of 4 coordinates [x0,y0,x1,y1].  The
@@ -131,7 +136,7 @@ class Arrow:
 
         def gap(dt):
             "A suitable gap for r restricted to a subinterval of length dt"
-            return min(gapsize/self.length, 0.2*dt)
+            return min(self.abs_gap_size/self.length, self.rel_gap_size*dt)
 
         segments = []
         for i in range(len(cross_params)-1):

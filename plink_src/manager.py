@@ -25,10 +25,12 @@ import time
 from string import ascii_lowercase
 from .gui import tkMessageBox
 from .vertex import Vertex
-from .arrow import Arrow, default_gap_size
+from .arrow import Arrow, default_abs_gap_size, default_rel_gap_size 
 from .crossings import Crossing, ECrossing
 from .smooth import TikZPicture
 DT_alphabet = '_abcdefghijklmnopqrstuvwxyzZYXWVUTSRQPONMLKJIHGFEDCBA'
+
+
 
 class LinkManager:
     """
@@ -51,6 +53,8 @@ class LinkManager:
         self.shift_delta = (0,0)
         self.shifting = False
         self.canvas = canvas
+        self.abs_gap_size = default_abs_gap_size
+        self.rel_gap_size = default_rel_gap_size
 
     def _from_string(self, contents):
         lines = [line for line in contents.split('\n') if len(line) > 0]
@@ -99,6 +103,8 @@ class LinkManager:
     def update_crosspoints(self):
         for arrow in self.Arrows:
             arrow.vectorize()
+            arrow.abs_gap_size = self.abs_gap_size
+            arrow.rel_gap_size = self.rel_gap_size
         for c in self.Crossings:
             c.locate()
         self.Crossings = [ c for c in self.Crossings if c.x is not None]
@@ -144,7 +150,7 @@ class LinkManager:
         nonclosed.sort(key=oldest_vertex)
         return (closed, nonclosed) if distinguish_closed else closed + nonclosed
 
-    def polylines(self, gapsize=default_gap_size, break_at_overcrossings=True):
+    def polylines(self, break_at_overcrossings=True):
         """
         Returns a list of lists of polylines, one per component, that make up
         the drawing of the link diagram.  Each polyline is a maximal
@@ -162,8 +168,7 @@ class LinkManager:
         for arrow in self.Arrows:
             arrows_segments = arrow.find_segments(
                 self.Crossings,
-                include_overcrossings=True,
-                gapsize=gapsize)
+                include_overcrossings=True)
             segments[arrow] = [ [(x0, y0), (x1, y1)]
                                 for x0, y0, x1, y1 in arrows_segments]
 
