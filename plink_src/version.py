@@ -15,4 +15,4 @@
 
 """The version number for this PLink program."""
 
-version = "2.2"
+version = "2.3a1"

@@ -22,7 +22,7 @@ import os, time, webbrowser
 from .gui import *
 from . import smooth
 from .vertex import Vertex
-from .arrow import Arrow, default_gap_size
+from .arrow import Arrow
 from .crossings import Crossing, ECrossing
 from .colors import Palette
 from .dialog import InfoDialog
