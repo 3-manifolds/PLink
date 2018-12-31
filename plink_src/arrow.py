@@ -21,6 +21,7 @@ from .gui import *
 
 default_abs_gap_size = 9.0
 default_rel_gap_size = 0.2
+default_no_arrow_size = 20
 
 class Arrow:
     """
@@ -30,7 +31,8 @@ class Arrow:
     
     def __init__(self, start, end, canvas=None, style='normal', color='black',
                  abs_gap_size=default_abs_gap_size,
-                 rel_gap_size=default_rel_gap_size):
+                 rel_gap_size=default_rel_gap_size,
+                 no_arrow_size=default_no_arrow_size):
         self.start, self.end = start, end
         self.canvas = canvas
         self.color = color
@@ -41,6 +43,7 @@ class Arrow:
         self.cross_params = []
         self.abs_gap_size = abs_gap_size
         self.rel_gap_size = rel_gap_size
+        self.no_arrow_size = no_arrow_size
         if self.start != self.end:
             self.start.out_arrow = self
             self.end.in_arrow = self
@@ -169,9 +172,11 @@ class Arrow:
                     x0, y0, x1, y1,
                     width=thickness, fill=color, tags='transformable'))
         x0, y0, x1, y1 = segments[-1]
+        last_seg_len = sqrt((x1 - x0)**2 + (y1 - y0)**2)
+        arrow = Tk_.LAST if last_seg_len >= self.no_arrow_size else None
         self.lines.append(self.canvas.create_line(
                 x0, y0, x1, y1,
-                arrow=Tk_.LAST,
+                arrow=arrow,
                 width=thickness, fill=color, tags='transformable'))
         if recurse:
             under_arrows = [c.under for c in crossings if c.over == self]

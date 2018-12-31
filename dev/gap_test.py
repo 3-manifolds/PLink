@@ -24,11 +24,23 @@ class LinkEditor(plink.LinkEditor):
                                                        command=self.update_gaps)
         rel_scale.set(0.2)
         rel_scale.pack()
+
+        self.no_arrow_scale = rel_scale = tkinter.Scale(self.window,
+                                                       length=400,
+                                                       orient=tkinter.HORIZONTAL,
+                                                       resolution=0.5,
+                                                       tickinterval=5,
+                                                       from_=0, to=30,
+                                                       command=self.update_gaps)
+        rel_scale.set(0)
+        rel_scale.pack()
+
         rel_scale.bind("<ButtonRelease-1>", self.update_gaps)
 
     def update_gaps(self, event):
         self.abs_gap_size = float(self.abs_gap_scale.get())
         self.rel_gap_size = float(self.rel_gap_scale.get())
+        self.no_arrow_size = float(self.no_arrow_scale.get())
         self.update_crosspoints()
         self.set_style()
         
