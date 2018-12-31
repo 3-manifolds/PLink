@@ -21,7 +21,7 @@ from .gui import *
 
 default_abs_gap_size = 9.0
 default_rel_gap_size = 0.2
-default_no_arrow_size = 20
+default_no_arrow_size =  0
 
 class Arrow:
     """
