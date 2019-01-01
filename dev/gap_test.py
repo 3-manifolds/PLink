@@ -38,9 +38,10 @@ class LinkEditor(plink.LinkEditor):
         rel_scale.bind("<ButtonRelease-1>", self.update_gaps)
 
     def update_gaps(self, event):
-        self.abs_gap_size = float(self.abs_gap_scale.get())
-        self.rel_gap_size = float(self.rel_gap_scale.get())
-        self.no_arrow_size = float(self.no_arrow_scale.get())
+        params = self.arrow_params
+        params['abs_gap_size'] = float(self.abs_gap_scale.get())
+        params['rel_gap_size'] = float(self.rel_gap_scale.get())
+        params['no_arrow_size'] = float(self.no_arrow_scale.get())
         self.update_crosspoints()
         self.set_style()
         
