@@ -109,6 +109,7 @@ class PLinkBase(LinkViewer):
         self.saved_crossing_data = None
         self.current_info = 0
         self.has_focus = True
+        self.focus_after = None
         # Info window
         self.infotext.bind('<Control-Shift-C>',
                            lambda event : self.infotext.event_generate('<<Copy>>'))

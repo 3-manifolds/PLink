@@ -22,7 +22,8 @@ from .gui import *
 default_arrow_params = dict(abs_gap_size=9.0,
                             rel_gap_size=0.2,
                             no_arrow_size=0,
-                            double_gap_at_ends=False)
+                            double_gap_at_ends=False,
+                            include_overcrossings=False)
 
 class Arrow:
     """
@@ -125,7 +126,7 @@ class Arrow:
                 t = self ^ c.over
                 if t:
                     cross_params.append((t, not c.is_virtual))
-            if c.over == self and include_overcrossings:
+            if c.over == self and (include_overcrossings or params['include_overcrossings']):
                 t = self ^ c.under
                 if t:
                     cross_params.append((t, False))
@@ -138,19 +139,24 @@ class Arrow:
             x, y = self.start.point()
             return [x + t*self.dx, y + t*self.dy]
 
-        def gap(dt):
-            "A suitable gap for r restricted to a subinterval of length dt"
-            return min(params['abs_gap_size']/self.length,
-                       params['rel_gap_size']*dt)
-
         segments = []
         for i in range(len(cross_params)-1):
             a, has_gap_a = cross_params[i]
             b, has_gap_b = cross_params[i+1]
             # Length of this segment, in internal coordinates
-            c = b - a
-            gap_a = gap(c) if has_gap_a else 0
-            gap_b = gap(c) if has_gap_b else 0
+            dt = b - a
+            # A suitable gap for r restricted to a subinterval of len dt.
+            abs_gap = params['abs_gap_size']/self.length
+            rel_gap = params['rel_gap_size']*dt
+            if params['double_gap_at_ends']:
+                # When the segment includes one of the ends of the
+                # arrow, we will need a gap at at most one end.  Hence
+                # it makes sense to double the allowed relative gap.
+                if i==0 or i==len(cross_params)-2:
+                    rel_gap = 2*rel_gap
+            gap = min(abs_gap, rel_gap)
+            gap_a = gap if has_gap_a else 0
+            gap_b = gap if has_gap_b else 0
             segments.append( (a + gap_a, b - gap_b) )
         return [r(a) + r(b) for a, b in segments]
 
