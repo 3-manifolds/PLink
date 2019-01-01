@@ -19,9 +19,10 @@ line segment in a PL link diagram.
 from math import sqrt
 from .gui import *
 
-default_abs_gap_size = 9.0
-default_rel_gap_size = 0.2
-default_no_arrow_size =  0
+default_arrow_params = dict(abs_gap_size=9.0,
+                            rel_gap_size=0.2,
+                            no_arrow_size=0,
+                            double_gap_at_ends=False)
 
 class Arrow:
     """
@@ -29,10 +30,9 @@ class Arrow:
     """
     epsilon = 8
     
-    def __init__(self, start, end, canvas=None, style='normal', color='black',
-                 abs_gap_size=default_abs_gap_size,
-                 rel_gap_size=default_rel_gap_size,
-                 no_arrow_size=default_no_arrow_size):
+    def __init__(self, start, end, canvas=None,
+                 style='normal', color='black',
+                 other_params=None):
         self.start, self.end = start, end
         self.canvas = canvas
         self.color = color
@@ -41,9 +41,9 @@ class Arrow:
         self.lines = []
         self.dots = []
         self.cross_params = []
-        self.abs_gap_size = abs_gap_size
-        self.rel_gap_size = rel_gap_size
-        self.no_arrow_size = no_arrow_size
+        if other_params is None:
+            other_params = default_arrow_params.copy()
+        self.params = other_params
         if self.start != self.end:
             self.start.out_arrow = self
             self.end.in_arrow = self
@@ -116,6 +116,7 @@ class Arrow:
         include_overcrossings flag is True, then the segments are
         also split at overcrossings, with no gap.
         """
+        params = self.params
         segments = []
         self.vectorize()
         cross_params = [(0.0,False), (1.0,False)]
@@ -139,14 +140,17 @@ class Arrow:
 
         def gap(dt):
             "A suitable gap for r restricted to a subinterval of length dt"
-            return min(self.abs_gap_size/self.length, self.rel_gap_size*dt)
+            return min(params['abs_gap_size']/self.length,
+                       params['rel_gap_size']*dt)
 
         segments = []
         for i in range(len(cross_params)-1):
             a, has_gap_a = cross_params[i]
             b, has_gap_b = cross_params[i+1]
-            gap_a = gap(b-a) if has_gap_a else 0
-            gap_b = gap(b-a) if has_gap_b else 0
+            # Length of this segment, in internal coordinates
+            c = b - a
+            gap_a = gap(c) if has_gap_a else 0
+            gap_b = gap(c) if has_gap_b else 0
             segments.append( (a + gap_a, b - gap_b) )
         return [r(a) + r(b) for a, b in segments]
 
@@ -173,7 +177,8 @@ class Arrow:
                     width=thickness, fill=color, tags='transformable'))
         x0, y0, x1, y1 = segments[-1]
         last_seg_len = sqrt((x1 - x0)**2 + (y1 - y0)**2)
-        arrow = Tk_.LAST if last_seg_len >= self.no_arrow_size else None
+        no_arrow_size = self.params['no_arrow_size']
+        arrow = Tk_.LAST if last_seg_len >= no_arrow_size else None
         self.lines.append(self.canvas.create_line(
                 x0, y0, x1, y1,
                 arrow=arrow,

@@ -25,7 +25,7 @@ import time
 from string import ascii_lowercase
 from .gui import tkMessageBox
 from .vertex import Vertex
-from .arrow import Arrow, default_abs_gap_size, default_rel_gap_size, default_no_arrow_size
+from .arrow import Arrow, default_arrow_params
 from .crossings import Crossing, ECrossing
 from .smooth import TikZPicture
 DT_alphabet = '_abcdefghijklmnopqrstuvwxyzZYXWVUTSRQPONMLKJIHGFEDCBA'
@@ -53,9 +53,7 @@ class LinkManager:
         self.shift_delta = (0,0)
         self.shifting = False
         self.canvas = canvas
-        self.abs_gap_size = default_abs_gap_size
-        self.rel_gap_size = default_rel_gap_size
-        self.no_arrow_size = default_no_arrow_size
+        self.arrow_params = default_arrow_params.copy()
 
     def _from_string(self, contents):
         lines = [line for line in contents.split('\n') if len(line) > 0]
@@ -104,9 +102,7 @@ class LinkManager:
     def update_crosspoints(self):
         for arrow in self.Arrows:
             arrow.vectorize()
-            arrow.abs_gap_size = self.abs_gap_size
-            arrow.rel_gap_size = self.rel_gap_size
-            arrow.no_arrow_size = self.no_arrow_size
+            arrow.params = self.arrow_params
         for c in self.Crossings:
             c.locate()
         self.Crossings = [ c for c in self.Crossings if c.x is not None]
