@@ -403,7 +403,11 @@ class LinkManager:
                 n = (crossing.hit1 - 1)//2
                 even_codes[n] = crossing.hit2
             else:
-                n = (crossing.hit2 - 1)//2
+                if crossing.hit2 == -2*len(self.Crossings):
+                    # This can actually happen!
+                    n = -1
+                else:
+                    n = (crossing.hit2 - 1)//2
                 even_codes[n] = crossing.hit1
             flips[n] = int(crossing.flipped)
         if not alpha:
