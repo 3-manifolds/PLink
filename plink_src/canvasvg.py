@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-# $Id: canvasvg.py,v 1.23 2008-11-08 18:11:19 wojtek Exp $
-#
 # Tkinter canvas to SVG exporter
 #
 # license: BSD
@@ -8,93 +6,16 @@
 # author: Wojciech Muła
 # e-mail: wojciech_mula@poczta.onet.pl
 # WWW   : http://0x80.pl/
+#
+# This file from: https://github.com/WojciechMula/canvas2svg
 
-# Modified for plink by Marc Culler on 15 July 2013.
-# Added support for "raw" smoothed lines, which use cubic splines.
-
-"""
-Tkinter canvas to SVG exporter
-========================================================================
-
-:Added on: 1.12.2006
-:Update: 2011-02-20 --- python3 compatibility
-:Update: 2011-01-25 --- update ``saveall``: use list of items to export
-:Update: 2008-11-08 --- added ``tounicode``, optional argument
-
-This module provides function ``convert`` that convert all or selected
-items placed on given canvas object.
-
-Supported items:
-
-* lines
-* lines with arrows
-* polygons
-* smoothed lines and polygons
-* ovals (i.e. circle & ellipse)
-* arcs (all kind, i.e. ARC, CHORD, PIESLICE)
-* rectangles
-* text (**unwrapped** only i.e. attribute ``width = 0``)
-
-Unsupported items:
-
-* images
-* bitmaps
-* windows
-
-Stipples are not applied.
-
-
-Public functions
-------------------------------------------------------------------------
-
-``convert(document, canvas, items=None, tounicode=None)``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-* ``document`` --- SVG document, object that support DOM, i.e. provides
-  ``createElement`` method etc. (function ``SVGdocument`` can be used
-  to get such object)
-* ``canvas`` --- Tkinter.Canvas object
-* ``items`` --- list of objects to convert; if ``None`` then all items
-  are converted
-* ``tounicode`` --- user function that should return proper unicode
-  string if Tkinter app use other then ASCII encoding. By default
-  ``tounicode = lambda text: unicode(text).encode('utf-8')``.
-  Thanks to **Jan Böcker** who provided solution.
-
-
-``SVGdocument``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Takes no arguments, returns SVG document;  class provided in standard
-``xml.dom.minidom`` module is used.
-
-
-``saveall(filename, canvas, items=None, margin=10, tounicode=None)``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Helper function: saves whole canvas or selected items in SVG file,
-sets proper  dimensions, and viewport;  additional ``margin`` can
-be set.
-
-
-Downloads
-------------------------------------------------------------------------
-
-* `canvasvg.py <canvasvg.py>`_ --- source %%%UPDATE%%%
-* `test.tar.gz <test.tar.gz>`_ --- test suite %%%UPDATE%%%
-
-License & Author
-------------------------------------------------------------------------
-
-* License: BSD
-* Author: Wojciech Muła, e-mail: wojciech_mula@poczta.onet.pl
-"""
+from __future__ import division
 
 __author__  = "Wojciech Muła <wojciech_mula@poczta.onet.pl>"
-__version__ = "$Revision: 1.23 $"
 
-
-__all__ = ["convert", "SVGdocument", "saveall"]
+__all__ = ["convert", "SVGdocument", "saveall", "PYTHON", "MODULE", "NONE",
+    "warnings", "configure", "SEGMENT_TO_LINE", "SEGMENT_TO_PATH"
+]
 
 try:
     # python3
@@ -105,15 +26,56 @@ except ImportError:
     import Tkinter as tkinter
     from Tkconstants import *
 
+PYTHON = 100
+MODULE = 200
+NONE   = 300
+warnings_mode = MODULE
+
+def warnings(mode):
+    global warnings_mode
+
+    if mode not in [PYTHON, MODULE, NONE]:
+        raise ValueError("Please use one of constants: PYTHON, MODULE, NONE")
+
+    warnings_mode = mode
+
+
 try:
-    warn
+       warn
 except NameError:
-    from warnings import warn
+       from warnings import warn
+
+
+def emit_warning(msg):
+    if warnings_mode == PYTHON:
+        warn(msg)
+    elif warnings_mode == MODULE:
+        from sys import stderr
+
+        stderr.write('canvas2svg warning: ')
+        stderr.write(msg)
+        stderr.write('\n')
+
+SEGMENT_TO_LINE = 1000
+SEGMENT_TO_PATH = 2000
+
+def configure(*flags):
+    global segment
+
+    for flag in flags:
+        if flag == SEGMENT_TO_LINE:
+            segment = segment_to_line
+        elif flag == SEGMENT_TO_PATH:
+            segment = segment_to_path
+        else:
+            raise ValueError(
+                "Please use one of constants: SEGMENT_TO_LINE, SEGMENT_TO_PATH"
+            )
 
 def convert(document, canvas, items=None, tounicode=None):
     """
     Convert 'items' stored in 'canvas' to SVG 'document'.
-    If 'items' is None, then all items are converted.
+    If 'items' is None, then all items are convered.
 
     tounicode is a function that get text and returns
     it's unicode representation. It should be used when
@@ -122,13 +84,14 @@ def convert(document, canvas, items=None, tounicode=None):
     Return list of XML elements
     """
     tk = canvas.tk
+    global segment
 
     if items is None:    # default: all items
         items = canvas.find_all()
 
     supported_item_types = \
         set(["line", "oval", "polygon", "rectangle", "text", "arc"])
-    
+
     if tounicode is None:
         try:
             # python3
@@ -140,11 +103,11 @@ def convert(document, canvas, items=None, tounicode=None):
 
     elements = []
     for item in items:
-        
+
         # skip unsupported items
         itemtype = canvas.type(item)
         if itemtype not in supported_item_types:
-            warn("Items of type '%s' are not supported." % itemtype)
+            emit_warning("Items of type '%s' are not supported." % itemtype)
             continue
 
         # get item coords
@@ -154,7 +117,7 @@ def convert(document, canvas, items=None, tounicode=None):
         # options is a dict: opt. name -> opt. actual value
         tmp     = canvas.itemconfigure(item)
         options = dict((v0, v4) for v0, v1, v2, v3, v4 in tmp.values())
-        
+
         # get state of item
         state = options['state']
         if 'current' in options['tags']:
@@ -164,6 +127,9 @@ def convert(document, canvas, items=None, tounicode=None):
         else:
             # left state unchanged
             assert options['state'] in ['normal', DISABLED, 'hidden']
+
+        # skip hidden items
+        if options['state'] == 'hidden': continue
 
         def get(name, default=""):
             if state == ACTIVE and options.get(state + name):
@@ -175,16 +141,16 @@ def convert(document, canvas, items=None, tounicode=None):
                 return options.get(name)
             else:
                 return default
-        
-        
+
+
         if itemtype == 'line':
-            options['outline']           = ''
+            options['outline']             = ''
             options['activeoutline']     = ''
-            options['disabledoutline']   = ''
+            options['disabledoutline']     = ''
         elif itemtype == 'arc' and options['style'] == ARC:
-            options['fill']              = ''
-            options['activefill']        = ''
-            options['disabledfill']      = ''
+            options['fill']             = ''
+            options['activefill']         = ''
+            options['disabledfill']     = ''
 
         style = {}
         style["stroke"] = HTMLcolor(canvas, get("outline"))
@@ -193,17 +159,28 @@ def convert(document, canvas, items=None, tounicode=None):
             style["fill"] = HTMLcolor(canvas, get("fill"))
         else:
             style["fill"] = "none"
-        
+
+
         width = float(options['width'])
         if state == ACTIVE:
             width = max(float(options['activewidth']), width)
         elif state == DISABLED:
-            if float(options['disabledwidth']) > 0:
-                width = options['disabledwidth']
-    
+            try:
+                disabledwidth = options['disabledwidth']
+            except KeyError:
+                # Text item might not have 'disabledwidth' option. This raises
+                # the exception in course of processing of such item.
+                # Default value is 0. Hence, it shall not affect width.
+                pass
+            else:
+                if float(disabledwidth) > 0:
+                    width = disabledwidth
+
+
         if width != 1.0:
             style['stroke-width'] = width
-        
+
+
         if width:
             dash = canvas.itemcget(item, 'dash')
             if state == DISABLED and canvas.itemcget(item, 'disableddash'):
@@ -222,9 +199,11 @@ def convert(document, canvas, items=None, tounicode=None):
                 style['stroke-dasharray']  = ",".join(map(str, dash))
                 style['stroke-dashoffset'] = options['dashoffset']
 
+
         if itemtype == 'line':
             # in this case, outline is set with fill property
             style["fill"], style["stroke"] = "none", style["fill"]
+
             style['stroke-linecap'] = cap_style[options['capstyle']]
 
             if options['smooth'] in ['1', 'bezier', 'true']:
@@ -241,22 +220,17 @@ def convert(document, canvas, items=None, tounicode=None):
                     style['fill'] = "none"
                     style['stroke-linejoin'] = join_style[options['joinstyle']]
             else:
-                warn("Unknown smooth type: %s. Falling back to smooth=0" %
-		     options['smooth'])
+                emit_warning("Unknown smooth type: %s. Falling back to smooth=0" % options['smooth'])
                 element = polyline(coords)
                 style['stroke-linejoin'] = join_style[options['joinstyle']]
 
             elements.append(element)
             if options['arrow'] in [FIRST, BOTH]:
-                arrow = arrow_head(document, coords[2], coords[3],
-				   coords[0], coords[1],
-				   options['arrowshape'])
+                arrow = arrow_head(document, coords[2], coords[3], coords[0], coords[1], options['arrowshape'])
                 arrow.setAttribute('fill', style['stroke'])
                 elements.append(arrow)
             if options['arrow'] in [LAST, BOTH]:
-                arrow = arrow_head(document, coords[-4], coords[-3],
-				   coords[-2], coords[-1],
-				   options['arrowshape'])
+                arrow = arrow_head(document, coords[-4], coords[-3], coords[-2], coords[-1], options['arrowshape'])
                 arrow.setAttribute('fill', style['stroke'])
                 elements.append(arrow)
 
@@ -266,15 +240,14 @@ def convert(document, canvas, items=None, tounicode=None):
             elif options['smooth'] == '0':
                 element = polygon(document, coords)
             else:
-                warn("Unknown smooth type: %s. Falling back to smooth=0" %
-		     options['smooth'])
+                emit_warning("Unknown smooth type: %s. Falling back to smooth=0" % options['smooth'])
                 element = polygon(document, coords)
 
             elements.append(element)
 
             style['fill-rule'] = 'evenodd'
             style['stroke-linejoin'] = join_style[options['joinstyle']]
-        
+
         elif itemtype == 'oval':
             element = oval(document, coords)
             elements.append(element)
@@ -284,9 +257,7 @@ def convert(document, canvas, items=None, tounicode=None):
             elements.append(element)
 
         elif itemtype == 'arc':
-            element = arc(document, coords,
-			  options['start'], options['extent'],
-			  options['style'])
+            element = arc(document, coords, options['start'], options['extent'], options['style'])
             if options['style'] == ARC:
                 style['fill'] = "none"
 
@@ -294,18 +265,18 @@ def convert(document, canvas, items=None, tounicode=None):
 
         elif itemtype == 'text':
             style['stroke'] = '' # no stroke
-            
+
             # setup geometry
             xmin, ymin, xmax, ymax = canvas.bbox(item)
-            
+
             x = coords[0]
 
             # set y at 'dominant-baseline'
-            y = ymin + font_metrics(tk, options['font'], 'ascent') 
-            
+            y = ymin + font_metrics(tk, options['font'], 'ascent')
+
             element = setattribs(
                 document.createElement('text'),
-                x = x, y = y 
+                x = x, y = y
             )
             elements.append(element)
 
@@ -338,8 +309,9 @@ def convert(document, canvas, items=None, tounicode=None):
             elif actual['underline']:
                 style['text-decoration'] = 'underline'
 
+
         for attr, value in style.items():
-            if value: # create only nonempty attributes
+            if value != '': # create only nonempty attributes
                 element.setAttribute(attr, str(value))
 
     return elements
@@ -368,7 +340,11 @@ def saveall(filename, canvas, items=None, margin=10, tounicode=None):
         doc.documentElement.appendChild(element)
 
     if items is None:
-        x1, y1, x2, y2 = canvas.bbox(ALL)
+        bbox = canvas.bbox(ALL)
+        if bbox is None:
+            x1, y1, x2, y2 = 0, 0, 0, 0
+        else:
+            x1, y1, x2, y2 = bbox
     else:
         x1 = None
         y1 = None
@@ -386,7 +362,7 @@ def saveall(filename, canvas, items=None, margin=10, tounicode=None):
                 x2 = max(x2, X2)
                 y1 = min(y1, Y1)
                 y2 = max(y2, Y2)
-    
+
     x1 -= margin
     y1 -= margin
     x2 += margin
@@ -407,8 +383,8 @@ def saveall(filename, canvas, items=None, margin=10, tounicode=None):
 #========================================================================
 # canvas elements geometry
 
-def segment(document, coords):
-    "polyline with 2 vertices"
+def segment_to_line(document, coords):
+    "polyline with 2 vertices using <line> tag"
     return setattribs(
         document.createElement('line'),
         x1 = coords[0],
@@ -417,13 +393,21 @@ def segment(document, coords):
         y2 = coords[3],
     )
 
+def segment_to_path(document, coords):
+    "polyline with 2 vertices using <path> tag"
+    return setattribs(
+        document.createElement('path'),
+        d = "M%s,%s %s,%s" % tuple(coords[:4])
+    )
+
+segment = segment_to_line
 
 def polyline(document, coords):
-    "polyline with more than 2 vertices"
+    "polyline with more then 2 vertices"
     points = []
     for i in range(0, len(coords), 2):
         points.append("%s,%s" % (coords[i], coords[i+1]))
-    
+
     return setattribs(
         document.createElement('polyline'),
         points = ' '.join(points),
@@ -451,12 +435,13 @@ def smoothline(document, coords):
             a = p[i-1]
             b = p[i]
             c = p[i+1]
+
             yield lerp(a, b, 0.5), b, lerp(b, c, 0.5)
+
 
     for i, (A, B, C) in enumerate(pt(points)):
         if i == 0:
-            path.append("M%s,%s Q%s,%s %s,%s" % (
-			    A[0], A[1], B[0], B[1], C[0], C[1]))
+            path.append("M%s,%s Q%s,%s %s,%s" % (A[0], A[1], B[0], B[1], C[0], C[1]))
         else:
             path.append("T%s,%s" % (C[0], C[1]))
 
@@ -468,11 +453,12 @@ def cubic_bezier(document, coords):
     element = document.createElement('path')
     points  = [(coords[i], coords[i+1]) for i  in range(0, len(coords), 2)]
     path    = ["M%s %s" %points[0]]
-    for n in xrange(1, len(points), 3):
+    for n in range(1, len(points), 3):
         A, B, C = points[n:n+3]
         path.append("C%s,%s %s,%s %s,%s" % (A[0], A[1], B[0], B[1], C[0], C[1]))
     element.setAttribute('d', ' '.join(path))
     return element
+
 
 def polygon(document, coords):
     "filled polygon"
@@ -484,9 +470,10 @@ def polygon(document, coords):
         points = ' '.join(points)
     )
 
+
 def smoothpolygon(document, coords):
     "smoothed filled polygon"
-    
+
     element = document.createElement('path')
     path    = []
     points  = [(coords[i], coords[i+1]) for i  in range(0, len(coords), 2)]
@@ -499,14 +486,13 @@ def smoothpolygon(document, coords):
             c = p[(i+1) % n]
 
             yield lerp(a, b, 0.5), b, lerp(b, c, 0.5)
-        
+
     for i, (A, B, C) in enumerate(pt(points)):
         if i == 0:
-            path.append("M%s,%s Q%s,%s %s,%s" %
-			(A[0], A[1], B[0], B[1], C[0], C[1]))
+            path.append("M%s,%s Q%s,%s %s,%s" % (A[0], A[1], B[0], B[1], C[0], C[1]))
         else:
             path.append("T%s,%s" % (C[0], C[1]))
-    
+
     path.append("z")
 
     element.setAttribute('d', ' '.join(path))
@@ -534,7 +520,7 @@ def oval(document, coords):
             cy = (y1+y2)/2,
             r  = abs(x2-x1)/2,
         )
-    
+
     # ellipse
     else:
         return setattribs(document.createElement('ellipse'),
@@ -543,20 +529,21 @@ def oval(document, coords):
             rx = abs(x2-x1)/2,
             ry = abs(y2-y1)/2,
         )
-    
+
     return element
+
 
 def arc(document, bounding_rect, start, extent, style):
     "arc, pieslice (filled), arc with chord (filled)"
     (x1, y1, x2, y2) = bounding_rect
     import math
-    
+
     cx = (x1 + x2)/2.0
     cy = (y1 + y2)/2.0
 
     rx = (x2 - x1)/2.0
     ry = (y2 - y1)/2.0
-    
+
     start  = math.radians(float(start))
     extent = math.radians(float(extent))
 
@@ -564,6 +551,7 @@ def arc(document, bounding_rect, start, extent, style):
     # http://www.w3.org/TR/SVG/implnote.html#ArcImplementationNotes
     x1 =  rx * math.cos(start) + cx
     y1 = -ry * math.sin(start) + cy # XXX: ry is negated here
+
     x2 =  rx * math.cos(start + extent) + cx
     y2 = -ry * math.sin(start + extent) + cy # XXX: ry is negated here
 
@@ -576,15 +564,15 @@ def arc(document, bounding_rect, start, extent, style):
         fs = 0
     else:
         fs = 1
-    
+
     path = []
     # common: arc
     path.append('M%s,%s' % (x1, y1))
     path.append('A%s,%s 0 %d %d %s,%s' % (rx, ry, fa, fs, x2, y2))
-    
+
     if style == ARC:
         pass
-    
+
     elif style == CHORD:
         path.append('z')
 
@@ -615,7 +603,7 @@ def HTMLcolor(canvas, color):
     if color:
         # r, g, b \in [0..2**16]
 
-        r, g, b = ["%02x" % (c/256) for c in canvas.winfo_rgb(color)]
+        r, g, b = ["%02x" % (c // 256) for c in canvas.winfo_rgb(color)]
 
         if (r[0] == r[1]) and (g[0] == g[1]) and (b[0] == b[1]):
             # shorter form #rgb
@@ -629,20 +617,23 @@ def HTMLcolor(canvas, color):
 def arrow_head(document, x0, y0, x1, y1, arrowshape):
     "make arrow head at (x1,y1), arrowshape is tuple (d1, d2, d3)"
     import math
-     
+
     dx = x1 - x0
     dy = y1 - y0
 
     poly = document.createElement('polygon')
-    
+
     d = math.sqrt(dx*dx + dy*dy)
     if d == 0.0: # XXX: equal, no "close enough"
         return poly
 
-    d1, d2, d3 = list(map(float, arrowshape))
+    try:
+        d1, d2, d3 = list(map(float, arrowshape))
+    except ValueError:
+        d1, d2, d3 = map(float, arrowshape.split())
     P0 = (x0, y0)
     P1 = (x1, y1)
-    
+
     xa, ya = lerp(P1, P0, d1/d)
     xb, yb = lerp(P1, P0, d2/d)
 
@@ -665,7 +656,7 @@ def font_actual(tkapp, font):
     return dict(
         (tmp[i][1:], tmp[i+1]) for i in range(0, len(tmp), 2)
     )
-    
+
 def font_metrics(tkapp, font, property=None):
     if property is None:
         tmp = tkapp.call('font', 'metrics', font)
@@ -678,7 +669,7 @@ def font_metrics(tkapp, font, property=None):
 
 def parse_dash(string, width):
     "parse dash pattern specified with string"
-    
+
     # DashConvert from {tk-sources}/generic/tkCanvUtil.c
     w = max(1, int(width + 0.5))
 
@@ -733,7 +724,7 @@ text_anchor = {
 
 font_style = {
     "italic"    : "italic",
-    "roman"        : "" # SVG default 
+    "roman"        : "" # SVG default
 }
 
 font_weight = {
