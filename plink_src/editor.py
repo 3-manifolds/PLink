@@ -710,7 +710,7 @@ class LinkEditor(PLinkBase):
 
     def done(self, event=None):
         if self.callback is not None:
-            self.window.iconify()
+            self.window.withdraw()
             return
         if self._warn_arcs() == 'oops':
             return
