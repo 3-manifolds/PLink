@@ -73,28 +73,19 @@ class PLinkBase(LinkViewer):
         self.window.title(title)
         self.palette = Palette()
         # Frame and Canvas
-        self.frame = Tk_.Frame(self.window, 
-                               borderwidth=0,
-                               relief=Tk_.FLAT,
-                               background='#dcecff')
+        self.frame = ttk.Frame(self.window)
         self.canvas = Tk_.Canvas(self.frame,
                                  bg='#dcecff',
                                  width=500,
                                  height=500,
                                  highlightthickness=0)
         self.smoother = smooth.Smoother(self.canvas)
-        self.infoframe = Tk_.Frame(self.window, 
-                                   borderwidth=2,
-                                   relief=Tk_.FLAT,
-                                   background='#ffffff')
+        self.infoframe = ttk.Frame(self.window)
         self.infotext_contents = Tk_.StringVar(self.window)
-        self.infotext = Tk_.Entry(self.infoframe,
+        self.infotext = ttk.Entry(self.infoframe,
                                   state='readonly',
                                   font='Helvetica 16',
-                                  textvariable=self.infotext_contents,
-                                  readonlybackground='#ffffff',
-                                  relief=Tk_.FLAT,
-                                  highlightthickness=0)
+                                  textvariable=self.infotext_contents)
         self.infoframe.pack(padx=0, pady=0, fill=Tk_.X, expand=Tk_.NO,
                             side=Tk_.BOTTOM)
         self.frame.pack(padx=0, pady=0, fill=Tk_.BOTH, expand=Tk_.YES)
@@ -262,7 +253,6 @@ class PLinkBase(LinkViewer):
         mode = self.style_var.get()
         if mode == 'smooth':
             self.canvas.config(background='#ffffff')
-            self.infotext.config(readonlybackground='#f0f0f0')
             self.enable_fancy_save_images()
             for vertex in self.Vertices:
                 vertex.hide()
@@ -270,7 +260,6 @@ class PLinkBase(LinkViewer):
                 arrow.hide()
         elif mode == 'both':
             self.canvas.config(background='#ffffff')
-            self.infotext.config(readonlybackground='#f0f0f0')
             self.disable_fancy_save_images()
             for vertex in self.Vertices:
                 vertex.expose()
@@ -278,7 +267,6 @@ class PLinkBase(LinkViewer):
                 arrow.make_faint()
         else:
             self.canvas.config(background='#dcecff')
-            self.infotext.config(readonlybackground='#f0f0f0')
             self.enable_fancy_save_images()
             for vertex in self.Vertices:
                 vertex.expose()

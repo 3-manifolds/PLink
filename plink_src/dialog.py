@@ -49,8 +49,8 @@ class InfoDialog(baseclass):
         self.wait_window(self)
 
     def buttonbox(self):
-        box = Tk_.Frame(self)
-        w = Tk_.Button(box, text="OK", width=10, command=self.ok,
+        box = ttk.Frame(self)
+        w = ttk.Button(box, text="OK", width=10, command=self.ok,
                    default=Tk_.ACTIVE)
         w.pack(side=Tk_.LEFT, padx=5, pady=5)
         self.bind("<Return>", self.ok)

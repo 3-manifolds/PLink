@@ -26,11 +26,13 @@ try:
         import tkFileDialog
         import tkMessageBox
         import tkSimpleDialog
+        import Tkinter.ttk as ttk
     else:
         import tkinter as Tk_
         import tkinter.filedialog as tkFileDialog
         import tkinter.messagebox as tkMessageBox
         import tkinter.simpledialog as tkSimpleDialog
+        import tkinter.ttk as ttk
     from . import canvasvg
 except ImportError:  # Tk unavailable or misconfigured
     Tk_, tkFileDialog, tkMessageBox, tkSimpleDialog, canvasvg = None, None, None, None, None
