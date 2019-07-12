@@ -22,11 +22,11 @@ import sys
 
 try: 
     if sys.version_info[0] < 3:
-        import Tkinter as Tk_
+        import tkinter as Tk_
         import tkFileDialog
         import tkMessageBox
         import tkSimpleDialog
-        import Tkinter.ttk as ttk
+        import tkinter.ttk as ttk
     else:
         import tkinter as Tk_
         import tkinter.filedialog as tkFileDialog
@@ -36,6 +36,7 @@ try:
     from . import canvasvg
 except ImportError:  # Tk unavailable or misconfigured
     Tk_, tkFileDialog, tkMessageBox, tkSimpleDialog, canvasvg = None, None, None, None, None
+    raise
 
 try:
     from urllib import pathname2url

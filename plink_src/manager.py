@@ -487,7 +487,7 @@ class LinkManager:
                     elif ec.crossing.sign() == 'LH':
                         m -= 1
             # Each crossing got counted twice.
-            framing.append( (m/2, 1) )
+            framing.append( (m // 2, 1) )
         return framing
         
     def write_text(self, text):
