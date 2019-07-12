@@ -78,6 +78,7 @@ class PLinkBase(LinkViewer):
                                  bg='#dcecff',
                                  width=500,
                                  height=500,
+                                 borderwidth=0,
                                  highlightthickness=0)
         self.smoother = smooth.Smoother(self.canvas)
         self.infoframe = ttk.Frame(self.window)
