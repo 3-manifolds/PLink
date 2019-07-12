@@ -36,7 +36,6 @@ try:
     from . import canvasvg
 except ImportError:  # Tk unavailable or misconfigured
     Tk_, tkFileDialog, tkMessageBox, tkSimpleDialog, canvasvg = None, None, None, None, None
-    raise
 
 try:
     from urllib import pathname2url
