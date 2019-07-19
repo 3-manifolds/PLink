@@ -45,7 +45,7 @@ class Arrow:
         if other_params is None:
             other_params = default_arrow_params.copy()
         self.params = other_params
-        if self.start != self.end:
+        if not self.start is self.end:
             self.start.out_arrow = self
             self.end.in_arrow = self
             self.vectorize()
