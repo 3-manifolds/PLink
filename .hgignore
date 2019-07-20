@@ -10,7 +10,6 @@ syntax: glob
 plink_app/*.egg/
 plink_src/doc/_static/*
 plink.egg-info/*
-dev/*
 plink_src/doc/*.html
 plink_src/doc/_sources/
 plink_src/doc/searchindex.js
