@@ -20,9 +20,9 @@ from math import sqrt
 from .gui import *
 
 default_arrow_params = dict(abs_gap_size=9.0,
-                            rel_gap_size=0.2,
-                            no_arrow_size=0,
-                            double_gap_at_ends=False,
+                            rel_gap_size=0.3,
+                            no_arrow_size=20,
+                            double_gap_at_ends=True,
                             include_overcrossings=False)
 
 class Arrow:
