@@ -2,7 +2,7 @@
 #
 #   Copyright (C) 2007-present Marc Culler, Nathan Dunfield and others.
 #
-#   This program is distributed under the terms of the 
+#   This program is distributed under the terms of the
 #   GNU General Public License, version 2 or later, as published by
 #   the Free Software Foundation.  See the file gpl-2.0.txt for details.
 #   The URL for this program is
@@ -17,7 +17,7 @@
 This module exports the class LinkEditor which is a full-featured
 editing tool for link diagrams.
 """
-import os, time, webbrowser
+import os, time, webbrowser, threading
 
 from .gui import *
 from . import smooth
@@ -29,6 +29,12 @@ from .dialog import InfoDialog
 from .manager import LinkManager
 from .viewer import LinkViewer
 from .version import version
+
+try:
+    import IPython
+    ip = IPython.get_ipython()
+except:
+    ip = None
 
 About = """PLink version %s
 
@@ -111,9 +117,25 @@ class PLinkBase(LinkViewer):
         # Key events
         self.window.bind('<Key>', self._key_press)
         self.window.bind('<KeyRelease>', self._key_release)
+        # If we are running in IPython, make sure we have an event loop.
+        if ip:
+            self._have_tk = False
+            def set_flag():
+                self._have_tk = True
+            # Tk will set the flag if it is has an event loop.
+            self.window.after(100, set_flag)
+            # This thread will notice if the flag did not get set.
+            threading.Thread(target=self._ipython_tk_check).start()
         # Go
         if file_name:
             self.load(file_name=file_name)
+
+    def _ipython_tk_check(self):
+        message = ('Your PLink window needs an event loop to become visible.\n'
+                  'Please type %gui tk to start one.\n')
+        time.sleep(1)
+        if not self._have_tk:
+            print("\x1b[31m%s\x1b[0m"%message)
 
     def _key_release(self, event):
         """
@@ -236,7 +258,7 @@ class PLinkBase(LinkViewer):
         style_menu.add_separator()
         style_menu.add_cascade(label='Zoom', menu=zoom_menu)
         style_menu.add_cascade(label='Pan', menu=pan_menu)
-        
+
     def alert(self):
         background = self.canvas.cget('bg')
         def reset_bg():
@@ -248,7 +270,10 @@ class PLinkBase(LinkViewer):
         self.window.destroy()
 
     def reopen(self):
-        self.window.deiconify()
+        try:
+            self.window.deiconify()
+        except Tk_.TclError:
+            print('The PLink window was destroyed')
 
     def set_style(self):
         mode = self.style_var.get()
@@ -264,7 +289,7 @@ class PLinkBase(LinkViewer):
             self.disable_fancy_save_images()
             for vertex in self.Vertices:
                 vertex.expose()
-            for arrow in self.Arrows: 
+            for arrow in self.Arrows:
                 arrow.make_faint()
         else:
             self.canvas.config(background='#dcecff')
@@ -322,13 +347,13 @@ class PLinkBase(LinkViewer):
         else:
             self.current_info = which_info
             self.update_info()
-            
+
     def copy_info(self, event):
         self.window.clipboard_clear()
         if self.infotext.selection_present():
             self.window.clipboard_append(self.infotext.selection_get())
             self.infotext.selection_clear()
-        
+
     def clear_text(self):
         self.infotext_contents.set('')
         self.window.focus_set()
@@ -402,13 +427,13 @@ class PLinkBase(LinkViewer):
         mode = self.style_var.get()
         if mode == 'smooth':
             self.smoother.set_polylines(self.polylines())
-        elif mode == 'both': 
+        elif mode == 'both':
             self.smoother.set_polylines(self.polylines(), thickness=2)
 
     # Override to hijack the update_info method
     def _check_update(self):
         return True
-    
+
     def update_info(self):
         self.hide_DT()
         self.hide_labels()
@@ -479,7 +504,7 @@ class PLinkBase(LinkViewer):
     def hide_labels(self):
         for text_item in self.labels:
             self.canvas.delete(text_item)
-        self.labels = []        
+        self.labels = []
 
     def hide_DT(self):
         for text_item in self.DTlabels:
@@ -530,7 +555,7 @@ class PLinkBase(LinkViewer):
         mode = self.style_var.get()
         target = self.smoother if mode == 'smooth' else self
         LinkViewer.save_image(self, file_type, colormode, target)
-            
+
     def about(self):
         InfoDialog(self.window, 'About PLink', About)
 
@@ -539,7 +564,7 @@ class PLinkBase(LinkViewer):
         doc_path = os.path.abspath(doc_file)
         url = 'file:' + pathname2url(doc_path)
         try:
-            webbrowser.open(url) 
+            webbrowser.open(url)
         except:
             tkMessageBox.showwarning('Not found!', 'Could not open URL\n(%s)'%url)
 
@@ -552,7 +577,7 @@ class LinkDisplay(PLinkBase):
             kwargs['title'] = 'PLink Viewer'
         PLinkBase.__init__(self, *args, **kwargs)
         self.style_var.set('smooth')
-        
+
 class LinkEditor(PLinkBase):
     """
     A complete graphical link drawing tool based on the one embedded in Jeff Weeks'
@@ -587,7 +612,7 @@ class LinkEditor(PLinkBase):
             x, y = self.cursorx, self.canvas.winfo_height()-self.cursory
             self.write_text( '(%d, %d)'%(x, y) )
         return False
-    
+
     def _add_file_menu(self):
         file_menu = Tk_.Menu(self.menubar, tearoff=0)
         file_menu.add_command(label='Open File ...', command=self.load)
@@ -604,7 +629,7 @@ class LinkEditor(PLinkBase):
         style_menu.add_radiobutton(label='Smooth edit', value='both',
                                   command=self.set_style,
                                   variable=self.style_var)
-    
+
     def _add_tools_menu(self):
         self.lock_var = Tk_.BooleanVar(self.window)
         self.lock_var.set(False)
@@ -617,7 +642,7 @@ class LinkEditor(PLinkBase):
         if self.callback:
             tools_menu.add_command(label=self.cb_menu, command=self._do_callback)
         self.menubar.add_cascade(label='Tools', menu=tools_menu)
-        
+
     def _key_release(self, event):
         """
         Handler for keyrelease events.
@@ -759,14 +784,14 @@ class LinkEditor(PLinkBase):
         self.goto_start_state()
 
     def focus_in(self, event):
-        self.focus_after = self.window.after(100, self.notice_focus) 
-    
+        self.focus_after = self.window.after(100, self.notice_focus)
+
     def notice_focus(self):
         # This is used to avoid starting a new link when the user is just
         # clicking on the window to focus it.
         self.focus_after = None
         self.has_focus = True
-               
+
     def focus_out(self, event):
         self.has_focus = False
 
@@ -1002,7 +1027,7 @@ class LinkEditor(PLinkBase):
             else:
                 self.flipcheck = None
                 self.canvas.config(cursor='')
- 
+
     def mouse_moved(self,event):
         """
         Handler for mouse motion events.
@@ -1039,7 +1064,7 @@ class LinkEditor(PLinkBase):
 
     def move_is_ok(self):
         return self.active_crossing_data() == self.saved_crossing_data
-    
+
     def move_active(self, x, y):
         active = self.ActiveVertex
         if self.lock_var.get():
@@ -1229,7 +1254,7 @@ class LinkEditor(PLinkBase):
                 #print 'arrow too close to crossing %s'%crossing
                 return False
         return True
-       
+
     def destroy_arrow(self, arrow):
         self.Arrows.remove(arrow)
         if arrow.end:
