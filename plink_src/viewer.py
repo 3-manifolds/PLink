@@ -99,13 +99,13 @@ class LinkViewer(LinkManager):
             save_fn = getattr(target, 'save_as_' + file_type)
             save_fn(file_name, colormode)
 
-    def save_as_eps(self, file_name, colormode):
+    def save_as_eps(self, file_name, colormode='color'):
         smooth.save_as_eps(self.canvas, file_name, colormode)
 
-    def save_as_svg(self, file_name, colormode):
+    def save_as_svg(self, file_name, colormode='color'):
         smooth.save_as_svg(self.canvas, file_name, colormode)
 
-    def save_as_pdf(self, file_name, colormode,  width=312.0):
+    def save_as_pdf(self, file_name, colormode='color', width=312.0):
         PDF = smooth.PDFPicture(self.canvas, width)
         for polylines, color in self.polylines(break_at_overcrossings=False):
             style = [pyx.style.linewidth(4), pyx.style.linecap.round,
