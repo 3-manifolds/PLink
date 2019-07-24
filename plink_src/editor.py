@@ -131,8 +131,11 @@ class PLinkBase(LinkViewer):
             self.load(file_name=file_name)
 
     def _ipython_tk_check(self):
+        import IPython
         message = ('Your PLink window needs an event loop to become visible.\n'
                    'Type "%gui tk" below (without the quotes) to start one.\n')
+        if IPython.version_info < (6,):
+            message = '\n' + message[:-1]
         time.sleep(0.5)
         if not self._have_tk:
             print("\x1b[31m%s\x1b[0m"%message)
