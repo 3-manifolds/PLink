@@ -13,9 +13,9 @@ def warn_if_necessary(tk_window, window_name):
             tk_window._have_tk = True
         
         def ipython_tk_check():
-            message = (
-                'Your ' + window_name + ' window needs an event loop to become visible.\n'
-                'Type "%gui tk" below (without the quotes) to start one.\n')
+            message = ('Your new ' + window_name +
+                       ' window needs an event loop to become visible and active.\n' + 
+                       'Type "%gui tk" below (without the quotes) to start one.\n')
             if IPython.version_info < (6,):
                 message = '\n' + message[:-1]
             time.sleep(1)
