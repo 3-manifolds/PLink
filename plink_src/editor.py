@@ -17,7 +17,7 @@
 This module exports the class LinkEditor which is a full-featured
 editing tool for link diagrams.
 """
-import os, time, webbrowser, threading
+import os, time, webbrowser
 
 from .gui import *
 from . import smooth
@@ -29,12 +29,7 @@ from .dialog import InfoDialog
 from .manager import LinkManager
 from .viewer import LinkViewer
 from .version import version
-
-try:
-    import IPython
-    ip = IPython.get_ipython()
-except:
-    ip = None
+from . import ipython_tk_warn
 
 About = """PLink version %s
 
@@ -118,26 +113,7 @@ class PLinkBase(LinkViewer):
         self.window.bind('<Key>', self._key_press)
         self.window.bind('<KeyRelease>', self._key_release)
         # If we are running in IPython, make sure we have an event loop.
-        if ip:
-            self._have_tk = False
-            def set_flag():
-                self._have_tk = True
-            # Tk will set the flag if it is has an event loop.
-            self.window.after(100, set_flag)
-            # This thread will notice if the flag did not get set.
-            threading.Thread(target=self._ipython_tk_check).start()
-        # Go
-        if file_name:
-            self.load(file_name=file_name)
-
-    def _ipython_tk_check(self):
-        message = ('Your PLink window needs an event loop to become visible.\n'
-                   'Type "%gui tk" below (without the quotes) to start one.\n')
-        if IPython.version_info < (6,):
-            message = '\n' + message[:-1]
-        time.sleep(0.5)
-        if not self._have_tk:
-            print("\x1b[31m%s\x1b[0m"%message)
+        ipython_tk_warn.warn_if_necessary(self.window, "PLink")
 
     def _key_release(self, event):
         """
