@@ -41,12 +41,12 @@ class IPythonTkRoot(Tk):
 
     def __init__(self, **kwargs):
         Tk.__init__(self, **kwargs)
-        self.message = message = (
-            '\x1b[31mYour {} window needs an event loop to become visible.\n'
-            'Type "%gui tk" below (without the quotes) to start one.\x1b[0m\n'
+        message = ('\x1b[31mYour new {} window needs an event loop to become visible.\n'
+                   'Type "%gui tk" below (without the quotes) to start one.\x1b[0m\n'
         ).format(self.winfo_class())
         if IPython.version_info < (6,):
             message = '\n' + message[:-1]
+        self.message = message
         self._have_loop = False
         self._check_for_tk()
 
