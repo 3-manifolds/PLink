@@ -45,8 +45,6 @@ class IPythonTkRoot(Tk):
             '\x1b[31mYour {} window needs an event loop to become visible.\n'
             'Type "%gui tk" below (without the quotes) to start one.\x1b[0m\n'
         ).format(self.winfo_class())
-        if IPython.version_info < (6,):
-            message = '\n' + message[:-1]
         self._have_loop = False
         self._check_for_tk()
 
@@ -54,7 +52,10 @@ class IPythonTkRoot(Tk):
         """Thread target function."""
         time.sleep(0.5)
         if not self._have_loop:
-            print(self.message)
+            if IPython.version_info < (6,):
+                print('\n' + self.message[:-1])
+            else:
+                print(self.message)
 
     def _check_for_tk(self):
         def set_flag():
