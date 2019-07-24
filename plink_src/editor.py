@@ -29,7 +29,8 @@ from .dialog import InfoDialog
 from .manager import LinkManager
 from .viewer import LinkViewer
 from .version import version
-from . import ipython_tk_warn
+from .ip_tk_root import IPythonTkRoot
+#from . import ipython_tk_warn
 
 About = """PLink version %s
 
@@ -63,7 +64,8 @@ class PLinkBase(LinkViewer):
         self.color_keys = []
         # Window
         if root is None:
-            self.window = root = Tk_.Tk(className='plink')
+            # In IPython, this will remind the user to type %gui tk.
+            self.window = root = IPythonTkRoot(className='plink')
         else:
             self.window = Tk_.Toplevel(root)
         self.window.protocol("WM_DELETE_WINDOW", self.done)
@@ -113,7 +115,10 @@ class PLinkBase(LinkViewer):
         self.window.bind('<Key>', self._key_press)
         self.window.bind('<KeyRelease>', self._key_release)
         # If we are running in IPython, make sure we have an event loop.
-        ipython_tk_warn.warn_if_necessary(self.window, "PLink")
+        # ipython_tk_warn.warn_if_necessary(self.window, "PLink")
+        # Go
+        if file_name:
+            self.load(file_name=file_name)
 
     def _key_release(self, event):
         """
