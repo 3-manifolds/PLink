@@ -832,6 +832,11 @@ class LinkEditor(PLinkBase):
                 self.ActiveVertex.freeze()
                 self.saved_crossing_data = self.active_crossing_data()
                 x1, y1 = self.ActiveVertex.point()
+                if self.ActiveVertex.in_arrow is None and self.ActiveVertex.out_arrow is None:
+                    # If this is an isolated vertex (likely created
+                    # unintentionally), switch to drawing mode.
+                    self.double_click(event)
+                    return
                 if self.ActiveVertex.in_arrow:
                     x0, y0 = self.ActiveVertex.in_arrow.start.point()
                     self.ActiveVertex.in_arrow.freeze()
