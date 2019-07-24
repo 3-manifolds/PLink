@@ -146,7 +146,7 @@ class Arrow:
             # Length of this segment, in internal coordinates
             dt = b - a
             # A suitable gap for r restricted to a subinterval of len dt.
-            abs_gap = params['abs_gap_size']/self.length
+            abs_gap = params['abs_gap_size']/self.length if self.length != 0 else 0
             rel_gap = params['rel_gap_size']*dt
             if params['double_gap_at_ends']:
                 # When the segment includes one of the ends of the
