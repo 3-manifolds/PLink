@@ -50,7 +50,7 @@ class IPythonTkRoot(Tk):
 
     def _tk_check(self):
         """Thread target function."""
-        time.sleep(0.5)
+        time.sleep(1)
         if not self._have_loop:
             if IPython.version_info < (6,):
                 print('\n' + self.message[:-1])

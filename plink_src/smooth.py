@@ -43,12 +43,10 @@ from builtins import range
 import sys
 
 try: 
-    if sys.version_info[0] < 3:
-        import Tkinter as Tk_
-    else:
-        import tkinter as Tk_
+    import tkinter as Tk_
     from . import canvasvg
 except ImportError:  # Tk unavailable or misconfigured
+    print("smooth: Failed to import Tk\n")
     Tk_, canvasvg= None, None
 
 try:
