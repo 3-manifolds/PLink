@@ -46,8 +46,7 @@ try:
     import tkinter as Tk_
     from . import canvasvg
 except ImportError:  # Tk unavailable or misconfigured
-    print("smooth: Failed to import Tk\n")
-    Tk_, canvasvg= None, None
+    Tk_, canvasvg = None, None
 
 try:
     import pyx

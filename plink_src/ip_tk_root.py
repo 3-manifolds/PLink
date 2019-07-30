@@ -19,7 +19,11 @@ warns its user to type %gui Tk if it instantiates itself in an IPython
 shell which does not have a running Tk event loop.
 """
 import time, threading
-from tkinter import Tk
+try:
+    from tkinter import Tk
+except ImportError:
+    class Tk:
+        pass
 
 try:
     import IPython
