@@ -17,10 +17,10 @@ This module exports the InfoDialog class, used for displaying information
 about the PLink program.
 """
 # Hack for when Tkinter is unavailable or broken
-from .gui import tkSimpleDialog
+from .gui import *
 
-if tkSimpleDialog:
-    baseclass = tkSimpleDialog
+if SimpleDialog:
+    baseclass = SimpleDialog
 else:
     baseclass = object
     
@@ -33,11 +33,11 @@ class InfoDialog(baseclass):
         if title:
             self.title(title)
 #        self.icon = PhotoImage(data=icon_string)
-        canvas = Tk_.Canvas(self, width=58, height=58)
+#        canvas = Tk_.Canvas(self, width=58, height=58)
 #        canvas.create_image(10, 10, anchor=NW, image=self.icon)
-        canvas.grid(row=0, column=0, sticky=NW)
+#        canvas.grid(row=0, column=0, sticky=NSEWW)
         text = Tk_.Text(self, font='Helvetica 14',
-                    width=50, height=16, padx=10)
+                        width=50, height=16, padx=10, relief=Tk_.FLAT)
         text.insert(Tk_.END, self.content)
         text.grid(row=0, column=1, sticky=NW,
                   padx=10, pady=10)
