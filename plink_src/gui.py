@@ -24,7 +24,6 @@ try:
     import tkinter as Tk_
     import tkinter.filedialog as tkFileDialog
     import tkinter.messagebox as tkMessageBox
-    from tkinter.simpledialog import SimpleDialog as tkSimpleDialog
     import tkinter.ttk as ttk
     from . import canvasvg
 except ImportError:  # Tk unavailable or misconfigured
@@ -38,8 +37,10 @@ except ImportError:
     have_pyx = False
 
 if sys.version_info[0] < 3:
+    from tkSimpleDialog import Dialog as SimpleDialog
     from urllib import pathname2url
 else:
+    from tkinter.simpledialog import Dialog as SimpleDialog
     from urllib.request import pathname2url
 
 if sys.platform == 'linux2' or sys.platform == 'linux':
