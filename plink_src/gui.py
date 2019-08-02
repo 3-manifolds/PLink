@@ -20,16 +20,16 @@ components of the graphical user interface for PLink.
 """ 
 import sys
 
-#try: 
-import tkinter as Tk_
-import tkinter.filedialog as tkFileDialog
-import tkinter.messagebox as tkMessageBox
-from tkinter.simpledialog import SimpleDialog as tkSimpleDialog
-import tkinter.ttk as ttk
-from . import canvasvg
-#except ImportError:  # Tk unavailable or misconfigured
-#    print('Failed to import Tk')
-#    Tk_, tkFileDialog, tkMessageBox, tkSimpleDialog, canvasvg = None, None, None, None, None
+try: 
+    import tkinter as Tk_
+    import tkinter.filedialog as tkFileDialog
+    import tkinter.messagebox as tkMessageBox
+    from tkinter.simpledialog import SimpleDialog as tkSimpleDialog
+    import tkinter.ttk as ttk
+    from . import canvasvg
+except ImportError:  # Tk unavailable or misconfigured
+    print('Failed to import Tk')
+    Tk_, tkFileDialog, tkMessageBox, tkSimpleDialog, canvasvg = None, None, None, None, None
 
 try:
     import pyx
