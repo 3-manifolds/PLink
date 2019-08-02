@@ -17,14 +17,8 @@ __all__ = ["convert", "SVGdocument", "saveall", "PYTHON", "MODULE", "NONE",
     "warnings", "configure", "SEGMENT_TO_LINE", "SEGMENT_TO_PATH"
 ]
 
-try:
-    # python3
-    import tkinter
-    from tkinter.constants import *
-except ImportError:
-    # python2
-    import Tkinter as tkinter
-    from Tkconstants import *
+import tkinter
+from tkinter.constants import *
 
 PYTHON = 100
 MODULE = 200

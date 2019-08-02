@@ -20,33 +20,27 @@ components of the graphical user interface for PLink.
 """ 
 import sys
 
-try: 
-    if sys.version_info[0] < 3:
-        import tkinter as Tk_
-        import tkFileDialog
-        import tkMessageBox
-        import tkSimpleDialog
-        import tkinter.ttk as ttk
-    else:
-        import tkinter as Tk_
-        import tkinter.filedialog as tkFileDialog
-        import tkinter.messagebox as tkMessageBox
-        import tkinter.simpledialog as tkSimpleDialog
-        import tkinter.ttk as ttk
-    from . import canvasvg
-except ImportError:  # Tk unavailable or misconfigured
-    Tk_, tkFileDialog, tkMessageBox, tkSimpleDialog, canvasvg = None, None, None, None, None
-
-try:
-    from urllib import pathname2url
-except:  # Python 3
-    from urllib.request import pathname2url
+#try: 
+import tkinter as Tk_
+import tkinter.filedialog as tkFileDialog
+import tkinter.messagebox as tkMessageBox
+from tkinter.simpledialog import SimpleDialog as tkSimpleDialog
+import tkinter.ttk as ttk
+from . import canvasvg
+#except ImportError:  # Tk unavailable or misconfigured
+#    print('Failed to import Tk')
+#    Tk_, tkFileDialog, tkMessageBox, tkSimpleDialog, canvasvg = None, None, None, None, None
 
 try:
     import pyx
     have_pyx = True
 except ImportError:
     have_pyx = False
+
+if sys.version_info[0] < 3:
+    from urllib import pathname2url
+else:
+    from urllib.request import pathname2url
 
 if sys.platform == 'linux2' or sys.platform == 'linux':
     closed_hand_cursor = 'fleur'
