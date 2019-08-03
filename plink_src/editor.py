@@ -32,25 +32,28 @@ from .version import version
 from .ip_tk_root import IPythonTkRoot
 #from . import ipython_tk_warn
 
-About = """PLink version %s
+About = """This is version %s of PLink.
 
-PLink draws piecewise linear links.
+PLink draws piecewise linear link projections. It was
+written in Python by Marc Culler and Nathan Dunfield with
+support from the National Science Foundation. PLink is
+distributed under the GNU General Public License.
 
-Written in Python by Marc Culler and Nathan Dunfield.
+Source code for Plink is available at:
+    https://bitbucket.org/t3m/plink.
+Submit comments or bug reports at:
+    https://bitbucket.org/t3m/plink/issues
 
-Comments to: culler@math.uic.edu, nmd@illinois.edu
-Download at http://www.math.uic.edu/~t3m
-Distributed under the GNU General Public License.
+To install PLink in your Python environment, run:
+   pip install plink
 
-Development supported by the National Science Foundation.
-
-Inspired by SnapPea (written by Jeff Weeks) and
+PLink was inspired by SnapPea (written by Jeff Weeks) and
 LinkSmith (written by Jim Hoste and Morwen Thistlethwaite).
 """ % version
 
 class PLinkBase(LinkViewer):
     """
-    Base class for windows displaying a LinkViewer and an Info Windows.
+    Base class for windows displaying a LinkViewer and an Info Window.
     """
     def __init__(self, root=None, manifold=None, file_name=None, title='',
                  show_crossing_labels=False):
@@ -74,6 +77,7 @@ class PLinkBase(LinkViewer):
             root.tk.call('set', '::tk::dialog::file::showHiddenBtn',  '1')
             root.tk.call('set', '::tk::dialog::file::showHiddenVar',  '0')
         self.window.title(title)
+        self.style = PLinkStyle()
         self.palette = Palette()
         # Frame and Canvas
         self.frame = ttk.Frame(self.window)
@@ -88,7 +92,7 @@ class PLinkBase(LinkViewer):
         self.infotext_contents = Tk_.StringVar(self.window)
         self.infotext = ttk.Entry(self.infoframe,
                                   state='readonly',
-                                  font='Helvetica 16',
+                                  font='Helvetica 14',
                                   textvariable=self.infotext_contents)
         self.infoframe.pack(padx=0, pady=0, fill=Tk_.X, expand=Tk_.NO,
                             side=Tk_.BOTTOM)
@@ -540,7 +544,7 @@ class PLinkBase(LinkViewer):
         LinkViewer.save_image(self, file_type, colormode, target)
 
     def about(self):
-        InfoDialog(self.window, 'About PLink', About)
+        InfoDialog(self.window, 'About PLink', self.style, About)
 
     def howto(self):
         doc_file = os.path.join(os.path.dirname(__file__), 'doc', 'index.html')
