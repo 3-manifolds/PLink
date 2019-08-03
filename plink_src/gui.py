@@ -26,10 +26,20 @@ try:
     import tkinter.messagebox as tkMessageBox
     import tkinter.ttk as ttk
     from . import canvasvg
-except ImportError:  # Tk unavailable or misconfigured
-    print('Failed to import Tk')
-    Tk_ = tkFileDialog = tkMessageBox = tkSimpleDialog = canvasvg = None
+    if sys.version_info[0] < 3:
+        from tkSimpleDialog import Dialog as SimpleDialog
+    else:
+        from tkinter.simpledialog import Dialog as SimpleDialog
+except ImportError:
+    # Tk is unavailable or misconfigured.
+    # This allows running tests when there is no tkinter module.
+    print('Plink failed to import tkinter.')
+    Tk_ = ttk = tkFileDialog = tkMessageBox = SimpleDialog = None
 
+if sys.version_info[0] < 3:
+    from urllib import pathname2url
+else:
+    from urllib.request import pathname2url
 
 try:
     import pyx
@@ -37,12 +47,6 @@ try:
 except ImportError:
     have_pyx = False
 
-if sys.version_info[0] < 3:
-    from tkSimpleDialog import Dialog as SimpleDialog
-    from urllib import pathname2url
-else:
-    from tkinter.simpledialog import Dialog as SimpleDialog
-    from urllib.request import pathname2url
 
 if sys.platform == 'linux2' or sys.platform == 'linux':
     closed_hand_cursor = 'fleur'
@@ -63,6 +67,10 @@ class PLinkStyle:
     def __init__(self):
         self.ttk_style = ttk_style = ttk.Style()
         self.windowBG = ttk_style.lookup('Tframe', 'background')
+        if sys.platform == 'darwin':
+            self.font = 'Helvetica 16'
+        else:
+            self.font = 'Helvetica 12'
 
 # Make the Tk file dialog work better with file extensions on macOS
 
