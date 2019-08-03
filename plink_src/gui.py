@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 #
 #   Copyright (C) 2007-present Marc Culler, Nathan Dunfield and others.
 #
-#   This program is distributed under the terms of the 
+#   This program is distributed under the terms of the
 #   GNU General Public License, version 2 or later, as published by
 #   the Free Software Foundation.  See the file gpl-2.0.txt for details.
 #   The URL for this program is
@@ -17,10 +17,10 @@ from __future__ import unicode_literals
 """
 Imports objects and defines constants used in common by different
 components of the graphical user interface for PLink.
-""" 
+"""
 import sys
 
-try: 
+try:
     import tkinter as Tk_
     import tkinter.filedialog as tkFileDialog
     import tkinter.messagebox as tkMessageBox
@@ -28,7 +28,8 @@ try:
     from . import canvasvg
 except ImportError:  # Tk unavailable or misconfigured
     print('Failed to import Tk')
-    Tk_, tkFileDialog, tkMessageBox, tkSimpleDialog, canvasvg = None, None, None, None, None
+    Tk_ = tkFileDialog = tkMessageBox = tkSimpleDialog = canvasvg = None
+
 
 try:
     import pyx
@@ -52,14 +53,24 @@ elif sys.platform == 'darwin':
 else:
     closed_hand_cursor = 'hand2'
     open_hand_cursor = 'hand1'
-    
-# Make the Tk file dialog work better with file extensions on OX
+
+class PLinkStyle:
+    """
+    Provide platform specific thematic constants for use by Tk widgets.
+    NOTE: A Tk interpreter must be created before instantiating an
+    object in this class.
+    """
+    def __init__(self):
+        self.ttk_style = ttk_style = ttk.Style()
+        self.windowBG = ttk_style.lookup('Tframe', 'background')
+
+# Make the Tk file dialog work better with file extensions on macOS
 
 def asksaveasfile(mode='w',**options):
     """
     Ask for a filename to save as, and returned the opened file.
     Modified from tkFileDialog to more intelligently handle
-    default file extensions. 
+    default file extensions.
     """
     if sys.platform == 'darwin':
         if 'defaultextension' in options and not 'initialfile' in options:
@@ -106,4 +117,3 @@ vertex_shifts = {
     'Right' : (1, 0),
     'Left'  : (-1, 0)
     }
-
