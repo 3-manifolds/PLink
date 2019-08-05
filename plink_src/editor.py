@@ -165,7 +165,7 @@ class PLinkBase(LinkViewer):
         file_menu.add_command(label='Save ...', command=self.save)
         self.build_save_image_menu(self.menubar, file_menu)
         file_menu.add_separator()
-        file_menu.add_command(label='Exit', command=self.done)
+        file_menu.add_command(label='Quit', command=self.done)
         self.menubar.add_cascade(label='File', menu=file_menu)
 
     def _add_info_menu(self):
@@ -609,7 +609,7 @@ class LinkEditor(PLinkBase):
         if self.callback:
             file_menu.add_command(label='Close', command=self.done)
         else:
-            file_menu.add_command(label='Exit', command=self.done)
+            file_menu.add_command(label='Quit', command=self.done)
         self.menubar.add_cascade(label='File', menu=file_menu)
 
     def _extend_style_menu(self, style_menu):
