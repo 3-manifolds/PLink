@@ -29,8 +29,7 @@ from .dialog import InfoDialog
 from .manager import LinkManager
 from .viewer import LinkViewer
 from .version import version
-from .ip_tk_root import IPythonTkRoot
-#from . import ipython_tk_warn
+from .ipython_tools import IPythonTkRoot
 
 About = """This is version %s of PLink.
 
@@ -118,8 +117,6 @@ class PLinkBase(LinkViewer):
         # Key events
         self.window.bind('<Key>', self._key_press)
         self.window.bind('<KeyRelease>', self._key_release)
-        # If we are running in IPython, make sure we have an event loop.
-        #ipython_tk_warn.warn_if_necessary(self.window, "PLink")
         # Go
         if file_name:
             self.load(file_name=file_name)
