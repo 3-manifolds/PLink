@@ -15,10 +15,15 @@
 #   DMS0504975 and DMS0204142.
 
 from .version import version as __version__
-from . import gui
-from .manager import LinkManager
-from .viewer import LinkViewer
-from .editor import LinkDisplay, LinkEditor
+try:
+    from . import gui
+    from .manager import LinkManager
+    from .viewer import LinkViewer
+    from .editor import LinkDisplay, LinkEditor
+except ImportError:
+    # Tk is not available
+    LinkManager = LinkViewer = LinkDisplay = LinkEditor = None
+    
 __all__ = ['LinkManager', 'LinkViewer', 'LinkDisplay', 'LinkEditor']
 
 if __name__ == '__main__':
