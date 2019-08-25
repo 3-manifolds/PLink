@@ -1,12 +1,10 @@
+*~
+*.pyc
 build
 dist
 doc_source/_build
 .DS_Store
 plink_app/dmg-maker/PLink.dmg
-
-syntax: glob
-*~
-*.pyc
 plink_app/*.egg/
 plink_src/doc/_static/*
 plink.egg-info/*
