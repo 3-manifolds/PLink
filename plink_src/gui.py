@@ -18,7 +18,7 @@ from __future__ import unicode_literals
 Imports objects and defines constants used in common by different
 components of the graphical user interface for PLink.
 """
-import sys
+import sys, platform
 
 try:
     import tkinter as Tk_
@@ -81,6 +81,8 @@ def asksaveasfile(mode='w',**options):
     default file extensions.
     """
     if sys.platform == 'darwin':
+        if platform.mac_ver()[0] < '10.15.2':
+            options.pop('parent', None)
         if 'defaultextension' in options and not 'initialfile' in options:
             options['initialfile'] = 'untitled' + options['defaultextension']
 
@@ -94,6 +96,8 @@ if sys.platform == 'linux2':
             title='Open SnapPea Projection File')
 else:
     def askopenfile(parent=None):
+        if sys.platform == 'darwin' and platform.mac_ver()[0] < '10.15.2':
+            parent=None
         return tkFileDialog.askopenfile(
             parent=parent,
             mode='r',
