@@ -42,4 +42,4 @@ Source code
 -----------------------------------
 
 You can download and browse the source code
-`here <https://bitbucket.org/t3m/plink>`_.
+`here <https://github.com/3-manifolds/PLink>`_.

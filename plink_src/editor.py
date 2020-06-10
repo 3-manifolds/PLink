@@ -39,9 +39,9 @@ support from the National Science Foundation. PLink is
 distributed under the GNU General Public License.
 
 Source code for Plink is available at:
-    https://bitbucket.org/t3m/plink.
+    https://github.com/3-manifolds/PLink
 Submit comments or bug reports at:
-    https://bitbucket.org/t3m/plink/issues
+    https://github.com/3-manifolds/PLink/issues
 
 To install PLink in your Python environment, run:
    pip install plink
