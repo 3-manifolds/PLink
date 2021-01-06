@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 #
 #   Copyright (C) 2007-present Marc Culler, Nathan Dunfield and others.
 #
-#   This program is distributed under the terms of the 
+#   This program is distributed under the terms of the
 #   GNU General Public License, version 2 or later, as published by
 #   the Free Software Foundation.  See the file gpl-2.0.txt for details.
 #   The URL for this program is
@@ -29,7 +29,6 @@ from .arrow import Arrow, default_arrow_params
 from .crossings import Crossing, ECrossing
 from .smooth import TikZPicture
 DT_alphabet = '_abcdefghijklmnopqrstuvwxyzZYXWVUTSRQPONMLKJIHGFEDCBA'
-
 
 
 class LinkManager:
@@ -93,12 +92,12 @@ class LinkManager:
             except:
                 tkMessageBox.showwarning(
                     'Bad file',
-                    'Failed while parsing line %d'%(num_lines - len(lines)))
+                    'Failed while parsing line %d' % (num_lines - len(lines)))
             # make sure the window has been rendered before doing anything
             self.unpickle(vertices, arrows, crossings)
             self.update_crosspoints()
             return hot
-    
+
     def update_crosspoints(self):
         for arrow in self.Arrows:
             arrow.vectorize()
@@ -108,12 +107,12 @@ class LinkManager:
         self.Crossings = [ c for c in self.Crossings if c.x is not None]
         self.CrossPoints = [Vertex(c.x, c.y, self.canvas, style='hidden')
                             for c in self.Crossings]
-            
+
     def arrow_components(self, include_isolated_vertices=False, distinguish_closed=False):
         """
         Returns a list of components, given as lists of arrows.
         The closed components are sorted in DT order if they have
-        been marked.  The others are sorted by age. If distinguish_closed 
+        been marked.  The others are sorted by age. If distinguish_closed
         is set to True then two lists are returned, the first has the closed
         components the second has the non-closed components.
         """
@@ -156,7 +155,7 @@ class LinkManager:
         in the Wirtinger presentation).  Each polyline is a list of
         coordinates [(x0,y0), (x1,y1), ...]  Isolated vertices are
         ignored.
-        
+
         If the flag break_at_overcrossings is set, each polyline instead
         corresponds to maximal arcs with no crossings on their interior.
         """
@@ -212,11 +211,11 @@ class LinkManager:
         for component in arrow_components:
             crosses=[]
             for arrow in component:
-                arrow_crosses = [(c.height(arrow), c, arrow) 
+                arrow_crosses = [(c.height(arrow), c, arrow)
                                 for c in self.Crossings if arrow in c]
                 arrow_crosses.sort()
                 crosses += arrow_crosses
-            result.append([ECrossing(c[1],c[2]) for c in crosses]) 
+            result.append([ECrossing(c[1],c[2]) for c in crosses])
         return result
 
 
@@ -273,8 +272,8 @@ class LinkManager:
             # Choose the next component, by Morwen's rule: Use the
             # component containing the partner of the first
             # odd-numbered crossing that is shared with another
-            # commponent (if there are any shared crossings).
-            if len(touching) > 0:
+            # component (if there are any shared crossings).
+            if touching:
                 touching.sort(key=lambda x : x[0].hit1)
                 next_component = touching[0][1]
                 components.remove(next_component)
@@ -299,7 +298,7 @@ class LinkManager:
         the x-direction is the KLPStrandX, and the strand going in the
         y-direction is the KLPStrandY.  Note that this definition does not
         depend on which is the overstrand and which is the understrand:
-        
+
         ::
 
                              KLPStrandY
@@ -309,7 +308,7 @@ class LinkManager:
                                  |
                                  |
 
-        \ 
+        \
         """
         try:
             components = self.crossing_components()
@@ -360,7 +359,6 @@ class LinkManager:
         counter = dict( (ec, k+1) for k, ec in enumerate(ecrossings) )
         over_dict, under_dict = {}, {}
         for component in components:
-            N = len(component)
             for n, ec in enumerate(component):
                 incoming = counter[component[n-1]]
                 outgoing = counter[component[n]]
@@ -452,7 +450,7 @@ class LinkManager:
             even = abs(N)
             if even < odd:
                 counts[even-1] = -N
-                counts[odd-1] = N 
+                counts[odd-1] = N
             else:
                 O = odd if N > 0 else -odd
                 counts[even-1] = -O
@@ -464,7 +462,7 @@ class LinkManager:
             gauss.append(tuple(counts[start:end]))
             start = end
         return gauss
-                                         
+
     def BB_framing(self):
         """
         Return the standard meridian-longitude coordinates of the
@@ -489,7 +487,7 @@ class LinkManager:
             # Each crossing got counted twice.
             framing.append( (m // 2, 1) )
         return framing
-        
+
     def write_text(self, text):
         # Subclasses override this
         pass
@@ -544,7 +542,7 @@ class LinkManager:
         projection file.
         """
         has_virtual_crossings = any(crossing.is_virtual for crossing in self.Crossings)
-        
+
         result = ''
         result += '% Virtual Link Projection\n' if has_virtual_crossings else '% Link Projection\n'
         components = self.arrow_components()
@@ -572,7 +570,7 @@ class LinkManager:
         else:
             result += '-1\n'
         return result
-    
+
     def twister_surface_file(self):
         """
         Returns a string containing the contents of a Twister surface
@@ -580,10 +578,10 @@ class LinkManager:
         """
         result = '# A Twister surface file produced by PLink.\n'
         virtual_crossings = [crossing for crossing in self.Crossings if crossing.is_virtual]
-        if len(virtual_crossings) == 0: 
+        if len(virtual_crossings) == 0:
             raise ValueError('No virtual crossings present.')
         closed_components, nonclosed_components = self.arrow_components(distinguish_closed=True)
-        
+
         def component_sequence(component):
             sequence = []
             for arrow in component:
@@ -601,8 +599,7 @@ class LinkManager:
                 this_arrows_crossings.sort()
                 sequence += [pm + str(index) for _, index, pm in this_arrows_crossings]
             return sequence
-        
-        num_components = len(closed_components) + len(nonclosed_components)
+
         curves = list(ascii_lowercase) + ['%s%d' % (letter, index)
             for index in range((len(closed_components) + len(nonclosed_components)) // 26)
             for letter in ascii_lowercase]
@@ -638,7 +635,7 @@ class LinkManager:
 
            * crossings: a list of quadruples (under, over, is_virtual, label),
            giving the indices in the arrow list of each pair of crossing
-           arrows, a boolean indicating if the crossing is virtual, 
+           arrows, a boolean indicating if the crossing is virtual,
            and an assigned label.
 
            * an optional argument "hot" giving the index of one vertex
@@ -658,14 +655,14 @@ class LinkManager:
         """
         Inverse of unpickle.
         """
-        V = lambda v:self.Vertices.index(v)
-        A = lambda a:self.Arrows.index(a)
+        V = lambda v: self.Vertices.index(v)
+        A = lambda a: self.Arrows.index(a)
         vertices = [(v.x, v.y) for v in self.Vertices]
         arrows = [(V(a.start), V(a.end)) for a in self.Arrows]
         crossings = [(A(c.under), A(c.over), c.is_virtual, c.label) for c in self.Crossings]
-        hot = V(self.ActiveVertex) if self.ActiveVertex else None        
+        hot = V(self.ActiveVertex) if self.ActiveVertex else None
         return [vertices, arrows, crossings, hot]
-    
+
     def create_colors(self):
         components = self.arrow_components()
         for component in components:
@@ -674,4 +671,3 @@ class LinkManager:
             for arrow in component:
                 arrow.set_color(color)
                 arrow.end.set_color(color)
-

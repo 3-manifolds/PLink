@@ -66,10 +66,11 @@ def configure(*flags):
                 "Please use one of constants: SEGMENT_TO_LINE, SEGMENT_TO_PATH"
             )
 
+
 def convert(document, canvas, items=None, tounicode=None):
     """
     Convert 'items' stored in 'canvas' to SVG 'document'.
-    If 'items' is None, then all items are convered.
+    If 'items' is None, then all items are converted.
 
     tounicode is a function that get text and returns
     it's unicode representation. It should be used when
@@ -707,7 +708,7 @@ text_anchor = {
     E    : "end",
     NE    : "end",
 
-    SW    : "", # SVG defaul (value "start")
+    SW    : "", # SVG default (value "start")
     W    : "",
     NW    : "",
 
