@@ -94,8 +94,9 @@ class PLinkPipInstall(Command):
         if os.path.exists(egginfo):
             shutil.rmtree(egginfo)
         wheels = glob.glob('dist' + os.sep + '*.whl')
-        new_wheel = max(wheels, key=os.path.getmtime)            
-        check_call([python, '-m', 'pip', 'install', '--upgrade',
+        new_wheel = max(wheels, key=os.path.getmtime)
+        check_call([python, '-m', 'pip', 'uninstall', '-y', 'plink'])
+        check_call([python, '-m', 'pip', 'install',
                     '--upgrade-strategy', 'only-if-needed',
                     new_wheel])
 
