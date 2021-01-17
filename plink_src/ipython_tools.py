@@ -20,7 +20,8 @@ shell which does not have a running Tk event loop.
 
 It also exports a function which will issue an equivalent warning.
 """
-import time, threading
+import time
+import threading
 try:
     from tkinter import Tk
 except ImportError:
@@ -29,10 +30,11 @@ except ImportError:
 
 try:
     import IPython
-    # This will not be None if we are runnning in an IPython shell.
+    # This will not be None if we are running in an IPython shell.
     ip = IPython.get_ipython()
 except:
     ip = None
+
 
 class IPythonTkRoot(Tk):
     """
@@ -80,7 +82,7 @@ def warn_if_necessary(tk_window, window_type=''):
     loop exists and, if not, tells the user how to start one.
     """
     try:
-        import IPython, threading, time
+        import IPython
         ip = IPython.get_ipython()
         tk_window._have_loop = False
 
