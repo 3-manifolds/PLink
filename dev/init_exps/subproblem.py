@@ -1,7 +1,7 @@
 """
 Comparing the two methods for choosing the velocites.
 
-To using interactively in a Sage notebook, do:
+To use interactively in a Sage notebook, do:
 
 @interact
 def _(x=(0.5, (-0.7, 1.7)), y=(0.3, (0,1.5)), t=(0.6,(0,1))):
