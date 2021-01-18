@@ -1,4 +1,3 @@
-from __future__ import unicode_literals
 # -*- coding: utf-8 -*-
 #
 #   Copyright (C) 2007-present Marc Culler, Nathan Dunfield and others.

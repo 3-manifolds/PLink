@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
 #
 #   Copyright (C) 2007-present Marc Culler, Nathan Dunfield and others.
 #
@@ -26,20 +25,14 @@ try:
     import tkinter.messagebox as tkMessageBox
     import tkinter.ttk as ttk
     from . import canvasvg
-    if sys.version_info[0] < 3:
-        from tkSimpleDialog import Dialog as SimpleDialog
-    else:
-        from tkinter.simpledialog import Dialog as SimpleDialog
+    from tkinter.simpledialog import Dialog as SimpleDialog
 except ImportError:
     # Tk is unavailable or misconfigured.
     # This allows running tests when there is no tkinter module.
     print('Plink failed to import tkinter.')
     Tk_ = ttk = tkFileDialog = tkMessageBox = SimpleDialog = None
 
-if sys.version_info[0] < 3:
-    from urllib import pathname2url
-else:
-    from urllib.request import pathname2url
+from urllib.request import pathname2url
 
 try:
     import pyx
