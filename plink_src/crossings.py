@@ -107,14 +107,14 @@ class Crossing:
         flipped attribute on the first hit.
         """
         over = ecrossing.goes_over()
-        if not count % 2 and over:
+        if count % 2 == 0 and over:
             count = -count
         if self.hit1 == 0:
             self.hit1 = count
             sign = self.sign()
             if sign:
                 self.flipped = over ^ (sign == 'RH')
-            if count % 2 and self.comp1 != self.comp2:
+            if count % 2 != 0 and self.comp1 != self.comp2:
                 return True
         elif self.hit2 == 0:
             self.hit2 = count
