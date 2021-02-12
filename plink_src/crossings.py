@@ -1,7 +1,7 @@
 #
 #   Copyright (C) 2007-present Marc Culler, Nathan Dunfield and others.
 #
-#   This program is distributed under the terms of the 
+#   This program is distributed under the terms of the
 #   GNU General Public License, version 2 or later, as published by
 #   the Free Software Foundation.  See the file gpl-2.0.txt for details.
 #   The URL for this program is
@@ -17,16 +17,19 @@ This module exports the Crossing class, which represents a crossing
 in a link diagram, and the ECrossing class which represents an edge
 of the diagram passing through a crossing.
 """
+
+
 class Crossing:
     """
     A pair of crossing arrows in a PL link diagram.
     """
+
     def __init__(self, over, under, is_virtual=False, label=None):
         self.over = over
         self.under = under
         self.locked = False
         self.KLP = {}    # See the SnapPea file link_projection.h
-        self.hit1 = None # For computing DT codes
+        self.hit1 = None  # For computing DT codes
         self.hit2 = None
         self.comp1 = None
         self.comp2 = None
@@ -38,55 +41,49 @@ class Crossing:
     def __repr__(self):
         self.locate()
         if not self.is_virtual:
-            return '%s over %s at (%s,%s)'%(
+            return '%s over %s at (%s,%s)' % (
                 self.over, self.under, self.x, self.y)
         else:
-            return 'virtual crossing of %s and %s at (%s,%s)'%(
+            return 'virtual crossing of %s and %s at (%s,%s)' % (
                 self.over, self.under, self.x, self.y)
-            
+
     def __eq__(self, other):
         """
         Crossings are equivalent if they involve the same arrows.
         """
-        if self.over in other and self.under in other:
-            return True
-        else:
-            return False
+        return (self.over in other and self.under in other)
 
     def __hash__(self):
         # Since we redefined __eq__ we need to define __hash__
         return id(self)
-        
+
     def __contains__(self, arrow):
-        if arrow == None or arrow == self.over or arrow == self.under:
-            return True
-        else:
-            return False
-        
+        return (arrow is None or arrow == self.over or arrow == self.under)
+
     def locate(self):
         t = self.over ^ self.under
         if t:
-            self.x = self.over.start.x + t*self.over.dx
-            self.y = self.over.start.y + t*self.over.dy
+            self.x = self.over.start.x + t * self.over.dx
+            self.y = self.over.start.y + t * self.over.dy
         else:
-            #print 'Crossing.locate failed'
-            #print 'over = %s, under = %s'%(self.over, self.under)
             self.x = self.y = None
 
     def sign(self):
         try:
-            D = self.under.dx*self.over.dy - self.under.dy*self.over.dx
-            if D > 0: return 'RH'
-            if D < 0: return 'LH'
-        except:
+            D = self.under.dx * self.over.dy - self.under.dy * self.over.dx
+            if D > 0:
+                return 'RH'
+            if D < 0:
+                return 'LH'
+        except:  # which exception should it catch ?
             return 0
 
     def strand(self, arrow):
         sign = self.sign()
         if arrow not in self:
             return None
-        elif ( (arrow == self.over and sign == 'RH') or
-               (arrow == self.under and sign =='LH') ):
+        elif ((arrow == self.over and sign == 'RH') or
+              (arrow == self.under and sign == 'LH')):
             return 'X'
         else:
             return 'Y'
@@ -110,14 +107,14 @@ class Crossing:
         flipped attribute on the first hit.
         """
         over = ecrossing.goes_over()
-        if count%2 == 0 and over:
+        if count % 2 == 0 and over:
             count = -count
         if self.hit1 == 0:
             self.hit1 = count
             sign = self.sign()
             if sign:
                 self.flipped = over ^ (sign == 'RH')
-            if count%2 != 0 and self.comp1 != self.comp2:
+            if count % 2 != 0 and self.comp1 != self.comp2:
                 return True
         elif self.hit2 == 0:
             self.hit2 = count
@@ -133,14 +130,16 @@ class Crossing:
             raise ValueError('Too many component hits!')
 
     def clear_marks(self):
-        self.hit1= self.hit2 = 0
+        self.hit1 = self.hit2 = 0
         self.flipped = self.comp1 = self.comp2 = None
+
 
 class ECrossing:
     """
     A pair: (Crossing, Arrow), where the Arrow is involved in the Crossing.
     The ECrossings correspond 1-1 with edges of the link diagram.
-    """ 
+    """
+
     def __init__(self, crossing, arrow):
         if arrow not in crossing:
             raise ValueError
@@ -152,8 +151,4 @@ class ECrossing:
         return (self.crossing, self.arrow)
 
     def goes_over(self):
-        if self.arrow == self.crossing.over:
-            return True
-        return False
-
-
+        return (self.arrow == self.crossing.over)
