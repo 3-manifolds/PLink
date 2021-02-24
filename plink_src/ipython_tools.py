@@ -54,7 +54,7 @@ class IPythonTkRoot(Tk):
             '\x1b[31mYour new {} window needs an event loop to become visible.\n'
             'Type "%gui tk" below (without the quotes) to start one.\x1b[0m\n'
         ).format(window_type if window_type else self.winfo_class())
-        if IPython.version_info < (6,):
+        if ip and IPython.version_info < (6,):
             self.message = '\n' + self.message[:-1]
         self._have_loop = False
         self._check_for_tk()
