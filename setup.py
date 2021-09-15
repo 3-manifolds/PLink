@@ -133,7 +133,7 @@ setup(name='plink',
       author = 'Marc Culler and Nathan M. Dunfield',
       author_email = 'culler@uic.edu, nathan@dunfield.info',
       license='GPLv2+',
-      url = 'http://www.math.uic.edu/t3m/plink/doc/',
+      url = 'https://www.math.uic.edu/t3m/plink/doc/',
       classifiers = [
         'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Science/Research',
