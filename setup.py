@@ -15,8 +15,9 @@ class PLinkClean(Command):
     def finalize_options(self):
         pass
     def run(self):
-        for dir in ['build', 'dist', 'plink.egg-info']:
+        for dir in ['build', 'dist', 'plink.egg-info', doc_path]:
             shutil.rmtree(dir, ignore_errors=True)
+        os.mkdir(doc_path)
         for file in glob.glob('*.pyc'):
             if os.path.exists(file):
                 os.remove(file)
@@ -59,6 +60,18 @@ def check_call(args):
         command = [a for a in args if not a.startswith('-')][-1]
         raise RuntimeError(command + ' failed for ' + executable)
 
+
+try:
+    from wheel.bdist_wheel import bdist_wheel
+    class PlinkBuildWheel(bdist_wheel):
+        def run(self):
+            python = sys.executable
+            check_call([python, 'setup.py', 'build'])
+            check_call([python, 'setup.py', 'build_docs'])
+            bdist_wheel.run(self)
+except ImportError:
+    PlinkBuildWheel = None
+
 class PLinkRelease(Command):
     user_options = [('install', 'i', 'install the release into each Python')]
     def initialize_options(self):
@@ -79,7 +92,7 @@ class PLinkRelease(Command):
 
         # Build sdist/universal wheels using the *first* specified Python
         check_call([pythons[0], 'setup.py', 'sdist'])
-        check_call([pythons[0], 'setup.py', 'bdist_wheel', '--universal'])
+        check_call([pythons[0], 'setup.py', 'bdist_wheel'])
 
 class PLinkPipInstall(Command):
     user_options = []
@@ -89,7 +102,7 @@ class PLinkPipInstall(Command):
         pass
     def run(self):
         python = sys.executable
-        check_call([python, 'setup.py', 'bdist_wheel', '--universal'])
+        check_call([python, 'setup.py', 'bdist_wheel'])
         egginfo = 'plink.egg-info'
         if os.path.exists(egginfo):
             shutil.rmtree(egginfo)
@@ -124,6 +137,7 @@ setup(name='plink',
       cmdclass =  {'clean': PLinkClean,
                    'build_docs': PLinkBuildDocs,
                    'build_all': PLinkBuildAll,
+                   'bdist_wheel': PlinkBuildWheel,
                    'release': PLinkRelease,
                    'pip_install':PLinkPipInstall,
       },
