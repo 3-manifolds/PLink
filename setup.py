@@ -68,6 +68,7 @@ try:
             python = sys.executable
             check_call([python, 'setup.py', 'build'])
             check_call([python, 'setup.py', 'build_docs'])
+            check_call([python, 'setup.py', 'build'])
             bdist_wheel.run(self)
 except ImportError:
     PlinkBuildWheel = None
