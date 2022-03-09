@@ -31,7 +31,7 @@ class PLinkBuildDocs(Command):
     def finalize_options(self):
         pass
     def run(self):
-        sphinx_cmd = load_entry_point('Sphinx>=0.6.1', 'console_scripts', 'sphinx-build')
+        sphinx_cmd = load_entry_point('sphinx>=0.6.1', 'console_scripts', 'sphinx-build')
         sphinx_args = ['-a', '-E', '-d', 'doc_source/_build/doctrees',
                        'doc_source', doc_path]
         import sphinx
