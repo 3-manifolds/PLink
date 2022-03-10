@@ -15,7 +15,7 @@ You can browse the source code `here <https://github.com/3-manifolds/PLink>`_.
 
 
 License
-========================
+=======
 
 Copyright 2008-present by Marc Culler, Nathan Dunfield, and others.
 
@@ -26,7 +26,7 @@ published by the Free Software Foundation.
 
 
 Acknowledgements
-========================
+================
 
 The development of this program was partially supported by the US
 National Science Foundation under grants DMS0608567, DMS0504975,
