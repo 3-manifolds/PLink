@@ -215,6 +215,13 @@ class LinkManager:
                 arrow_crosses.sort()
                 crosses += arrow_crosses
             result.append([ECrossing(c[1],c[2]) for c in crosses])
+
+        for crossing in self.Crossings:
+            crossing.clear_marks()
+        # Mark which components each crossing belongs to.
+        for component in result:
+            for ecrossing in component:
+                ecrossing.crossing.mark_component(component)
         return result
 
 
