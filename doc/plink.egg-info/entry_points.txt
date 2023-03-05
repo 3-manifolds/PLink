@@ -1,0 +1,2 @@
+[console_scripts]
+plink = plink.app:main

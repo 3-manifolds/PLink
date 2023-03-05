@@ -1,0 +1,52 @@
+Metadata-Version: 2.1
+Name: plink
+Version: 4.0
+Summary: A full featured Tk-based knot and link editor
+Home-page: https://www.math.uic.edu/t3m/plink/doc/
+Author: Marc Culler and Nathan M. Dunfield
+Author-email: culler@uic.edu, nathan@dunfield.info
+License: GPLv2+
+Keywords: knot,link,editor,SnapPy
+Platform: UNKNOWN
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Intended Audience :: Science/Research
+Classifier: License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python
+Classifier: Topic :: Scientific/Engineering :: Mathematics
+
+PLink is a full featured graphical editor for knot and link projections,
+using the cross-platform GUI toolkit Tk.  The primary focus is on
+piecewise-linear link projections, but it also supports a "smooth
+mode" and can export images in PostScript, PDF, SVG, and TikZ formats.
+See the `PLink home page <https://t3m.math.uic.edu/plink/doc>`_
+for complete details.
+
+This is a pure Python module and you can install it via
+`pip <https://pip.pypa.io/en/latest/>`_.
+See `the documentation
+<https://t3m.math.uic.edu/plink/doc/installing>`_
+for more.
+
+You can browse the source code `here <https://github.com/3-manifolds/PLink>`_.
+
+
+License
+========================
+
+Copyright 2008-present by Marc Culler, Nathan Dunfield, and others.
+
+All parts of this package are released under the
+`GNU General Public License, version 2 <http://www.gnu.org/licenses/gpl-2.0.txt>`_
+or (at your discretion) any later version as
+published by the Free Software Foundation.
+
+
+Acknowledgements
+========================
+
+The development of this program was partially supported by the US
+National Science Foundation under grants DMS0608567, DMS0504975,
+DMS0204142, and others.
+
+

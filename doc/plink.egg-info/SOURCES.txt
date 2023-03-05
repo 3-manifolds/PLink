@@ -1,0 +1,10 @@
+README.rst
+pyproject.toml
+setup.cfg
+setup.py
+plink_src/plink.egg-info/PKG-INFO
+plink_src/plink.egg-info/SOURCES.txt
+plink_src/plink.egg-info/dependency_links.txt
+plink_src/plink.egg-info/entry_points.txt
+plink_src/plink.egg-info/not-zip-safe
+plink_src/plink.egg-info/top_level.txt
