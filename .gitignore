@@ -8,8 +8,10 @@ plink_app/dmg-maker/PLink.dmg
 plink_app/*.egg/
 plink_src/doc/_static/*
 plink.egg-info/*
+plink_src/doc/
 plink_src/doc/*.html
 plink_src/doc/_sources/
 plink_src/doc/searchindex.js
 plink_src/doc/objects.inv
 plink_src/doc/_images/
+plink_src/plink.egg-info/

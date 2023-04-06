@@ -2,13 +2,13 @@ PLink is a full featured graphical editor for knot and link projections,
 using the cross-platform GUI toolkit Tk.  The primary focus is on
 piecewise-linear link projections, but it also supports a "smooth
 mode" and can export images in PostScript, PDF, SVG, and TikZ formats.
-See the `PLink home page <https://t3m.math.uic.edu/plink/doc>`_
+See the `PLink home page <https://3-manifolds.github.io/PLink>`_
 for complete details.
 
 This is a pure Python module and you can install it via
 `pip <https://pip.pypa.io/en/latest/>`_.
 See `the documentation
-<https://t3m.math.uic.edu/plink/doc/installing>`_
+<https://3-manifolds.github.io/PLink/installing>`_
 for more.
 
 You can browse the source code `here <https://github.com/3-manifolds/PLink>`_.
