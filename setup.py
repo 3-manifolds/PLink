@@ -12,6 +12,8 @@ from pkg_resources import load_entry_point
 from wheel.bdist_wheel import bdist_wheel
 import os, re, shutil, subprocess, sys, glob
 
+doc_path = 'plink_src/doc'
+
 # A real clean
 
 class PLinkClean(Command):
