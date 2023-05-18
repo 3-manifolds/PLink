@@ -24,6 +24,7 @@ if SimpleDialog:
 else:
     baseclass = object
 
+
 class InfoDialog(baseclass):
     def __init__(self, parent, title, style, content=''):
         self.parent, self.style, self.content = parent, style, content
@@ -35,13 +36,13 @@ class InfoDialog(baseclass):
 #        canvas.create_image(10, 10, anchor=NW, image=self.icon)
 #        canvas.grid(row=0, column=0, sticky=NSEWW)
         text = Tk_.Text(self, font=style.font, width=50, height=18, padx=10,
-                            relief=Tk_.FLAT, background = style.windowBG,
-                            highlightthickness=0)
+                        relief=Tk_.FLAT, background=style.windowBG,
+                        highlightthickness=0)
         text.insert(Tk_.END, self.content)
-        #Needed to make the text selectable on macOS
+        # Needed to make the text selectable on macOS
         text.focus_set()
         text.config(state=Tk_.DISABLED)
-        text.grid(row=0, column=1, sticky=Tk_.N+Tk_.W, padx=10, pady=10)
+        text.grid(row=0, column=1, sticky=Tk_.N + Tk_.W, padx=10, pady=10)
         self.buttonbox()
         self.grab_set()
         self.protocol('WM_DELETE_WINDOW', self.ok)

@@ -3,7 +3,7 @@
 #
 #   Copyright (C) 2007-present Marc Culler, Nathan Dunfield and others.
 #
-#   This program is distributed under the terms of the 
+#   This program is distributed under the terms of the
 #   GNU General Public License, version 2 or later, as published by
 #   the Free Software Foundation.  See the file gpl-2.0.txt for details.
 #   The URL for this program is
@@ -40,9 +40,8 @@
 #
 # with caps on the velocities to remove some unnecessary inflection points.
 from builtins import range
-import sys
 
-try: 
+try:
     import tkinter as Tk_
     from . import canvasvg
 except ImportError:  # Tk unavailable or misconfigured
@@ -53,37 +52,39 @@ try:
 except ImportError:
     pass
 
-from math import sqrt, cos, sin, atan2, pi
+from math import sqrt, cos, sin, atan2
 
 
 def in_twos(L):
     assert len(L) % 2 == 0
-    return [L[i:i+2] for i in range(0, len(L), 2)]        
+    return [L[i:i + 2] for i in range(0, len(L), 2)]
+
 
 class TwoVector(tuple):
     def __new__(cls, x, y):
-        return tuple.__new__(cls, (x,y))
+        return tuple.__new__(cls, (x, y))
 
     def __add__(self, other):
-        return TwoVector(self[0]+other[0], self[1]+other[1])
+        return TwoVector(self[0] + other[0], self[1] + other[1])
 
     def __sub__(self, other):
-        return TwoVector(self[0]-other[0], self[1]-other[1])
+        return TwoVector(self[0] - other[0], self[1] - other[1])
 
     def __rmul__(self, scalar):
-        return TwoVector(scalar*self[0], scalar*self[1])
+        return TwoVector(scalar * self[0], scalar * self[1])
 
     def __xor__(self, other):
-        return self[0]*other[1] - self[1]*other[0]
+        return self[0] * other[1] - self[1] * other[0]
 
     def __abs__(self):
-        return sqrt(self[0]*self[0]+self[1]*self[1])
+        return sqrt(self[0] * self[0] + self[1] * self[1])
 
     def angle(self):
         return atan2(self[1], self[0])
 
     def unit(self):
-        return (1/abs(self))*self
+        return (1 / abs(self)) * self
+
 
 class SmoothArc:
     """
@@ -99,20 +100,20 @@ class SmoothArc:
         self.color = color
         self.canvas_items = []
         self.spline_knots = K = (
-            [ V[0] ] +
-            [ 0.5*(V[k] + V[k+1]) for k in range(1, len(V)-2) ] +
-            [ V[-1] ] )
+            [V[0]] +
+            [0.5 * (V[k] + V[k + 1]) for k in range(1, len(V) - 2)] +
+            [V[-1]])
         self.tangents = (
-            [ V[1]-K[0] ] +
-            [ V[k+1]-K[k] for k in range(1, len(V)-2) ] +
-            [ V[-1]-V[-2] ])
+            [V[1] - K[0]] +
+            [V[k + 1] - K[k] for k in range(1, len(V) - 2)] +
+            [V[-1] - V[-2]])
         assert len(self.spline_knots) == len(self.tangents)
 
     def _polar_to_vector(self, r, phi):
         """
         Return a TwoVector with specified length and angle.
         """
-        return TwoVector(r*cos(phi), r*sin(phi))
+        return TwoVector(r * cos(phi), r * sin(phi))
 
     def _curve_to(self, k):
         """
@@ -122,8 +123,8 @@ class SmoothArc:
         spline knots to exceed the distance to the interlacing vertex
         of the PL curve; this avoids extraneous inflection points.
         """
-        A, B = self.spline_knots[k:k+2]
-        vA, vB = self.tangents[k:k+2]
+        A, B = self.spline_knots[k:k + 2]
+        vA, vB = self.tangents[k:k + 2]
         A_speed_max, B_speed_max = abs(vA), abs(vB)
         base = B - A
         l, psi = abs(base), base.angle()
@@ -131,16 +132,16 @@ class SmoothArc:
         ctheta, stheta = cos(theta), sin(theta)
         cphi, sphi = cos(phi), sin(phi)
         a = sqrt(2.0)
-        b = 1.0/16.0
-        c = (3.0 - sqrt(5.0))/2.0
-        alpha = a*(stheta - b*sphi) * (sphi - b*stheta) * (ctheta - cphi)
-        rho = (2 + alpha) / ((1 + (1-c)*ctheta + c*cphi) * self.tension1 )
-        sigma = (2 - alpha) / ((1 + (1-c)*cphi + c*ctheta) * self.tension2 )
-        A_speed = min(l*rho/3, A_speed_max)
-        B_speed = min(l*sigma/3, B_speed_max)
-        return [ A,
-                 A + self._polar_to_vector(A_speed, psi+theta),
-                 B - self._polar_to_vector(B_speed, psi-phi) ]
+        b = 1.0 / 16.0
+        c = (3.0 - sqrt(5.0)) / 2.0
+        alpha = a * (stheta - b * sphi) * (sphi - b * stheta) * (ctheta - cphi)
+        rho = (2 + alpha) / ((1 + (1 - c) * ctheta + c * cphi) * self.tension1)
+        sigma = (2 - alpha) / ((1 + (1 - c) * cphi + c * ctheta) * self.tension2)
+        A_speed = min(l * rho / 3, A_speed_max)
+        B_speed = min(l * sigma / 3, B_speed_max)
+        return [A,
+                A + self._polar_to_vector(A_speed, psi + theta),
+                B - self._polar_to_vector(B_speed, psi - phi)]
 
     def bezier(self):
         """
@@ -148,7 +149,7 @@ class SmoothArc:
         spline, in format [ ... Knot, Control, Control, Knot ...]
         """
         path = []
-        for k in range(len(self.spline_knots)-1):
+        for k in range(len(self.spline_knots) - 1):
             path += self._curve_to(k)
         path.append(self.spline_knots[-1])
         return path
@@ -156,21 +157,21 @@ class SmoothArc:
     def tk_clear(self):
         for item in self.canvas_items:
             self.canvas.delete(item)
-            
+
     def tk_draw(self, thickness=4):
         XY = self.bezier()
         self.tk_clear()
         self.canvas_items.append(self.canvas.create_line(
             *XY, smooth='raw', width=thickness, fill=self.color,
-             capstyle=Tk_.ROUND, splinesteps=100,
-             tags=('smooth','transformable')))
+            capstyle=Tk_.ROUND, splinesteps=100,
+            tags=('smooth', 'transformable')))
 
     def pyx_draw(self, canvas, transform):
         XY = [transform(xy) for xy in self.bezier()]
         arc_parts = [pyx.path.moveto(*XY[0])]
         for i in range(1, len(XY), 3):
             arc_parts.append(pyx.path.curveto(XY[i][0], XY[i][1],
-                XY[i+1][0], XY[i+1][1], XY[i+2][0], XY[i+2][1]))
+                XY[i + 1][0], XY[i + 1][1], XY[i + 2][0], XY[i + 2][1]))
             style = [pyx.style.linewidth(4), pyx.style.linecap.round,
                      pyx.color.rgbfromhexstring(self.color)]
             path = pyx.path.path(*arc_parts)
@@ -180,15 +181,16 @@ class SmoothArc:
         points = ['(%.2f, %.2f)' % transform(xy) for xy in self.bezier()]
         file.write(self.color, '    \\draw %s .. controls %s and %s .. ' % tuple(points[:3]))
         for i in range(3, len(points) - 3, 3):
-            file.write(self.color, '\n' + 10*' ' + '%s .. controls %s and %s .. ' % tuple(points[i:i+3]))
+            file.write(self.color, '\n' + 10 * ' ' + '%s .. controls %s and %s .. ' % tuple(points[i:i + 3]))
         file.write(self.color, points[-1] + ';\n')
-        
+
+
 class SmoothLoop(SmoothArc):
     """
     A Bezier spline that is tangent at the midpoints of segments in a
     PL loop given by specifying a list of vertices.  Speeds at
     the spline knots are chosen by using Hobby's scheme.
-    """    
+    """
     def __init__(self, canvas, vertices, color='black',
                  tension1=1.0, tension2=1.0):
         self.canvas = canvas
@@ -199,11 +201,12 @@ class SmoothLoop(SmoothArc):
         self.tension1, self.tension2 = tension1, tension2
         self.color = color
         self.canvas_items = []
-        self.spline_knots = [0.5*(V[k] + V[k+1]) for k in range(len(V)-1)]
+        self.spline_knots = [0.5 * (V[k] + V[k + 1]) for k in range(len(V) - 1)]
         self.spline_knots.append(self.spline_knots[0])
-        self.tangents = [(V[k+1] - V[k]) for k in range(len(V)-1)]
+        self.tangents = [(V[k + 1] - V[k]) for k in range(len(V) - 1)]
         self.tangents.append(self.tangents[0])
         assert len(self.spline_knots) == len(self.tangents)
+
 
 class Smoother:
     """
@@ -218,7 +221,6 @@ class Smoother:
         self.curves = curves = []
         self.polygons = []
         for polyline, color in self.polylines:
-            n = len(curves)
             polygon = []
             for arc in polyline:
                 polygon += arc[1:-1]
@@ -249,7 +251,7 @@ class Smoother:
     def clear(self):
         for curve in self.curves:
             curve.tk_clear()
-        
+
     def save_as_pdf(self, file_name, colormode='color', width=312.0):
         """
         Save the smooth link diagram as a PDF file.
@@ -262,7 +264,7 @@ class Smoother:
         for curve in self.curves:
             curve.pyx_draw(PDF.canvas, PDF.transform)
         PDF.save(file_name)
-      
+
     def save_as_eps(self, file_name, colormode='color', width=312.0):
         """
         Save the link diagram as an encapsulated postscript file.
@@ -288,8 +290,7 @@ class Smoother:
         tikz.save(file_name)
 
 
-
-#----- Code for saving various file types ------
+# ----- Code for saving various file types ------
 
 def save_as_eps(canvas, file_name, colormode='color', width=312.0):
     """
@@ -298,43 +299,47 @@ def save_as_eps(canvas, file_name, colormode='color', width=312.0):
     default width is 312pt = 4.33in = 11cm .
     """
     ulx, uly, lrx, lry = canvas.bbox(Tk_.ALL)
-    canvas.postscript(file=file_name, x=ulx, y=uly, width=lrx-ulx, height=lry-uly,
-                               colormode=colormode, pagewidth=width)
-    
-    
+    canvas.postscript(file=file_name, x=ulx, y=uly,
+                      width=lrx - ulx, height=lry - uly,
+                      colormode=colormode, pagewidth=width)
+
+
 def save_as_svg(canvas, file_name, colormode='color', width=None):
     """
     Width is ignored for SVG images; colormode is currently ignored.
     """
     canvasvg.saveall(file_name, canvas, items=canvas.find_withtag(Tk_.ALL))
 
+
 class PDFPicture:
     def __init__(self, canvas, width):
-        ulx, uly, lrx, lry = canvas.bbox(Tk_.ALL)        
-        scale = float(width)/(lrx - ulx)
+        ulx, uly, lrx, lry = canvas.bbox(Tk_.ALL)
+        scale = float(width) / (lrx - ulx)
         pyx.unit.set(uscale=scale, wscale=scale, defaultunit='pt')
-        self.transform = lambda xy: (xy[0]-ulx,-xy[1]+lry)
+        self.transform = lambda xy: (xy[0] - ulx, -xy[1] + lry)
         self.canvas = pyx.canvas.canvas()
 
     def save(self, file_name):
-        page = pyx.document.page(self.canvas,  bboxenlarge=3.5* pyx.unit.t_pt)
+        page = pyx.document.page(self.canvas, bboxenlarge=3.5 * pyx.unit.t_pt)
         doc = pyx.document.document([page])
         doc.writePDFfile(file_name)
+
 
 class TikZPicture:
     def __init__(self, canvas, raw_colors, width=282.0):
         self.string = ''
         ulx, uly, lrx, lry = canvas.bbox(Tk_.ALL)
-        pt_scale = float(width)/(lrx - ulx)
-        cm_scale = 0.0352777778*pt_scale
-        self.transform = lambda xy: (cm_scale*(-ulx+xy[0]), cm_scale*(lry-xy[1]))
+        pt_scale = float(width) / (lrx - ulx)
+        cm_scale = 0.0352777778 * pt_scale
+        self.transform = lambda xy: (cm_scale * (-ulx + xy[0]),
+                                     cm_scale * (lry - xy[1]))
 
         self.colors = dict()
         for i, hex_color in enumerate(raw_colors):
             self.colors[hex_color] = i
-            rgb = [int(c,16)/255.0 for c in in_twos(hex_color[1:])]
+            rgb = [int(c, 16) / 255.0 for c in in_twos(hex_color[1:])]
             self.string += '\\definecolor{linkcolor%d}' % i + '{rgb}{%.2f, %.2f, %.2f}\n' % tuple(rgb)
-        self.string += '\\begin{tikzpicture}[line width=%.1f, line cap=round, line join=round]\n' % (pt_scale*4)
+        self.string += '\\begin{tikzpicture}[line width=%.1f, line cap=round, line join=round]\n' % (pt_scale * 4)
         self.curcolor = None
 
     def write(self, color, line):
@@ -344,9 +349,7 @@ class TikZPicture:
             self.string += '  \\begin{scope}[color=linkcolor%d]\n' % self.colors[color]
             self.curcolor = color
         self.string += line
-        
+
     def save(self, file_name):
-        file = open(file_name, 'w')
-        file.write(self.string + '  \\end{scope}\n\\end{tikzpicture}\n')
-        file.close()
-    
+        with open(file_name, 'w') as file:
+            file.write(self.string + '  \\end{scope}\n\\end{tikzpicture}\n')
