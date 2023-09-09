@@ -29,7 +29,8 @@ try:
 except ImportError:
     # Tk is unavailable or misconfigured.
     # This allows running tests when there is no tkinter module.
-    print('Plink failed to import tkinter.')
+    import warnings
+    warnings.warn('Plink failed to import tkinter, GUI will not be available')
     Tk_ = ttk = tkFileDialog = tkMessageBox = SimpleDialog = None
 
 from urllib.request import pathname2url
