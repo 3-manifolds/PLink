@@ -19,17 +19,29 @@ line segment in a PL link diagram.
 from math import sqrt
 from .gui import *
 
-default_arrow_params = dict(abs_gap_size=9.0,
-                            rel_gap_size=0.3,
-                            no_arrow_size=20,
-                            double_gap_at_ends=True,
-                            include_overcrossings=False)
-
 class Arrow:
     """
     An arrow in a PL link diagram.
     """
     epsilon = 8
+    scale_factor = None
+    default_params = dict(abs_gap_size=9.0,
+                          rel_gap_size=0.3,
+                          no_arrow_size=40,
+                          arrow_shape=(10, 15, 5), # Tk default is (8, 10, 3)
+                          double_gap_at_ends=True,
+                          include_overcrossings=False)
+    @classmethod
+    def set_scale(cls):
+        if not cls.scale_factor is None:
+            return
+        cls.scale_factor = sf = PLinkStyle().scale_factor
+        cls.default_params['abs_gap_size'] *= sf
+        cls.default_params['rel_gap_size'] *= sf
+        cls.default_params['no_arrow_size'] *= sf
+        cls.default_params['arrow_shape'] = tuple(
+            x * sf for x in cls.default_params['arrow_shape'])
+
     
     def __init__(self, start, end, canvas=None,
                  style='normal', color='black',
@@ -43,13 +55,13 @@ class Arrow:
         self.dots = []
         self.cross_params = []
         if other_params is None:
-            other_params = default_arrow_params.copy()
+            other_params = Arrow.default_params.copy()
         self.params = other_params
         if self.start != self.end:
             self.start.out_arrow = self
             self.end.in_arrow = self
             self.vectorize()
-        
+
     def __repr__(self):
         return '%s-->%s'%(self.start, self.end)
 
@@ -165,13 +177,13 @@ class Arrow:
             return
         if self.style == 'frozen':
             color = 'gray'
-            thickness = 3
+            thickness = 3 * Arrow.scale_factor
         elif self.style == 'faint':
             color = 'gray'
-            thickness = 1
+            thickness = 1 * Arrow.scale_factor
         else:
             color = self.color
-            thickness = 3
+            thickness = 3 * Arrow.scale_factor
         segments = self.find_segments(crossings)
         for line in self.lines:
             self.canvas.delete(line)
@@ -186,8 +198,8 @@ class Arrow:
         no_arrow_size = self.params['no_arrow_size']
         arrow = Tk_.LAST if last_seg_len >= no_arrow_size else None
         self.lines.append(self.canvas.create_line(
-                x0, y0, x1, y1,
-                arrow=arrow,
+                x0, y0, x1, y1, arrow=arrow,
+                arrowshape=self.params['arrow_shape'],
                 width=thickness, fill=color, tags='transformable'))
         if recurse:
             under_arrows = [c.under for c in crossings if c.over == self]

@@ -54,7 +54,7 @@ except ImportError:
     pass
 
 from math import sqrt, cos, sin, atan2, pi
-
+from .gui import PLinkStyle
 
 def in_twos(L):
     assert len(L) % 2 == 0
@@ -328,13 +328,15 @@ class TikZPicture:
         pt_scale = float(width)/(lrx - ulx)
         cm_scale = 0.0352777778*pt_scale
         self.transform = lambda xy: (cm_scale*(-ulx+xy[0]), cm_scale*(lry-xy[1]))
+        self.scale_factor = PLinkStyle().scale_factor
 
         self.colors = dict()
         for i, hex_color in enumerate(raw_colors):
             self.colors[hex_color] = i
             rgb = [int(c,16)/255.0 for c in in_twos(hex_color[1:])]
             self.string += '\\definecolor{linkcolor%d}' % i + '{rgb}{%.2f, %.2f, %.2f}\n' % tuple(rgb)
-        self.string += '\\begin{tikzpicture}[line width=%.1f, line cap=round, line join=round]\n' % (pt_scale*4)
+        self.string += '\\begin{tikzpicture}[line width=%.1f, line cap=round, line join=round]\n' % (
+            pt_scale * 4 * self.scale_factor)
         self.curcolor = None
 
     def write(self, color, line):

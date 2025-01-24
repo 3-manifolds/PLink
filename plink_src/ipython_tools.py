@@ -23,6 +23,7 @@ It also exports a function which will issue an equivalent warning.
 import time
 import threading
 try:
+    import tkinter
     from tkinter import Tk
 except ImportError:
     class Tk:
@@ -35,6 +36,12 @@ try:
 except:
     ip = None
 
+def get_scale_factor(interp):
+    if tkinter.TkVersion >= 9.0:
+        scale_factor = round(3 * interp.call('tk', 'scaling') / 4)
+    else:
+        scale_factor = 2 if interp.winfo_screenwidth() > 2500 else 1
+    return scale_factor
 
 class IPythonTkRoot(Tk):
     """
@@ -50,6 +57,7 @@ class IPythonTkRoot(Tk):
     def __init__(self, **kwargs):
         window_type = kwargs.pop('window_type', '')
         Tk.__init__(self, **kwargs)
+        self.scale_factor = get_scale_factor(self)
         self.message = (
             '\x1b[31mYour new {} window needs an event loop to become visible.\n'
             'Type "%gui tk" below (without the quotes) to start one.\x1b[0m\n'

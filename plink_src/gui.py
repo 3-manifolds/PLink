@@ -41,7 +41,6 @@ try:
 except ImportError:
     have_pyx = False
 
-
 if sys.platform == 'linux2' or sys.platform == 'linux':
     closed_hand_cursor = 'fleur'
     open_hand_cursor = 'hand1'
@@ -51,6 +50,7 @@ elif sys.platform == 'darwin':
 else:
     closed_hand_cursor = 'hand2'
     open_hand_cursor = 'hand1'
+
 
 class PLinkStyle:
     """
@@ -65,6 +65,12 @@ class PLinkStyle:
             self.font = 'Helvetica 16'
         else:
             self.font = 'Helvetica 12'
+        root = Tk_._default_root
+        if Tk_.TkVersion >= 9.0:
+            self.scale_factor = round(3 * root.call('tk', 'scaling') / 4)
+        else:
+            self.scale_factor = 2 if root.winfo_screenwidth() > 2500 else 1
+
 
 # Make the Tk file dialog work better with file extensions on macOS
 

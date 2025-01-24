@@ -70,6 +70,7 @@ class PLinkBase(LinkViewer):
             self.window = root = IPythonTkRoot(className='plink')
         else:
             self.window = Tk_.Toplevel(root)
+        Arrow.set_scale()
         self.window.protocol("WM_DELETE_WINDOW", self.done)
         if sys.platform == 'linux2' or sys.platform == 'linux':
             root.tk.call('namespace', 'import', '::tk::dialog::file::')
@@ -79,11 +80,16 @@ class PLinkBase(LinkViewer):
         self.style = PLinkStyle()
         self.palette = Palette()
         # Frame and Canvas
+        try:
+            scaling = root.tk.call('tk', 'scaling')
+            scale_factor = round(3 * scaling / 2)
+        except:
+            scale_factor = 1
         self.frame = ttk.Frame(self.window)
         self.canvas = Tk_.Canvas(self.frame,
                                  bg='#dcecff',
-                                 width=500,
-                                 height=500,
+                                 width=500*scale_factor,
+                                 height=500*scale_factor,
                                  borderwidth=0,
                                  highlightthickness=0)
         self.smoother = smooth.Smoother(self.canvas)
@@ -822,7 +828,7 @@ class LinkEditor(PLinkBase):
         start_vertex = Vertex(x, y, self.canvas, style='hidden')
         if self.state == 'start_state':
             if start_vertex in self.Vertices:
-                #print 'single click on a vertex'
+                #print('single click on a vertex')
                 self.state = 'dragging_state'
                 self.hide_DT()
                 self.hide_labels()
@@ -888,7 +894,7 @@ class LinkEditor(PLinkBase):
                     self.destroy_arrow(dead_arrow)
                 self.goto_start_state()
                 return
-            #print 'setting up a new arrow'
+            #print('setting up a new arrow')
             if self.ActiveVertex.out_arrow:
                 next_arrow = self.ActiveVertex.out_arrow
                 next_arrow.set_end(next_vertex)
@@ -903,7 +909,7 @@ class LinkEditor(PLinkBase):
                 self.Arrows.append(next_arrow)
             next_vertex.set_color(next_arrow.color)
             if next_vertex in [v for v in self.Vertices if v.is_endpoint()]:
-                #print 'melding vertices'
+                #print('melding vertices')
                 if not self.generic_arrow(next_arrow):
                     self.alert()
                     return
@@ -920,7 +926,7 @@ class LinkEditor(PLinkBase):
                 next_arrow.expose(self.Crossings)
                 self.goto_start_state()
                 return
-            #print 'just extending a path, as usual'
+            #print('just extending a path, as usual')
             if not (self.generic_vertex(next_vertex) and
                     self.generic_arrow(next_arrow) ):
                 self.alert()

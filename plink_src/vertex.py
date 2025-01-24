@@ -17,12 +17,13 @@
 This module exports the class Vertex which represents an endpoint
 of a segment in a PL link diagram.
 """
+from .gui import PLinkStyle
 
 class Vertex:
     """
     A vertex in a PL link diagram.
     """
-    epsilon = 8
+    epsilon = None
     
     def __init__(self, x, y, canvas=None, style='normal', color='black'):
         self.x, self.y = float(x), float(y)
@@ -33,6 +34,8 @@ class Vertex:
         self.delta = 2
         self.dot = None
         self.style = style
+        if self.canvas and self.epsilon is None:
+            Vertex.epsilon = 8 * PLinkStyle().scale_factor
 
     def __repr__(self):
         return '(%s,%s)'%(self.x, self.y)
