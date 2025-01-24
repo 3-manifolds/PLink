@@ -86,7 +86,7 @@ class PLinkBase(LinkViewer):
         except:
             scale_factor = 1
         self.frame = ttk.Frame(self.window)
-        canvas_size = 500*scale_factor if Tk_.TkVersion < 9.0 else 750 
+        canvas_size = root.winfo_screenwidth() // 3 
         self.canvas = Tk_.Canvas(self.frame,
                                  bg='#dcecff',
                                  width=canvas_size,
