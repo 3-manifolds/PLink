@@ -86,10 +86,11 @@ class PLinkBase(LinkViewer):
         except:
             scale_factor = 1
         self.frame = ttk.Frame(self.window)
+        canvas_size = 500*scale_factor if Tk_.TkVersion < 9.0 else 750 
         self.canvas = Tk_.Canvas(self.frame,
                                  bg='#dcecff',
-                                 width=500*scale_factor,
-                                 height=500*scale_factor,
+                                 width=canvas_size,
+                                 height=canvas_size,
                                  borderwidth=0,
                                  highlightthickness=0)
         self.smoother = smooth.Smoother(self.canvas)
