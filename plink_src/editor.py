@@ -29,7 +29,7 @@ from .dialog import InfoDialog
 from .manager import LinkManager
 from .viewer import LinkViewer
 from .version import version
-from .ipython_tools import IPythonTkRoot
+from .ipython_tools import IPythonTkRoot, get_scale_factor
 
 About = """This is version %s of PLink.
 
@@ -70,7 +70,7 @@ class PLinkBase(LinkViewer):
             self.window = root = IPythonTkRoot(className='plink')
         else:
             self.window = Tk_.Toplevel(root)
-        Arrow.set_scale()
+        Arrow.set_scale(root)
         self.window.protocol("WM_DELETE_WINDOW", self.done)
         if sys.platform == 'linux2' or sys.platform == 'linux':
             root.tk.call('namespace', 'import', '::tk::dialog::file::')
@@ -80,12 +80,11 @@ class PLinkBase(LinkViewer):
         self.style = PLinkStyle()
         self.palette = Palette()
         # Frame and Canvas
-        try:
-            scaling = root.tk.call('tk', 'scaling')
-            scale_factor = round(3 * scaling / 2)
-        except:
-            scale_factor = 1
+        scale_factor = get_scale_factor(root)
         self.frame = ttk.Frame(self.window)
+        screen_width = root.winfo_screenwidth()
+        screen_height = root.winfo_screenheight()
+        min(max(500, screen_width // 3), int(0.9 * screen_height))
         canvas_size = root.winfo_screenwidth() // 3 
         self.canvas = Tk_.Canvas(self.frame,
                                  bg='#dcecff',

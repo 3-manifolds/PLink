@@ -17,7 +17,7 @@
 This module exports the class Vertex which represents an endpoint
 of a segment in a PL link diagram.
 """
-from .gui import PLinkStyle
+from .ipython_tools import get_scale_factor
 
 class Vertex:
     """
@@ -34,8 +34,8 @@ class Vertex:
         self.delta = 2
         self.dot = None
         self.style = style
-        if self.canvas and self.epsilon is None:
-            Vertex.epsilon = 8 * PLinkStyle().scale_factor
+        if self.epsilon is None and not canvas is None:
+            Vertex.epsilon = 8 * get_scale_factor(canvas.winfo_toplevel())
 
     def __repr__(self):
         return '(%s,%s)'%(self.x, self.y)

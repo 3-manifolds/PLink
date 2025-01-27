@@ -20,6 +20,7 @@ shell which does not have a running Tk event loop.
 
 It also exports a function which will issue an equivalent warning.
 """
+import sys
 import time
 import threading
 try:
@@ -39,8 +40,10 @@ except:
 def get_scale_factor(interp):
     if tkinter.TkVersion >= 9.0:
         scale_factor = round(3 * interp.call('tk', 'scaling') / 4)
+    elif sys.platform == 'linux':
+        scale_factor = 2 if interp.winfo_screenheight() > 1600 else 1
     else:
-        scale_factor = 2 if interp.winfo_screenwidth() > 2500 else 1
+        scale_factor = 1
     return scale_factor
 
 class IPythonTkRoot(Tk):

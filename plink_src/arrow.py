@@ -18,6 +18,7 @@ line segment in a PL link diagram.
 """
 from math import sqrt
 from .gui import *
+from .ipython_tools import get_scale_factor
 
 class Arrow:
     """
@@ -32,10 +33,10 @@ class Arrow:
                           double_gap_at_ends=True,
                           include_overcrossings=False)
     @classmethod
-    def set_scale(cls):
+    def set_scale(cls, root):
         if not cls.scale_factor is None:
             return
-        cls.scale_factor = sf = PLinkStyle().scale_factor
+        cls.scale_factor = sf = get_scale_factor(root)
         cls.default_params['abs_gap_size'] *= sf
         cls.default_params['rel_gap_size'] *= sf
         cls.default_params['no_arrow_size'] *= sf
