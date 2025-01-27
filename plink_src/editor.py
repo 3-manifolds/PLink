@@ -80,7 +80,7 @@ class PLinkBase(LinkViewer):
         self.style = PLinkStyle()
         self.palette = Palette()
         # Frame and Canvas
-        scale_factor = get_scale_factor(root)
+        scale_factor = get_scale_factor()
         self.frame = ttk.Frame(self.window)
         screen_width = root.winfo_screenwidth()
         screen_height = root.winfo_screenheight()

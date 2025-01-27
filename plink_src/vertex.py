@@ -35,7 +35,7 @@ class Vertex:
         self.dot = None
         self.style = style
         if self.epsilon is None and not canvas is None:
-            Vertex.epsilon = 8 * get_scale_factor(canvas.winfo_toplevel())
+            Vertex.epsilon = 8 * get_scale_factor()
 
     def __repr__(self):
         return '(%s,%s)'%(self.x, self.y)

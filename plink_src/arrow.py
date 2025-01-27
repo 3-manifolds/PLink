@@ -36,7 +36,7 @@ class Arrow:
     def set_scale(cls, root):
         if not cls.scale_factor is None:
             return
-        cls.scale_factor = sf = get_scale_factor(root)
+        cls.scale_factor = sf = get_scale_factor()
         cls.default_params['abs_gap_size'] *= sf
         cls.default_params['rel_gap_size'] *= sf
         cls.default_params['no_arrow_size'] *= sf
