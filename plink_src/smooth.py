@@ -161,7 +161,7 @@ class SmoothArc:
             
     def tk_draw(self, thickness=4):
         if SmoothArc.scale_factor == None:
-            SmoothArc.scale_factor = get_scale_factor
+            SmoothArc.scale_factor = get_scale_factor()
         if SmoothArc.scale_factor == 2:
             thickness = 6
         XY = self.bezier()
