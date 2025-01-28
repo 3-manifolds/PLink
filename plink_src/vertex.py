@@ -17,14 +17,19 @@
 This module exports the class Vertex which represents an endpoint
 of a segment in a PL link diagram.
 """
-from .ipython_tools import get_scale_factor
 
 class Vertex:
     """
     A vertex in a PL link diagram.
     """
-    epsilon = None
+    epsilon = 8
+    scale_factor = 1
     
+    @classmethod
+    def set_scale(cls, factor):
+        cls.scale_factor = factor
+        cls.epsilon = 8 * factor
+
     def __init__(self, x, y, canvas=None, style='normal', color='black'):
         self.x, self.y = float(x), float(y)
         self.in_arrow = None
@@ -34,8 +39,6 @@ class Vertex:
         self.delta = 2
         self.dot = None
         self.style = style
-        if self.epsilon is None and not canvas is None:
-            Vertex.epsilon = 8 * get_scale_factor()
 
     def __repr__(self):
         return '(%s,%s)'%(self.x, self.y)

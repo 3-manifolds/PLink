@@ -645,12 +645,16 @@ class LinkManager:
            * an optional argument "hot" giving the index of one vertex
            which was being added at the time the diagram was pickled
         """
+        #print('vertices:', vertices, file=sys.stderr)
+        #print('arrows:', arrows, file=sys.stderr)
         for x, y in vertices:
             X, Y = float(x), float(y)
             self.Vertices.append(Vertex(X, Y, self.canvas))
         for start, end in arrows:
             S, E = self.Vertices[int(start)], self.Vertices[int(end)]
-            self.Arrows.append(Arrow(S, E, self.canvas))
+            arrow = Arrow(S, E, self.canvas)
+            self.Arrows.append(arrow)
+            S.out_arrow = E.in_arrow = arrow
         for under, over, is_virtual, label in crossings:
             U, O, V, L = self.Arrows[int(under)], self.Arrows[int(over)], bool(is_virtual), str(label)
             self.Crossings.append(Crossing(O, U, V, L))

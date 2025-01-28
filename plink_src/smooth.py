@@ -39,8 +39,7 @@
 #     Discrete and Computational Geometry 1:123-140 (1986).
 #
 # with caps on the velocities to remove some unnecessary inflection points.
-from builtins import range
-import sys
+#from builtins import range
 
 try: 
     import tkinter as Tk_
@@ -54,7 +53,6 @@ except ImportError:
     pass
 
 from math import sqrt, cos, sin, atan2, pi
-from .ipython_tools import get_scale_factor
 
 def in_twos(L):
     assert len(L) % 2 == 0
@@ -91,7 +89,11 @@ class SmoothArc:
     the PL path given by specifying a list of vertices.  Speeds
     at the spline knots are chosen by using Hobby's scheme.
     """
-    scale_factor = None
+    scale_factor = 1
+
+    @classmethod
+    def set_scale(cls, factor):
+        cls.scale_factor = factor
 
     def __init__(self, canvas, vertices, color='black',
                  tension1=1.0, tension2=1.0):
@@ -160,8 +162,6 @@ class SmoothArc:
             self.canvas.delete(item)
             
     def tk_draw(self, thickness=4):
-        if SmoothArc.scale_factor == None:
-            SmoothArc.scale_factor = get_scale_factor()
         if SmoothArc.scale_factor == 2:
             thickness = 6
         XY = self.bezier()
@@ -334,6 +334,7 @@ class TikZPicture:
         pt_scale = float(width)/(lrx - ulx)
         cm_scale = 0.0352777778*pt_scale
         self.transform = lambda xy: (cm_scale*(-ulx+xy[0]), cm_scale*(lry-xy[1]))
+        from .ipython_tools import get_scale_factor
         self.scale_factor = get_scale_factor(canvas.winfo_toplevel())
 
         self.colors = dict()

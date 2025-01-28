@@ -16,34 +16,36 @@
 This module exports the class Arrow which represents a (directed)
 line segment in a PL link diagram.
 """
+
 from math import sqrt
 from .gui import *
-from .ipython_tools import get_scale_factor
+
+defaults = dict(abs_gap_size=9.0,
+                rel_gap_size=0.3,
+                no_arrow_size=40,
+                arrow_shape=(10, 15, 5), # Tk default is (8, 10, 3)
+                double_gap_at_ends=True,
+                include_overcrossings=False)
 
 class Arrow:
     """
     An arrow in a PL link diagram.
     """
     epsilon = 8
-    scale_factor = None
-    default_params = dict(abs_gap_size=9.0,
-                          rel_gap_size=0.3,
-                          no_arrow_size=40,
-                          arrow_shape=(10, 15, 5), # Tk default is (8, 10, 3)
-                          double_gap_at_ends=True,
-                          include_overcrossings=False)
-    @classmethod
-    def set_scale(cls, root):
-        if not cls.scale_factor is None:
-            return
-        cls.scale_factor = sf = get_scale_factor()
-        cls.default_params['abs_gap_size'] *= sf
-        cls.default_params['rel_gap_size'] *= sf
-        cls.default_params['no_arrow_size'] *= sf
-        cls.default_params['arrow_shape'] = tuple(
-            x * sf for x in cls.default_params['arrow_shape'])
+    scale_set = False
+    scale_factor = 1
+    default_params = defaults
 
-    
+    @classmethod
+    def set_scale(cls, factor):
+        cls.scale_factor = factor
+        cls.epsilon = 8 * factor
+        for attr in ('abs_gap_size', 'rel_gap_size', 'no_arrow_size'):
+            cls.default_params[attr] = factor * defaults[attr]
+        cls.default_params['arrow_shape'] = tuple(
+            x * factor for x in defaults['arrow_shape'])
+        cls.scale_set = True
+
     def __init__(self, start, end, canvas=None,
                  style='normal', color='black',
                  other_params=None):
@@ -159,7 +161,7 @@ class Arrow:
             # Length of this segment, in internal coordinates
             dt = b - a
             # A suitable gap for r restricted to a subinterval of len dt.
-            abs_gap = params['abs_gap_size']/self.length if self.length != 0 else 0
+            abs_gap = params['abs_gap_size']/self.length if self.length else 0
             rel_gap = params['rel_gap_size']*dt
             if params['double_gap_at_ends']:
                 # When the segment includes one of the ends of the
@@ -178,13 +180,13 @@ class Arrow:
             return
         if self.style == 'frozen':
             color = 'gray'
-            thickness = 3 * Arrow.scale_factor
+            thickness = 3 * self.scale_factor
         elif self.style == 'faint':
             color = 'gray'
-            thickness = 1 * Arrow.scale_factor
+            thickness = 1 * self.scale_factor
         else:
             color = self.color
-            thickness = 3 * Arrow.scale_factor
+            thickness = 3 * self.scale_factor
         segments = self.find_segments(crossings)
         for line in self.lines:
             self.canvas.delete(line)

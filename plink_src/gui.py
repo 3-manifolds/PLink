@@ -34,7 +34,6 @@ except ImportError:
     Tk_ = ttk = tkFileDialog = tkMessageBox = SimpleDialog = None
 
 from urllib.request import pathname2url
-from .ipython_tools import get_scale_factor
 try:
     import pyx
     have_pyx = True
@@ -66,7 +65,6 @@ class PLinkStyle:
         else:
             self.font = 'Helvetica 12'
         root = Tk_._default_root
-        self.scale_factor = get_scale_factor()
 
 # Make the Tk file dialog work better with file extensions on macOS
 

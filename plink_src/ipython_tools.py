@@ -20,7 +20,6 @@ shell which does not have a running Tk event loop.
 
 It also exports a function which will issue an equivalent warning.
 """
-import sys
 import time
 import threading
 try:
@@ -29,6 +28,7 @@ try:
 except ImportError:
     class Tk:
         pass
+from .scaling import set_scale_factor
 
 try:
     import IPython
@@ -37,22 +37,9 @@ try:
 except:
     ip = None
 
-def get_scale_factor():
-    interp = tkinter._default_root
-    if interp is None:
-        scale_factor = 1
-    elif tkinter.TkVersion >= 9.0:
-        scale_factor = round(3 * interp.call('tk', 'scaling') / 4)
-    elif sys.platform == 'linux':
-        scale_factor = 2 if interp.winfo_screenheight() > 1600 else 1
-    else:
-        scale_factor = 1
-    return scale_factor
-
 class IPythonTkRoot(Tk):
     """
     A Tk root window intended for use in an IPython shell.
-
     Because of the way that IPython overloads the Python inputhook, it
     is necessary to start a Tk event loop by running the magic command
     %gui tk in order for Tk windows to actually appear on the screen.
@@ -63,8 +50,8 @@ class IPythonTkRoot(Tk):
     def __init__(self, **kwargs):
         window_type = kwargs.pop('window_type', '')
         Tk.__init__(self, **kwargs)
-        self.scale_factor = get_scale_factor()
-        self.message = (
+        set_scale_factor()
+        self.message = ( 
             '\x1b[31mYour new {} window needs an event loop to become visible.\n'
             'Type "%gui tk" below (without the quotes) to start one.\x1b[0m\n'
         ).format(window_type if window_type else self.winfo_class())

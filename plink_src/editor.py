@@ -17,7 +17,7 @@
 This module exports the class LinkEditor which is a full-featured
 editing tool for link diagrams.
 """
-import os, time, webbrowser
+import os, time, webbrowser, sys
 
 from .gui import *
 from . import smooth
@@ -29,7 +29,8 @@ from .dialog import InfoDialog
 from .manager import LinkManager
 from .viewer import LinkViewer
 from .version import version
-from .ipython_tools import IPythonTkRoot, get_scale_factor
+from .ipython_tools import IPythonTkRoot
+from .scaling import set_scale_factor
 
 About = """This is version %s of PLink.
 
@@ -69,8 +70,8 @@ class PLinkBase(LinkViewer):
             # In IPython, this will remind the user to type %gui tk.
             self.window = root = IPythonTkRoot(className='plink')
         else:
+            set_scale_factor()
             self.window = Tk_.Toplevel(root)
-        Arrow.set_scale(root)
         self.window.protocol("WM_DELETE_WINDOW", self.done)
         if sys.platform == 'linux2' or sys.platform == 'linux':
             root.tk.call('namespace', 'import', '::tk::dialog::file::')
@@ -80,7 +81,6 @@ class PLinkBase(LinkViewer):
         self.style = PLinkStyle()
         self.palette = Palette()
         # Frame and Canvas
-        scale_factor = get_scale_factor()
         self.frame = ttk.Frame(self.window)
         screen_width = root.winfo_screenwidth()
         screen_height = root.winfo_screenheight()
