@@ -57,7 +57,8 @@ class LinkManager:
         num_lines = len(lines)
         first_line = lines.pop(0)
         has_virtual_crossings = first_line.startswith('% Virtual Link Projection')
-        if not (first_line.startswith('% Link Projection') or first_line.startswith('% Virtual Link Projection')):
+        if not (first_line.startswith('% Link Projection') or
+                first_line.startswith('% Virtual Link Projection')):
             tkMessageBox.showwarning(
                 'Bad file',
                 'This is not a SnapPea link projection file')
@@ -652,9 +653,7 @@ class LinkManager:
             self.Vertices.append(Vertex(X, Y, self.canvas))
         for start, end in arrows:
             S, E = self.Vertices[int(start)], self.Vertices[int(end)]
-            arrow = Arrow(S, E, self.canvas)
-            self.Arrows.append(arrow)
-            S.out_arrow = E.in_arrow = arrow
+            self.Arrows.append(Arrow(S, E, self.canvas))
         for under, over, is_virtual, label in crossings:
             U, O, V, L = self.Arrows[int(under)], self.Arrows[int(over)], bool(is_virtual), str(label)
             self.Crossings.append(Crossing(O, U, V, L))
