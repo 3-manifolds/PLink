@@ -4,8 +4,10 @@
 # the screen resolution.  It must be called after the Tk interpreter
 # has been created by instantiating the tkinter.Tk class.
 
-import tkinter
-import sys
+try:
+    import tkinter
+except ImportError:
+    pass
 
 scale_set = False
 
