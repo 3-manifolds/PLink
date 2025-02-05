@@ -9,6 +9,8 @@ try:
 except ImportError:
     pass
 
+import sys
+
 scale_set = False
 
 def set_scale_factor():
