@@ -3,7 +3,7 @@
 #
 #   Copyright (C) 2007-present Marc Culler, Nathan Dunfield and others.
 #
-#   This program is distributed under the terms of the 
+#   This program is distributed under the terms of the
 #   GNU General Public License, version 2 or later, as published by
 #   the Free Software Foundation.  See the file gpl-2.0.txt for details.
 #   The URL for this program is
@@ -41,7 +41,7 @@
 # with caps on the velocities to remove some unnecessary inflection points.
 #from builtins import range
 
-try: 
+try:
     import tkinter as Tk_
     from . import canvasvg
 except ImportError:  # Tk unavailable or misconfigured
@@ -56,7 +56,7 @@ from math import sqrt, cos, sin, atan2, pi
 
 def in_twos(L):
     assert len(L) % 2 == 0
-    return [L[i:i+2] for i in range(0, len(L), 2)]        
+    return [L[i:i+2] for i in range(0, len(L), 2)]
 
 class TwoVector(tuple):
     def __new__(cls, x, y):
@@ -160,7 +160,7 @@ class SmoothArc:
     def tk_clear(self):
         for item in self.canvas_items:
             self.canvas.delete(item)
-            
+
     def tk_draw(self, thickness=4):
         if SmoothArc.scale_factor == 2:
             thickness = 6
@@ -171,15 +171,14 @@ class SmoothArc:
              capstyle=Tk_.ROUND, splinesteps=100,
              tags=('smooth','transformable')))
 
-    def pyx_draw(self, canvas, transform):
+    def pyx_draw(self, canvas, transform, base_style):
         XY = [transform(xy) for xy in self.bezier()]
         arc_parts = [pyx.path.moveto(*XY[0])]
         for i in range(1, len(XY), 3):
             arc_parts.append(pyx.path.curveto(XY[i][0], XY[i][1],
                 XY[i+1][0], XY[i+1][1], XY[i+2][0], XY[i+2][1]))
-            style = [pyx.style.linewidth(4), pyx.style.linecap.round,
-                     pyx.color.rgbfromhexstring(self.color)]
             path = pyx.path.path(*arc_parts)
+            style = base_style + [pyx.color.rgbfromhexstring(self.color)]
             canvas.stroke(path, style)
 
     def tikz_draw(self, file, transform):
@@ -188,13 +187,14 @@ class SmoothArc:
         for i in range(3, len(points) - 3, 3):
             file.write(self.color, '\n' + 10*' ' + '%s .. controls %s and %s .. ' % tuple(points[i:i+3]))
         file.write(self.color, points[-1] + ';\n')
-        
+
+
 class SmoothLoop(SmoothArc):
     """
     A Bezier spline that is tangent at the midpoints of segments in a
     PL loop given by specifying a list of vertices.  Speeds at
     the spline knots are chosen by using Hobby's scheme.
-    """    
+    """
     def __init__(self, canvas, vertices, color='black',
                  tension1=1.0, tension2=1.0):
         self.canvas = canvas
@@ -255,7 +255,7 @@ class Smoother:
     def clear(self):
         for curve in self.curves:
             curve.tk_clear()
-        
+
     def save_as_pdf(self, file_name, colormode='color', width=312.0):
         """
         Save the smooth link diagram as a PDF file.
@@ -266,9 +266,9 @@ class Smoother:
         """
         PDF = PDFPicture(self.canvas, width)
         for curve in self.curves:
-            curve.pyx_draw(PDF.canvas, PDF.transform)
+            curve.pyx_draw(PDF.canvas, PDF.transform, PDF.base_line_style())
         PDF.save(file_name)
-      
+
     def save_as_eps(self, file_name, colormode='color', width=312.0):
         """
         Save the link diagram as an encapsulated postscript file.
@@ -306,37 +306,53 @@ def save_as_eps(canvas, file_name, colormode='color', width=312.0):
     ulx, uly, lrx, lry = canvas.bbox(Tk_.ALL)
     canvas.postscript(file=file_name, x=ulx, y=uly, width=lrx-ulx, height=lry-uly,
                                colormode=colormode, pagewidth=width)
-    
-    
+
+
 def save_as_svg(canvas, file_name, colormode='color', width=None):
     """
     Width is ignored for SVG images; colormode is currently ignored.
     """
     canvasvg.saveall(file_name, canvas, items=canvas.find_withtag(Tk_.ALL))
 
+
 class PDFPicture:
+    scale_factor = 1
+
+    @classmethod
+    def set_scale(cls, factor):
+        cls.scale_factor = factor
+    
     def __init__(self, canvas, width):
-        ulx, uly, lrx, lry = canvas.bbox(Tk_.ALL)        
+        ulx, uly, lrx, lry = canvas.bbox(Tk_.ALL)
         scale = float(width)/(lrx - ulx)
         pyx.unit.set(uscale=scale, wscale=scale, defaultunit='pt')
         self.transform = lambda xy: (xy[0]-ulx,-xy[1]+lry)
         self.canvas = pyx.canvas.canvas()
 
+    def base_line_style(self):
+        return  [pyx.style.linewidth(4 * PDFPicture.scale_factor),
+                 pyx.style.linecap.round,
+                 pyx.style.linejoin.round]
+
     def save(self, file_name):
-        page = pyx.document.page(self.canvas,  bboxenlarge=3.5* pyx.unit.t_pt)
+        page = pyx.document.page(self.canvas,  bboxenlarge=3.5 * pyx.unit.t_pt)
         doc = pyx.document.document([page])
         doc.writePDFfile(file_name)
 
+
 class TikZPicture:
+    scale_factor = 1
+
+    @classmethod
+    def set_scale(cls, factor):
+        cls.scale_factor = factor
+
     def __init__(self, canvas, raw_colors, width=282.0):
         self.string = ''
         ulx, uly, lrx, lry = canvas.bbox(Tk_.ALL)
         pt_scale = float(width)/(lrx - ulx)
         cm_scale = 0.0352777778*pt_scale
         self.transform = lambda xy: (cm_scale*(-ulx+xy[0]), cm_scale*(lry-xy[1]))
-        from .ipython_tools import get_scale_factor
-        self.scale_factor = get_scale_factor(canvas.winfo_toplevel())
-
         self.colors = dict()
         for i, hex_color in enumerate(raw_colors):
             self.colors[hex_color] = i
@@ -353,9 +369,8 @@ class TikZPicture:
             self.string += '  \\begin{scope}[color=linkcolor%d]\n' % self.colors[color]
             self.curcolor = color
         self.string += line
-        
+
     def save(self, file_name):
         file = open(file_name, 'w')
         file.write(self.string + '  \\end{scope}\n\\end{tikzpicture}\n')
         file.close()
-    

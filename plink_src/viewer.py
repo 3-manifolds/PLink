@@ -108,8 +108,7 @@ class LinkViewer(LinkManager):
     def save_as_pdf(self, file_name, colormode='color', width=312.0):
         PDF = smooth.PDFPicture(self.canvas, width)
         for polylines, color in self.polylines(break_at_overcrossings=False):
-            style = [pyx.style.linewidth(4), pyx.style.linecap.round,
-                     pyx.style.linejoin.round, pyx.color.rgbfromhexstring(color)]
+            style = PDF.base_line_style() + [pyx.color.rgbfromhexstring(color)]
             for lines in polylines:
                 lines = [PDF.transform(xy) for xy in lines]
                 path_parts = [pyx.path.moveto(* lines[0])] + [pyx.path.lineto(*xy) for xy in lines]
