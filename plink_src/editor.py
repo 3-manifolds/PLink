@@ -463,7 +463,8 @@ class PLinkBase(LinkViewer):
             self.labels.append(self.canvas.create_text(
                     (crossing.x - 1, crossing.y - yshift),
                     anchor=Tk_.E,
-                    text=str(crossing.label)
+                    text=str(crossing.label),
+                    fill='black',
                     ))
 
     def show_DT(self):
@@ -484,13 +485,13 @@ class PLinkBase(LinkViewer):
                     (crossing.x - 10, crossing.y - yshift),
                     anchor=Tk_.E,
                     text=str(crossing.hit1),
-                    fill="black"
+                    fill='black'
                     ))
             self.DTlabels.append(self.canvas.create_text(
                     (crossing.x + 10, crossing.y - yshift),
                     anchor=Tk_.W,
                     text=str(crossing.hit2) + flip,
-                    fill="black"
+                    fill='black'
                     ))
 
     def hide_labels(self):
