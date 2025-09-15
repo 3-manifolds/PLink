@@ -278,11 +278,19 @@ class LinkManager:
             # component containing the partner of the first
             # odd-numbered crossing that is shared with another
             # component (if there are any shared crossings).
+            #
+            # Note: The above seems inaccurate: we favor additional
+            # components that meet the most recently added one, rather
+            # than the oldest available.
             if touching:
-                touching.sort(key=lambda x : x[0].hit1)
-                next_component = touching[0][1]
-                components.remove(next_component)
-                components.append(next_component)
+                # We run through all the components touched so that if
+                # a component is added that doesn't meet any
+                # then-unfinished components, we will still select an
+                # unfinished component that meets a finished one.
+                touching.sort(key=lambda x : x[0].hit1, reverse=True)
+                for _, next_component in touching:
+                    components.remove(next_component)
+                    components.append(next_component)
 
         return sorted_components
 
