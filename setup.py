@@ -8,11 +8,11 @@
 
 
 from setuptools import setup, Command
-from pkg_resources import load_entry_point
+from importlib.metadata import entry_points
 from wheel.bdist_wheel import bdist_wheel
 import os, re, shutil, subprocess, sys, glob
 
-doc_path = 'plink_src/doc'
+doc_path = 'src/plink/doc'
 
 # A real clean
 
@@ -39,11 +39,14 @@ class PLinkBuildDocs(Command):
     def finalize_options(self):
         pass
     def run(self):
-        sphinx_cmd = load_entry_point('sphinx>=1.7', 'console_scripts', 'sphinx-build')
+        sphinx_eps = entry_points(group='console_scripts')
+        for ep in sphinx_eps:
+            if ep.name == 'sphinx-build':
+                sphinx_cmd = ep.load()
+                break
         sphinx_args = ['-a', '-E', '-d', 'doc_source/_build/doctrees',
-                       'doc_source', 'plink_src/doc']
+                       'doc_source', doc_path]
         sphinx_cmd(sphinx_args)
-
 
 def check_call(args):
     try:
