@@ -30,21 +30,21 @@ in the code.  A PLinkDiagram must satisfy a non-degeneracy condition:
 every point of an Arrow must have L_1 distance greater than Δ from the
 point assigned to any Vertex which is not an endpoint of the Arrow.
 
-A component of a PLinkDiagram is a maximal subgraph such that the
-interior of its realization as a CW complex is homeomorphic to a circle
-or an open interval.  In the later case the closure of the component
-is an arc joining two vertices of valence different from 2.  If all
-components are circles then the PLinkDiagram represents a knot or link
-diagram.
+A filament of a PLinkDiagram is a maximal subgraph such that the
+interior of its realization as a CW complex is a 1-manifold.  the
+closure of a filament is either an arc joining two vertices of valence
+different from 2 or a circle.  If all filaments are circles then the
+PLinkDiagram represents a knot or link diagram.
 
-A PLinkDiagram has a list of Crossings, which represent points where
-two arrows with no endpoints in common intersect.  A Crossing may
+A PLinkDiagram has a list of Crossings, which represent intersection
+points of two arrows with no endpoints in common.  A Crossing may
 specify that one of the arrows crosses over the other, or it may
-represent a virtual crossing in a virtual knot diagram.
+represent a virtual crossing.
 
-A PLinkDiagram provides many methods for importing and exporting
-diagrams as well as computing features of the diagram, such as the
-components.
+The PLinkDiagram class provides many methods for importing and
+exporting diagrams as well as computing features of a diagram, such
+as the filaments and components.
+
 """
 
 import time
