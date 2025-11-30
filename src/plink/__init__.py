@@ -16,11 +16,11 @@
 
 from .version import version as __version__
 from . import gui
-from .manager import LinkManager
+from .diagram import PLinkDiagram
 from .viewer import LinkViewer
 from .editor import LinkDisplay, LinkEditor
     
-__all__ = ['LinkManager', 'LinkViewer', 'LinkDisplay', 'LinkEditor']
+__all__ = ['PLinkDiagram', 'LinkViewer', 'LinkDisplay', 'LinkEditor']
 
 if __name__ == '__main__':
     LE = LinkEditor()

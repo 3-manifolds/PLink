@@ -13,11 +13,38 @@
 #   The development of this program was partially supported by
 #   the National Science Foundation under grants DMS0608567,
 #   DMS0504975 and DMS0204142.
-"""
-This module exports the LinkManager class.  A LinkManager encapsulates
-a PL link diagram and provides many methods for importing and exporting
-diagrams as well as computing features of the diagram, such as the components
-of the link.
+
+"""This module exports the PLinkDiagram class.  A PLinkDiagram
+encapsulates a piecewise linear immersion of a directed graph into the
+plane.  It has a list of Vertices, each of which is assigned a
+point in the plane, as well as a list of Arrows, where an Arrow
+represents a directed line segment joining two Vertices.
+
+If P and Q are two points in the plane with coordinates (x1, y1) and
+(x2, y2) let L_1(P,Q) = max(|x1 - x2|, |y1 - y2|).  Not that L_1
+is a metric on the plane.
+
+Two vertices are considered equal if the L_1 distance between their
+associated points is less than a certain positive constant Δ specifed
+in the code.  A PLinkDiagram must satisfy a non-degeneracy condition:
+every point of an Arrow must have L_1 distance greater than Δ from the
+point assigned to any Vertex which is not an endpoint of the Arrow.
+
+A component of a PLinkDiagram is a maximal subgraph such that the
+interior of its realization as a CW complex is homeomorphic to a circle
+or an open interval.  In the later case the closure of the component
+is an arc joining two vertices of valence different from 2.  If all
+components are circles then the PLinkDiagram represents a knot or link
+diagram.
+
+A PLinkDiagram has a list of Crossings, which represent points where
+two arrows with no endpoints in common intersect.  A Crossing may
+specify that one of the arrows crosses over the other, or it may
+represent a virtual crossing in a virtual knot diagram.
+
+A PLinkDiagram provides many methods for importing and exporting
+diagrams as well as computing features of the diagram, such as the
+components.
 """
 
 import time
@@ -30,7 +57,7 @@ from .smooth import TikZPicture
 DT_alphabet = '_abcdefghijklmnopqrstuvwxyzZYXWVUTSRQPONMLKJIHGFEDCBA'
 
 
-class LinkManager:
+class PLinkDiagram:
     """
     Manages the data associated with a link projection.
     """

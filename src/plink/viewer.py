@@ -23,9 +23,9 @@ from . import smooth
 # -*- coding: utf-8 -*-
 
 from .colors import Palette
-from .manager import LinkManager
+from .diagram import PLinkDiagram
 
-class LinkViewer(LinkManager):
+class LinkViewer(PLinkDiagram):
     """
     Simply draws a smooth link diagram on a canvas.  Instantiate with
     a canvas and a pickled link diagram as returned by

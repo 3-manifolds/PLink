@@ -26,7 +26,7 @@ from .arrow import Arrow
 from .crossings import Crossing, ECrossing
 from .colors import Palette
 from .dialog import InfoDialog
-from .manager import LinkManager
+from .diagram import PLinkDiagram
 from .viewer import LinkViewer
 from .version import version
 from .ipython_tools import IPythonTkRoot
@@ -323,7 +323,7 @@ class PLinkBase(LinkViewer):
         self.update_smooth()
 
     def unpickle(self,  vertices, arrows, crossings, hot=None):
-        LinkManager.unpickle(self, vertices, arrows, crossings, hot)
+        PLinkDiagram.unpickle(self, vertices, arrows, crossings, hot)
         self.set_style()
         self.full_redraw()
 
