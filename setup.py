@@ -19,7 +19,7 @@ doc_path = 'src/plink/doc'
 class PLinkClean(Command):
     user_options = []
     def initialize_options(self):
-        pass 
+        pass
     def finalize_options(self):
         pass
     def run(self):
@@ -35,12 +35,15 @@ class PLinkClean(Command):
 class PLinkBuildDocs(Command):
     user_options = []
     def initialize_options(self):
-        pass 
+        pass
     def finalize_options(self):
         pass
     def run(self):
-        sphinx_eps = entry_points(group='console_scripts')
-        for ep in sphinx_eps:
+        if sys.version_info < (3, 10):
+            eps = entry_points()['console_scripts']
+        else:
+            eps = entry_points(group='console_scripts')
+        for ep in eps:
             if ep.name == 'sphinx-build':
                 sphinx_cmd = ep.load()
                 break
