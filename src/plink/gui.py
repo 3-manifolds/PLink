@@ -33,6 +33,17 @@ except ImportError:
     warnings.warn('Plink failed to import tkinter, GUI will not be available')
     Tk_ = ttk = tkFileDialog = tkMessageBox = SimpleDialog = None
 
+if Tk_.TkVersion < 9.0:
+    plus_keycode = 'plus'
+    minus_keycode = 'minus'
+    equal_keycode = 'equal'
+    underscore_keycode = 'underscore'
+else:
+    plus_keycode = '+'
+    minus_keycode = '-'
+    equal_keycode = '='
+    underscore_keycode = '_'
+    
 from urllib.request import pathname2url
 try:
     import pyx

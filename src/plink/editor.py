@@ -131,25 +131,27 @@ class PLinkBase(LinkViewer):
         """
         Handler for keyrelease events.
         """
-        pass
+        raise RuntimeError('Subclasses must override _key_release')
 
     def _key_press(self, event):
         """
         Handler for keypress events.
         """
-        dx, dy = 0, 0
-        key = event.keysym
-        if key in ('plus', 'equal'):
-            self.zoom_in()
-        elif key in ('minus', 'underscore'):
-            self.zoom_out()
-        elif key == '0':
-            self.zoom_to_fit()
-        try:
-            self._shift(*canvas_shifts[key])
-        except KeyError:
-            pass
-        return
+        raise RuntimeError('Subclasses must override _key_press')
+
+        # dx, dy = 0, 0
+        # key = event.keysym
+        # if key in (plus_keycode, equal_keycode):
+        #     self.zoom_in()
+        # elif key in (minus_keycode, underscore_keycode):
+        #     self.zoom_out()
+        # elif key == '0':
+        #     self.zoom_to_fit()
+        # try:
+        #     self._shift(*canvas_shifts[key])
+        # except KeyError:
+        #     pass
+        # return
 
     def _build_menus(self):
         self.menubar = menubar = Tk_.Menu(self.window)
@@ -681,9 +683,9 @@ class LinkEditor(PLinkBase):
                     self.Vertices.remove(self.ActiveVertex)
                     self.ActiveVertex.erase()
                     self.goto_start_state()
-        elif key in ('plus', 'equal'):
+        elif key in (plus_keycode, equal_keycode):
             self.zoom_in()
-        elif key in ('minus', 'underscore'):
+        elif key in (minus_keycode, underscore_keycode):
             self.zoom_out()
         elif key == '0':
             self.zoom_to_fit()
