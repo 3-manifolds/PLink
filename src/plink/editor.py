@@ -131,25 +131,13 @@ class PLinkBase(LinkViewer):
         """
         Handler for keyrelease events.
         """
-        pass
+        raise RuntimeError('Subclasses must override _key_press')
 
     def _key_press(self, event):
         """
         Handler for keypress events.
         """
-        dx, dy = 0, 0
-        key = event.keysym
-        if key in ('plus', 'equal'):
-            self.zoom_in()
-        elif key in ('minus', 'underscore'):
-            self.zoom_out()
-        elif key == '0':
-            self.zoom_to_fit()
-        try:
-            self._shift(*canvas_shifts[key])
-        except KeyError:
-            pass
-        return
+        raise RuntimeError('Subclasses must override _key_press')
 
     def _build_menus(self):
         self.menubar = menubar = Tk_.Menu(self.window)
@@ -585,7 +573,7 @@ class LinkEditor(PLinkBase):
         PLinkBase.__init__(self, *args, **kwargs)
         self.flipcheck = None
         self.shift_down = False
-        self.state='start_state'
+        self.state = 'start_state'
         self.canvas.bind('<Button-1>', self.single_click)
         self.canvas.bind('<Double-Button-1>', self.double_click)
         self.canvas.bind('<Shift-Button-1>', self.shift_click)
@@ -679,9 +667,9 @@ class LinkEditor(PLinkBase):
                     self.Vertices.remove(self.ActiveVertex)
                     self.ActiveVertex.erase()
                     self.goto_start_state()
-        elif key in ('plus', 'equal'):
+        elif key in (plus_keycode, equal_keycode):
             self.zoom_in()
-        elif key in ('minus', 'underscore'):
+        elif key in (minus_keycode, underscore_keycode):
             self.zoom_out()
         elif key == '0':
             self.zoom_to_fit()
@@ -806,7 +794,7 @@ class LinkEditor(PLinkBase):
         self.clear_text()
         start_vertex = Vertex(x, y, self.canvas, style='hidden')
         if start_vertex in self.CrossPoints:
-            #print 'shift-click in %s'%self.state
+            #print('shift-click in %s'%self.state)
             crossing = self.Crossings[self.CrossPoints.index(start_vertex)]
             self.update_info()
             crossing.is_virtual = not crossing.is_virtual
@@ -861,7 +849,7 @@ class LinkEditor(PLinkBase):
             elif self.lock_var.get():
                 return
             elif start_vertex in self.CrossPoints:
-                #print 'single click on a crossing'
+                #print('single click on a crossing')
                 crossing = self.Crossings[self.CrossPoints.index(start_vertex)]
                 if crossing.is_virtual:
                     crossing.is_virtual = False
@@ -873,10 +861,10 @@ class LinkEditor(PLinkBase):
                 self.update_smooth()
                 return
             elif self.clicked_on_arrow(start_vertex):
-                #print 'clicked on an arrow.'
+                #print('clicked on an arrow.')
                 return
             else:
-                #print 'creating a new vertex'
+                #print('creating a new vertex')
                 if not self.generic_vertex(start_vertex):
                     start_vertex.erase()
                     self.alert()
@@ -890,7 +878,7 @@ class LinkEditor(PLinkBase):
         elif self.state == 'drawing_state':
             next_vertex = Vertex(x, y, self.canvas, style='hidden')
             if next_vertex == self.ActiveVertex:
-                #print 'clicked the same vertex twice'
+                #print('clicked the same vertex twice')
                 next_vertex.erase()
                 dead_arrow = self.ActiveVertex.out_arrow
                 if dead_arrow:
@@ -961,7 +949,7 @@ class LinkEditor(PLinkBase):
         y = y1 = self.canvas.canvasy(event.y)
         self.clear_text()
         vertex = Vertex(x, y, self.canvas, style='hidden')
-        #print 'double-click in %s'%self.state
+        #print('double-click in %s'%self.state)
         if self.state == 'dragging_state':
             try:
                 self.end_dragging_state()
@@ -970,7 +958,7 @@ class LinkEditor(PLinkBase):
                 return
             # The first click on a vertex put us in dragging state.
             if vertex in [v for v in self.Vertices if v.is_endpoint()]:
-                #print 'double-clicked on an endpoint'
+                #print('double-clicked on an endpoint')
                 vertex.erase()
                 vertex = self.Vertices[self.Vertices.index(vertex)]
                 x0, y0 = x1, y1 = vertex.point()
@@ -978,7 +966,7 @@ class LinkEditor(PLinkBase):
                     self.update_crosspoints()
                     vertex.reverse_path()
             elif vertex in self.Vertices:
-                #print 'double-clicked on a non-endpoint vertex'
+                #print('double-clicked on a non-endpoint vertex')
                 cut_vertex = self.Vertices[self.Vertices.index(vertex)]
                 cut_vertex.recolor_incoming(palette=self.palette)
                 cut_arrow = cut_vertex.in_arrow
@@ -990,7 +978,7 @@ class LinkEditor(PLinkBase):
             self.goto_drawing_state(x1,y1)
             return
         elif self.state == 'drawing_state':
-            #print 'double-click while drawing'
+            #print('double-click while drawing')
             dead_arrow = self.ActiveVertex.out_arrow
             if dead_arrow:
                 self.destroy_arrow(dead_arrow)
@@ -1110,12 +1098,12 @@ class LinkEditor(PLinkBase):
         self.window.update_idletasks()
 
     def attach_cursor(self, reason=''):
-        #print 'attaching:', reason
+        #print('attaching:', reason)
         self.cursor_attached = True
         self.ActiveVertex.set_delta(8)
 
     def detach_cursor(self, reason=''):
-        #print 'detaching:', reason
+        #print('detaching:', reason)
         self.cursor_attached = False
         self.ActiveVertex.set_delta(2)
 
@@ -1222,7 +1210,7 @@ class LinkEditor(PLinkBase):
             return False
         for arrow in self.Arrows:
             if arrow.too_close(vertex, tolerance=Arrow.epsilon + 2):
-                #print 'non-generic vertex'
+                #print('non-generic vertex')
                 return False
         return True
 
@@ -1238,7 +1226,7 @@ class LinkEditor(PLinkBase):
                     self.canvas.create_oval(x-delta , y-delta, x+delta, y+delta,
                                             outline='gray', fill=None, width=3,
                                             tags='lock_error')
-                #print 'arrow too close to vertex %s'%vertex
+                #print('arrow too close to vertex %s'%vertex)
                 return False
         for crossing in self.Crossings:
             point = self.CrossPoints[self.Crossings.index(crossing)]
@@ -1249,7 +1237,7 @@ class LinkEditor(PLinkBase):
                     self.canvas.create_oval(x-delta , y-delta, x+delta, y+delta,
                                             outline='gray', fill=None, width=3,
                                             tags='lock_error')
-                #print 'arrow too close to crossing %s'%crossing
+                #print('arrow too close to crossing %s'%crossing)
                 return False
         return True
 
@@ -1278,14 +1266,14 @@ class LinkEditor(PLinkBase):
             new_crossing.locate()
             if new_crossing.x != None:
                 if new_crossing in cross_list:
-                    #print 'keeping %s'%new_crossing
+                    #print('keeping %s'%new_crossing)
                     find(new_crossing).locate()
                     continue
                 else:
-                    #print 'adding %s'%new_crossing
+                    #print('adding %s'%new_crossing)
                     self.Crossings.append(new_crossing)
             else:
-                #print 'removing %s'%new_crossing
+                #print('removing %s'%new_crossing)
                 if new_crossing in self.Crossings:
                     if arrow == find(new_crossing).under:
                         damage_list.append(arrow)
