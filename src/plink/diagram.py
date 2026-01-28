@@ -141,6 +141,8 @@ class PLinkDiagram:
         is set to True then two lists are returned, the first has the closed
         components the second has the non-closed components.
         """
+        for arrow in self.Arrows:
+            assert arrow.start in self.Vertices
         pool = [v.out_arrow for v in self.Vertices if v.in_arrow is None]
         pool += [v.out_arrow  for v in self.Vertices if v.in_arrow is not None]
         closed, nonclosed = [], []

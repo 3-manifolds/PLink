@@ -817,19 +817,21 @@ class LinkEditor(PLinkBase):
             crossing.under.draw(self.Crossings)
             crossing.over.draw(self.Crossings)
             self.update_smooth()
-        else:
-            arrow = self.cursor_on_arrow(start_vertex)
-            if arrow:
-                # Freeze the arrow; activate its endpoint; start drawing.
-                cut_vertex = arrow.end
-                cut_vertex.recolor_incoming(palette=self.palette)
-                cut_arrow = cut_vertex.in_arrow
-                cut_vertex.in_arrow = None
-                vertex = cut_arrow.start
-                x1, y1 = cut_vertex.point()
-                cut_arrow.freeze()
-                self.ActiveVertex = vertex
-                self.goto_drawing_state(x1,y1)
+#           else:
+#            arrow = self.cursor_on_arrow(start_vertex)
+#            if arrow:
+#                # Freeze the arrow; activate its endpoint; start drawing.
+#                cut_vertex = arrow.end
+#                cut_vertex.recolor_incoming(palette=self.palette)
+#                cut_arrow = cut_vertex.in_arrow
+#                cut_vertex.in_arrow = None
+#                vertex = cut_arrow.start
+#                x1, y1 = cut_vertex.point()
+#                cut_arrow.freeze()
+#                self.ActiveVertex = vertex
+#                self.goto_drawing_state(x1,y1)
+        elif self.cursor_on_arrow(start_vertex):
+            print("shift-click on an arrow")
 
     def single_click(self, event):
         """
@@ -961,10 +963,10 @@ class LinkEditor(PLinkBase):
             self.canvas.coords(self.LiveArrow1,x,y,x,y)
             return
         elif self.state == 'dragging_state':
-            try:
+            #try:
                 self.end_dragging_state()
-            except ValueError:
-                self.alert()
+            #except ValueError:
+            #    self.alert()
         
     def double_click(self, event):
         """
@@ -1026,7 +1028,7 @@ class LinkEditor(PLinkBase):
             elif point in self.CrossPoints:
                 self.flipcheck = None
                 self.canvas.config(cursor='exchange')
-            if self.cursor_on_arrow(point):
+            elif self.cursor_on_arrow(point):
                 now = time.time()
                 if self.flipcheck is None:
                     self.flipcheck = now
