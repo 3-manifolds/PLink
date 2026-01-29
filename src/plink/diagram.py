@@ -177,7 +177,11 @@ class PLinkDiagram:
                 nonclosed.append(filament)
             for arrow in filament:
                 if arrow != some_arrow:
-                    pool.remove(arrow)
+                    try:
+                        pool.remove(arrow)
+                    except KeyError:
+                        # This can happen when reconnecting after a cut
+                        print('Arrow is not in pool.')
         if include_isolated_vertices:
             for vertex in [v for v in self.Vertices if v.is_isolated]:
                 nonclosed.append([Arrow(vertex, vertex, self.canvas,
@@ -216,11 +220,11 @@ class PLinkDiagram:
         if break_at_overcrossings:
             crossing_locations = set([(c.x, c.y) for c in self.Crossings])
 
-        for component in self.arrow_components():
-            color = component[0].color
+        for filament in self.arrow_filaments():
+            color = filament[0].color
             polylines = []
             polyline = []
-            for arrow in component:
+            for arrow in filament:
                 for segment in segments[arrow]:
                     if len(polyline) == 0:
                         polyline = segment
@@ -251,7 +255,7 @@ class PLinkDiagram:
             if vertex.is_endpoint:
                 raise ValueError('All components must be closed.')
         result = []
-        arrow_components = self.arrow_components()
+        arrow_components = self.arrow_filaments()
         for component in arrow_components:
             crosses=[]
             for arrow in component:
@@ -604,7 +608,7 @@ class PLinkDiagram:
 
         result = ''
         result += '% Virtual Link Projection\n' if has_virtual_crossings else '% Link Projection\n'
-        components = self.arrow_components()
+        components = self.arrow_filaments()
         result += '%d\n'%len(components)
         for component in components:
             first = self.Vertices.index(component[0].start)
@@ -639,7 +643,7 @@ class PLinkDiagram:
         virtual_crossings = [crossing for crossing in self.Crossings if crossing.is_virtual]
         if len(virtual_crossings) == 0:
             raise ValueError('No virtual crossings present.')
-        closed_components, nonclosed_components = self.arrow_components(distinguish_closed=True)
+        closed_components, nonclosed_components = self.arrow_filaments(distinguish_closed=True)
 
         def component_sequence(component):
             sequence = []
@@ -725,10 +729,10 @@ class PLinkDiagram:
         return [vertices, arrows, crossings, hot]
 
     def create_colors(self):
-        components = self.arrow_components()
-        for component in components:
+        filamentss = self.arrow_filaments()
+        for filament in filaments:
             color = self.palette.new()
             component[0].start.set_color(color)
-            for arrow in component:
+            for arrow in filamenent:
                 arrow.set_color(color)
                 arrow.end.set_color(color)
