@@ -33,7 +33,7 @@ except ImportError:
     warnings.warn('Plink failed to import tkinter, GUI will not be available')
     Tk_ = ttk = tkFileDialog = tkMessageBox = SimpleDialog = None
 
-if Tk_.TkVersion < 9.0:
+if Tk_ is not None and Tk_.TkVersion < 9.0:
     plus_keycode = 'plus'
     minus_keycode = 'minus'
     equal_keycode = 'equal'
