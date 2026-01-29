@@ -69,8 +69,7 @@ class PLinkDiagram:
         self.Vertices = []
         self.Crossings = []
         self.CrossPoints = []
-        self.LiveArrow1 = None
-        self.LiveArrow2 = None
+        self.LiveArrows = []
         self.ActiveVertex = None
         self.DTlabels = []
         self.labels = []
