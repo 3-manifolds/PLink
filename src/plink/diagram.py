@@ -83,7 +83,8 @@ class PLinkDiagram:
         lines = [line for line in contents.split('\n') if len(line) > 0]
         num_lines = len(lines)
         first_line = lines.pop(0)
-        has_virtual_crossings = first_line.startswith('% Virtual Link Projection')
+        has_virtual_crossings = first_line.startswith(
+            '% Virtual Link Projection')
         if not (first_line.startswith('% Link Projection') or
                 first_line.startswith('% Virtual Link Projection')):
             tkMessageBox.showwarning(
@@ -133,47 +134,63 @@ class PLinkDiagram:
         self.CrossPoints = [Vertex(c.x, c.y, self.canvas, style='hidden')
                             for c in self.Crossings]
 
-    def arrow_components(self, include_isolated_vertices=False, distinguish_closed=False):
+    def arrow_filament(self, arrow):
         """
-        Returns a list of components, given as lists of arrows.
-        The closed components are sorted in DT order if they have
+        Returns a pair (list, is_closed) where is_closed is True iff
+        the filament is closed and the list contains all arrows in the
+        filament containing the given arrow, in orientation order.
+        """
+        filament = [arrow]
+        cursor = arrow
+        while cursor.end.is_smooth:
+            next_arrow = cursor.end.out_arrows[0]
+            filament.append(next_arrow)
+            cursor = next_arrow
+            if next_arrow.end == arrow.start: # filament is closed
+                return filament, True
+        # filament is not closed
+        cursor = arrow
+        while cursor.start.is_smooth:
+            prev_arrow = cursor.start.in_arrows[0]
+            filament.insert(0, prev_arrow)
+            cursor = prev_arrow
+        return filament, False
+
+    def arrow_filaments(self, include_isolated_vertices=False,
+                         distinguish_closed=False):
+        """
+        Returns a list of filaments, given as lists of arrows.
+        The closed filaments are sorted in DT order if they have
         been marked.  The others are sorted by age. If distinguish_closed
         is set to True then two lists are returned, the first has the closed
-        components the second has the non-closed components.
+        filaments the second has the non-closed filaments.
         """
-        for arrow in self.Arrows:
-            assert arrow.start in self.Vertices
-        pool = [v.out_arrow for v in self.Vertices if v.in_arrow is None]
-        pool += [v.out_arrow  for v in self.Vertices if v.in_arrow is not None]
-        closed, nonclosed = [], []
+        closed = []
+        nonclosed = []
+        pool = set(self.Arrows)
         while pool:
-            first_arrow = pool.pop(0)
-            if first_arrow is None:
-                continue
-            component = [first_arrow]
-            while component[-1].end is not component[0].start:
-                next_arrow = component[-1].end.out_arrow
-                if next_arrow is None:
-                    break
-                pool.remove(next_arrow)
-                component.append(next_arrow)
-            if next_arrow is None:
-                nonclosed.append(component)
+            some_arrow = pool.pop()
+            filament, is_closed = self.arrow_filament(some_arrow)
+            if is_closed:
+                closed.append(filament)
             else:
-                closed.append(component)
+                nonclosed.append(filament)
+            for arrow in filament:
+                if arrow != some_arrow:
+                    pool.remove(arrow)
         if include_isolated_vertices:
-            for vertex in [v for v in self.Vertices if v.is_isolated()]:
+            for vertex in [v for v in self.Vertices if v.is_isolated]:
                 nonclosed.append([Arrow(vertex, vertex, self.canvas,
                                         color=vertex.color)])
-        def oldest_vertex(component):
+        def oldest_vertex(filament):
             def oldest(arrow):
                 return min([self.Vertices.index(v)
                             for v in [arrow.start, arrow.end] if v])
-            return min( [len(self.Vertices)] +  [oldest(a) for a in component])
+            return min( [len(self.Vertices)] +  [oldest(a) for a in filament])
+        # arrow.component is set when a closed component is marked for DT
         closed.sort(key=lambda x : (x[0].component, oldest_vertex(x)))
         nonclosed.sort(key=oldest_vertex)
-        return (closed, nonclosed) if distinguish_closed else closed + nonclosed
-
+        return (closed, nonclosed) if distinguish_closed else closed + nonclosed              
     def polylines(self, break_at_overcrossings=True):
         """
         Returns a list of lists of polylines, one per component, that make up
@@ -231,7 +248,7 @@ class PLinkDiagram:
         through the component.  Requires that all components be closed.
         """
         for vertex in self.Vertices:
-            if vertex.is_endpoint():
+            if vertex.is_endpoint:
                 raise ValueError('All components must be closed.')
         result = []
         arrow_components = self.arrow_components()

@@ -15,7 +15,7 @@
 #   DMS0504975 and DMS0204142.
 """
 This module exports the class LinkEditor which is a full-featured
-editing tool for link diagrams.
+editing tool for link diagrams and planar projections of graphs..
 """
 import os, time, webbrowser, sys
 
@@ -661,13 +661,13 @@ class LinkEditor(PLinkBase):
                 self.set_start_cursor(self.cursorx, self.cursory)
         if key in ('Delete','BackSpace'):
             if self.state == 'drawing_state':
-                last_arrow = self.ActiveVertex.in_arrow
+                last_arrow = self.ActiveVertex.in_arrows[0]
                 if last_arrow:
-                    dead_arrow = self.ActiveVertex.out_arrow
+                    dead_arrow = self.ActiveVertex.out_arrows[0]
                     if dead_arrow:
                         self.destroy_arrow(dead_arrow)
                     self.ActiveVertex = last_arrow.start
-                    self.ActiveVertex.out_arrow = None
+                    self.ActiveVertex.out_arrows = []
                     x0,y0,x1,y1 = self.canvas.coords(self.LiveArrow1)
                     x0, y0 = self.ActiveVertex.point()
                     self.canvas.coords(self.LiveArrow1, x0, y0, x1, y1)
@@ -679,7 +679,7 @@ class LinkEditor(PLinkBase):
                     last_arrow.erase()
                     for arrow in self.Arrows:
                         arrow.draw(self.Crossings)
-                if not self.ActiveVertex.in_arrow:
+                if not self.ActiveVertex.in_arrows:
                     self.Vertices.remove(self.ActiveVertex)
                     self.ActiveVertex.erase()
                     self.goto_start_state()
@@ -800,38 +800,45 @@ class LinkEditor(PLinkBase):
             return
         if self.lock_var.get():
             return
+        # What is this about?  Why shift-click?
         if self.state == 'start_state':
             if not self.has_focus:
                 return
         else:
             self.has_focus = True
+        print('shift-click in %s' % self.state)
         x = self.canvas.canvasx(event.x)
         y = self.canvas.canvasy(event.y)
         self.clear_text()
         start_vertex = Vertex(x, y, self.canvas, style='hidden')
         if start_vertex in self.CrossPoints:
-            #print('shift-click in %s'%self.state)
             crossing = self.Crossings[self.CrossPoints.index(start_vertex)]
             self.update_info()
             crossing.is_virtual = not crossing.is_virtual
             crossing.under.draw(self.Crossings)
             crossing.over.draw(self.Crossings)
             self.update_smooth()
-#           else:
-#            arrow = self.cursor_on_arrow(start_vertex)
-#            if arrow:
-#                # Freeze the arrow; activate its endpoint; start drawing.
-#                cut_vertex = arrow.end
-#                cut_vertex.recolor_incoming(palette=self.palette)
-#                cut_arrow = cut_vertex.in_arrow
-#                cut_vertex.in_arrow = None
-#                vertex = cut_arrow.start
-#                x1, y1 = cut_vertex.point()
-#                cut_arrow.freeze()
-#                self.ActiveVertex = vertex
-#                self.goto_drawing_state(x1,y1)
+        elif start_vertex in self.Vertices:
+            print('start_vertex is already a vertex')
+            self.ActiveVertex = self.Vertices[self.Vertices.index(start_vertex)]
+            self.goto_drawing_state(*start_vertex.point())
         elif self.cursor_on_arrow(start_vertex):
-            print("shift-click on an arrow")
+            arrow = self.cursor_on_arrow(start_vertex)
+            if arrow:
+                # Freeze the arrow; activate its endpoint; start drawing.
+                cut_vertex = arrow.end
+                # How do we recolor?
+                ##cut_vertex.recolor_incoming(palette=self.palette)
+                ##### How can this happen?  (It did)
+                try:
+                    cut_vertex.in_arrows.remove(arrow)
+                except:
+                    print('The arrow has already been removed from the cut vertex.')
+                vertex = arrow.start
+                x1, y1 = cut_vertex.point()
+                arrow.freeze()
+                self.ActiveVertex = vertex
+                self.goto_drawing_state(x1,y1)
 
     def single_click(self, event):
         """
@@ -839,6 +846,7 @@ class LinkEditor(PLinkBase):
         """
         if self.style_var.get() == 'smooth':
             return
+        print('single_click in state', self.state)
         if self.state == 'start_state':
             if not self.has_focus:
                 return
@@ -861,23 +869,24 @@ class LinkEditor(PLinkBase):
                 self.ActiveVertex.freeze()
                 self.saved_crossing_data = self.active_crossing_data()
                 x1, y1 = self.ActiveVertex.point()
-                if self.ActiveVertex.in_arrow is None and self.ActiveVertex.out_arrow is None:
+                if not self.ActiveVertex.in_arrows and not self.ActiveVertex.out_arrows:
                     # If this is an isolated vertex (likely created
                     # unintentionally), switch to drawing mode.
                     self.double_click(event)
                     return
-                if self.ActiveVertex.in_arrow:
-                    x0, y0 = self.ActiveVertex.in_arrow.start.point()
-                    self.ActiveVertex.in_arrow.freeze()
+                if self.ActiveVertex.in_arrows:
+                    x0, y0 = self.ActiveVertex.in_arrows[0].start.point()
+                    self.ActiveVertex.in_arrows[0].freeze()
                     self.LiveArrow1 = self.canvas.create_line(x0, y0, x1, y1, fill='red')
-                if self.ActiveVertex.out_arrow:
-                    x0, y0 = self.ActiveVertex.out_arrow.end.point()
-                    self.ActiveVertex.out_arrow.freeze()
+                if self.ActiveVertex.out_arrows:
+                    x0, y0 = self.ActiveVertex.out_arrows[0].end.point()
+                    self.ActiveVertex.out_arrows[0].freeze()
                     self.LiveArrow2 = self.canvas.create_line(x0, y0, x1, y1, fill='red')
                 if self.lock_var.get():
                     self.attach_cursor('start')
                 return
             elif self.lock_var.get():
+                print('lock_var is set')
                 return
             elif start_vertex in self.CrossPoints:
                 #print('single click on a crossing')
@@ -895,7 +904,6 @@ class LinkEditor(PLinkBase):
                 #print('clicked on an arrow.')
                 return
             else:
-                #print('creating a new vertex')
                 if not self.generic_vertex(start_vertex):
                     start_vertex.erase()
                     self.alert()
@@ -909,44 +917,63 @@ class LinkEditor(PLinkBase):
         elif self.state == 'drawing_state':
             next_vertex = Vertex(x, y, self.canvas, style='hidden')
             if next_vertex == self.ActiveVertex:
-                #print('clicked the same vertex twice')
+                print('clicked the same vertex twice')
+                ## How do we get here?
                 next_vertex.erase()
-                dead_arrow = self.ActiveVertex.out_arrow
+                dead_arrow = self.ActiveVertex.out_arrows[0]
                 if dead_arrow:
                     self.destroy_arrow(dead_arrow)
                 self.goto_start_state()
                 return
-            #print('setting up a new arrow')
-            if self.ActiveVertex.out_arrow:
-                next_arrow = self.ActiveVertex.out_arrow
-                next_arrow.set_end(next_vertex)
-                next_vertex.in_arrow = next_arrow
-                if not next_arrow.frozen:
-                    next_arrow.hide()
-            else:
-                this_color = self.ActiveVertex.color
-                next_arrow = Arrow(self.ActiveVertex, next_vertex,
-                                 self.canvas, style='hidden',
-                                 color=this_color)
-                self.Arrows.append(next_arrow)
+                print('ActiveVertex has %d out_arrows' % len(self.ActiveVertex.out_arrows))
+                print('state is %s' %self.state)
+# Not clear when this used to happen.
+#            if self.ActiveVertex.out_arrows:
+#                print('ActiveVertex out_arrows', self.ActiveVertex.out_arrows)
+                #next_arrow = self.ActiveVertex.out_arrows[-1]
+                #next_arrow.set_end(next_vertex)
+                #next_vertex.in_arrows = [next_arrow]
+                #if not next_arrow.frozen:
+                #    print('NOT hiding next_arrow')
+                #    next_arrow.hide()
+#            else:
+# This was done when there were no out arrows.
+            # This color is probably wrong if we start drawing from a vertex.
+            # We should choose a new color.
+            this_color = self.ActiveVertex.color
+            next_arrow = Arrow(self.ActiveVertex, next_vertex,
+                               self.canvas, style='hidden',
+                               color=this_color)
+            self.Arrows.append(next_arrow)
             next_vertex.set_color(next_arrow.color)
-            if next_vertex in [v for v in self.Vertices if v.is_endpoint()]:
+            if next_vertex in self.Vertices:
+                print(f'clicked on vertex {next_vertex}')
+#            if next_vertex in [v for v in self.Vertices if v.valence == 1]:
                 #print('melding vertices')
                 if not self.generic_arrow(next_arrow):
                     self.alert()
                     return
                 next_vertex.erase()
                 next_vertex = self.Vertices[self.Vertices.index(next_vertex)]
-                if next_vertex.in_arrow:
-                    next_vertex.reverse_path()
+#                if next_vertex.in_arrows:
+#                    next_vertex.reverse_filaments()
+                print('Adding in arrow')
                 next_arrow.set_end(next_vertex)
-                next_vertex.in_arrow = next_arrow
+                next_vertex.in_arrows.append(next_arrow)
                 if next_vertex.color != self.ActiveVertex.color:
+                    print('recycling color', self.ActiveVertex.color)
                     self.palette.recycle(self.ActiveVertex.color)
-                    next_vertex.recolor_incoming(color = next_vertex.color)
+                    #print('calling recolor_incoming')
+                    #next_vertex.recolor_incoming(color=next_vertex.color)
+                    #print('done recoloring')
+                print('updating crossings')
                 self.update_crossings(next_arrow)
                 next_arrow.expose(self.Crossings)
+                print('switching to start state')
                 self.goto_start_state()
+                return
+            elif next_vertex in self.Vertices:
+                print('Should finish now')
                 return
             #print('just extending a path, as usual')
             if not (self.generic_vertex(next_vertex) and
@@ -963,10 +990,10 @@ class LinkEditor(PLinkBase):
             self.canvas.coords(self.LiveArrow1,x,y,x,y)
             return
         elif self.state == 'dragging_state':
-            #try:
+            try:
                 self.end_dragging_state()
-            #except ValueError:
-            #    self.alert()
+            except ValueError:
+                self.alert()
         
     def double_click(self, event):
         """
@@ -995,13 +1022,13 @@ class LinkEditor(PLinkBase):
                 x0, y0 = x1, y1 = vertex.point()
                 if vertex.out_arrow:
                     self.update_crosspoints()
-                    vertex.reverse_path()
+                    vertex.reverse_filaments()
             self.ActiveVertex = vertex
             self.goto_drawing_state(x1,y1)
             return
         elif self.state == 'drawing_state':
             #print('double-click while drawing')
-            dead_arrow = self.ActiveVertex.out_arrow
+            dead_arrow = self.ActiveVertex.out_arrows[0]
             if dead_arrow:
                 self.destroy_arrow(dead_arrow)
             self.goto_start_state()
@@ -1068,9 +1095,10 @@ class LinkEditor(PLinkBase):
         """
         assert self.ActiveVertex is not None
         active = self.ActiveVertex
-        ignore = [active.in_arrow, active.out_arrow]
-        return (self.crossed_arrows(active.in_arrow, ignore),
-                self.crossed_arrows(active.out_arrow, ignore))
+        ignore = active.in_arrows + active.out_arrows
+        return (sum((self.crossed_arrows(arrow)
+                    for arrow in active.in_arrows + active.out_arrows),
+                    tuple()), ignore)
 
     def move_is_ok(self):
         return self.active_crossing_data() == self.saved_crossing_data
@@ -1154,7 +1182,7 @@ class LinkEditor(PLinkBase):
     def clicked_on_arrow(self, vertex):
         for arrow in self.Arrows:
             if arrow.too_close(vertex):
-                arrow.end.reverse_path(self.Crossings)
+                arrow.end.reverse_filaments(self.Crossings)
                 self.update_info()
                 return True
         return False
@@ -1181,6 +1209,7 @@ class LinkEditor(PLinkBase):
         self.canvas.config(cursor='')
 
     def goto_drawing_state(self, x1,y1):
+        print('goto_drawing_state from %s' % self.state)
         self.ActiveVertex.expose()
         self.ActiveVertex.draw()
         x0, y0 = self.ActiveVertex.point()
@@ -1194,11 +1223,11 @@ class LinkEditor(PLinkBase):
     def verify_drag(self):
         active = self.ActiveVertex
         active.update_arrows()
-        self.update_crossings(active.in_arrow)
-        self.update_crossings(active.out_arrow)
+        for arrow in active.in_arrows + active.out_arrows:
+            self.update_crossings(arrow)
         self.update_crosspoints()
-        return (self.generic_arrow(active.in_arrow) and
-                self.generic_arrow(active.out_arrow) )
+        arrows = active.in_arrows + active.out_arrows
+        return all(self.generic_arrow(arrow) for arrow in arrows)
 
     def end_dragging_state(self):
         if not self.verify_drag():
@@ -1210,23 +1239,21 @@ class LinkEditor(PLinkBase):
             x, y = float(self.cursorx), float(self.cursory)
             self.ActiveVertex.x, self.ActiveVertex.y = x, y
         endpoint = None
-        if self.ActiveVertex.is_endpoint():
+        if self.ActiveVertex.is_endpoint:
             other_ends = [v for v in self.Vertices if
                           v.is_endpoint() and v is not self.ActiveVertex]
             if self.ActiveVertex in other_ends:
                 endpoint = other_ends[other_ends.index(self.ActiveVertex)]
                 self.ActiveVertex.swallow(endpoint, self.palette)
                 self.Vertices = [v for v in self.Vertices if v is not endpoint]
-            self.update_crossings(self.ActiveVertex.in_arrow)
-            self.update_crossings(self.ActiveVertex.out_arrow)
+            for arrow in self.ActiveVertex.in_arrows + self.ActiveVertex.out_arrows:
+                self.update_crossings(arrow)
         if endpoint is None and not self.generic_vertex(self.ActiveVertex):
             raise ValueError
         self.ActiveVertex.expose()
         if self.style_var.get() != 'smooth':
-            if self.ActiveVertex.in_arrow:
-                self.ActiveVertex.in_arrow.expose()
-            if self.ActiveVertex.out_arrow:
-                self.ActiveVertex.out_arrow.expose()
+            for arrow in self.ActiveVertex.in_arrows + self.ActiveVertex.out_arrows:
+                arrow.expose()
         self.goto_start_state()
 
     def generic_vertex(self, vertex):
@@ -1268,9 +1295,9 @@ class LinkEditor(PLinkBase):
     def destroy_arrow(self, arrow):
         self.Arrows.remove(arrow)
         if arrow.end:
-            arrow.end.in_arrow = None
+            arrow.end.in_arrows = []
         if arrow.start:
-            arrow.start.out_arrow = None
+            arrow.start.out_arrows = []
         arrow.erase()
         self.Crossings = [c for c in self.Crossings if arrow not in c]
 

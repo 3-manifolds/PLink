@@ -32,8 +32,8 @@ class Vertex:
 
     def __init__(self, x, y, canvas=None, style='normal', color='black'):
         self.x, self.y = float(x), float(y)
-        self.in_arrow = None
-        self.out_arrow = None
+        self.in_arrows = []
+        self.out_arrows = []
         self.canvas = canvas
         self.color = color
         self.delta = 2
@@ -50,10 +50,6 @@ class Vertex:
         """
         return abs(self.x - other.x) + abs(self.y - other.y) < Vertex.epsilon
     
-    def __ne__(self, other):
-        """Redundant for Python 3, but needed for Python 2"""
-        return not (self == other)
-    
     def __hash__(self):
         # Since we redefined __eq__ we need to define __hash__
         return id(self)
@@ -68,6 +64,10 @@ class Vertex:
     
     def freeze(self):
         self.style = 'frozen'
+    
+    @property
+    def valence(self):
+        return len(self.in_arrows) + len(self.out_arrows)
     
     @property
     def frozen(self):
@@ -106,14 +106,20 @@ class Vertex:
         self.delta = delta
         self.draw()
         
+    @property
     def is_endpoint(self):
-        return self.in_arrow == None or self.out_arrow == None
-    
+        return self.valence == 1
+
+    @property
+    def is_smooth(self):
+        return len(self.in_arrows) == 1 and len(self.out_arrows) == 1
+
+    @property
     def is_isolated(self):
-        return self.in_arrow == None and self.out_arrow == None
+        return self.valence == 0
 
     def reverse(self):
-        self.in_arrow, self.out_arrow = self.out_arrow, self.in_arrow
+        self.in_arrows, self.out_arrows = self.out_arrows, self.in_arrows
 
     def swallow(self, other, palette):
         """
@@ -121,80 +127,76 @@ class Vertex:
         """
         if not self.is_endpoint() or not other.is_endpoint():
             raise ValueError
-        if self.in_arrow is not None:
-            if other.in_arrow is not None:
-                other.reverse_path()
+        if self.in_arrows:
+            if other.in_arrows:
+                other.reverse_filament()
             if self.color != other.color:
                 palette.recycle(self.color)
                 self.color = other.color
-                self.recolor_incoming(color = other.color)
-            self.out_arrow = other.out_arrow
-            self.out_arrow.set_start(self)
-        elif self.out_arrow is not None:
-            if other.out_arrow is not None:
-                other.reverse_path()
+                self.recolor_incoming(color=other.color)
+            self.out_arrows = other.out_arrows
+            for arrow in self.out_arrows:
+                arrow.set_start(self)
+        elif self.out_arrows:
+            if other.out_arrows:
+                other.reverse_filament()
             if self.color != other.color:
                 palette.recycle(other.color)
-                other.recolor_incoming(color = self.color)
-            self.in_arrow = other.in_arrow
-            self.in_arrow.set_end(self)
+                other.recolor_incoming(color=self.color)
+            self.in_arrows = other.in_arrows
+            self.in_arrows[0].set_end(self)
         other.erase()
             
-    def reverse_path(self, crossings=[]):
+    def reverse_filaments(self, crossings=[]):
         """
-        Reverse all vertices and arrows of this vertex's component.
+        Reverse the arc filaments emanating from this vertex.
         """
         v = self
-        while True:
-            e = v.in_arrow
-            v.reverse()
-            if not e: break
-            e.reverse(crossings)
-            v = e.end
-            if v == self: return
+        for e in v.out_arrows:
+            while True:
+                e.reverse(crossings)
+                v = e.end
+                if v == self:
+                    return
+                if v.valence > 2:
+                    break
         self.reverse()
         v = self
-        while True:
-            e = v.out_arrow
-            v.reverse()
-            if not e: break
-            e.reverse(crossings)
-            v = e.start
-            if v == self: return
+        for e in v.out_arrows:
+            while True:
+                e.reverse(crossings)
+                v = e.start
+                if v == self:
+                    return
+                if v.valence > 2:
+                    break
 
     def recolor_incoming(self, palette=None, color=None):
         """
-        If this vertex lies in a non-closed component, recolor its incoming
-        path.  The old color is not freed.  This vertex is NOT recolored. 
+        If this vertex lies in a non-closed filament, recolor its incoming
+        filaments.  The old color is not freed.  This vertex is NOT recolored. 
         """
-        v = self
-        while True:
-            e = v.in_arrow
-            if not e:
-                break
-            v = e.start
-            if v == self:
-                return
         if not color:
             color = palette.new()
-        #print color
+        #print(color)
         v = self
-        while True:
-            e = v.in_arrow
-            if not e:
-                break
-            e.set_color(color)
-            v = e.start
-            v.set_color(color)
+        for e in v.in_arrows:
+            while True:
+                e.set_color(color)
+                v = e.start
+                if v == self:
+                    return
+                if v.valence > 2:
+                    break
         
     def update_arrows(self):
-        if self.in_arrow: self.in_arrow.vectorize()
-        if self.out_arrow: self.out_arrow.vectorize()
+        for arrow in self.in_arrows + self.out_arrows:
+            arrow.vectorize()
 
     def erase(self):
         """
         Prepare the vertex for the garbage collector.
         """
-        self.in_arrow = None
-        self.out_arrow = None
+        self.in_arrows = []
+        self.out_arrows = []
         self.hide()

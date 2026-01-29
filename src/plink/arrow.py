@@ -61,8 +61,8 @@ class Arrow:
             other_params = Arrow.default_params.copy()
         self.params = other_params
         if self.start is not self.end:
-            self.start.out_arrow = self
-            self.end.in_arrow = self
+            self.start.out_arrows.append(self)
+            self.end.in_arrows.append(self)
             self.vectorize()
 
     def __repr__(self):
@@ -90,6 +90,7 @@ class Arrow:
         self.length = sqrt(self.dx*self.dx + self.dy*self.dy) 
 
     def reverse(self, crossings=[]):
+        print('reversing arrow')
         self.end, self.start = self.start, self.end
         self.vectorize()
         self.draw(crossings)
