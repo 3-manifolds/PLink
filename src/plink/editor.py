@@ -797,7 +797,7 @@ class LinkEditor(PLinkBase):
             return
         if self.lock_var.get():
             return
-        # What is this about?  Why shift-click?
+        # What is this about?  Why is it here in shift-click?
         if self.state == 'start_state':
             if not self.has_focus:
                 return
@@ -860,7 +860,7 @@ class LinkEditor(PLinkBase):
                 self.ActiveVertex.freeze()
                 self.saved_crossing_data = self.active_crossing_data()
                 x1, y1 = self.ActiveVertex.point()
-                if not self.ActiveVertex.in_arrows and not self.ActiveVertex.out_arrows:
+                if self.ActiveVertex.is_isolated:
                     # If this is an isolated vertex (likely created
                     # unintentionally), switch to drawing mode.
                     self.double_click(event)
@@ -949,7 +949,7 @@ class LinkEditor(PLinkBase):
                     self.generic_arrow(next_arrow) ):
                 print('either arrow or vertex is not generic')
                 self.alert()
-                #self.destroy_arrow(next_arrow)
+                self.destroy_arrow(next_arrow)
                 return
             self.update_crossings(next_arrow)
             self.update_crosspoints()
@@ -993,6 +993,7 @@ class LinkEditor(PLinkBase):
                 x0, y0 = x1, y1 = vertex.point()
                 if vertex.out_arrows:
                     self.update_crosspoints()
+                    #####
                     vertex.reverse_filaments()
             self.ActiveVertex = vertex
             self.goto_drawing_state(x1,y1)
@@ -1152,7 +1153,18 @@ class LinkEditor(PLinkBase):
     def clicked_on_arrow(self, vertex):
         for arrow in self.Arrows:
             if arrow.too_close(vertex):
-                arrow.end.reverse_filaments(self.Crossings)
+                filament, closed = self.arrow_filament(arrow)
+                if not closed:
+                    start_in = filament[0].start.in_arrows
+                    end_out = filament[-1].end.out_arrows
+                for a in filament:
+                    a.reverse(self.Crossings)
+                    a.start.out_arrows = [a]
+                    a.end.in_arrows = [a]
+                if not closed:
+                    filament[0].end.in_arrows += start_in
+                    filament[-1].start.out_arrows += end_out
+                #arrow.end.reverse_filaments(self.Crossings)
                 self.update_info()
                 return True
         return False

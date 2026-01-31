@@ -90,7 +90,6 @@ class Arrow:
         self.length = sqrt(self.dx*self.dx + self.dy*self.dy) 
 
     def reverse(self, crossings=[]):
-        print('reversing arrow')
         self.end, self.start = self.start, self.end
         self.vectorize()
         self.draw(crossings)
