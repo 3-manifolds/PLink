@@ -943,7 +943,6 @@ class LinkEditor(PLinkBase):
                 next_arrow.set_end(next_vertex)
                 next_vertex.in_arrows.append(next_arrow)
                 if next_vertex.color != self.ActiveVertex.color:
-                    print('recycling color', self.ActiveVertex.color)
                     self.palette.recycle(self.ActiveVertex.color)
                 self.update_crossings(next_arrow)
                 next_arrow.expose(self.Crossings)

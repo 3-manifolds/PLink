@@ -26,6 +26,7 @@ def main():
             LE = LinkEditor(file_name=file_name)
     else:
         LE = LinkEditor()
+    LE.window.after(50, LE.window.focus_force)
     LE.window.mainloop()
 
 if __name__ == "__main__":
