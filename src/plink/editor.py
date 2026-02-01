@@ -157,6 +157,7 @@ class PLinkBase(LinkViewer):
         self.menubar = menubar = Tk_.Menu(self.window)
         self._add_file_menu()
         self._add_info_menu()
+        self.check_info_menu()
         self._add_tools_menu()
         self._add_style_menu()
         self.window.config(menu=menubar)
@@ -174,7 +175,7 @@ class PLinkBase(LinkViewer):
         self.menubar.add_cascade(label='File', menu=file_menu)
 
     def _add_info_menu(self):
-        info_menu = Tk_.Menu(self.menubar, tearoff=0)
+        self.info_menu = info_menu = Tk_.Menu(self.menubar, tearoff=0)
         info_menu.add_radiobutton(label='DT code', var=self.info_var,
                                   command=self.set_info, value=1)
         info_menu.add_radiobutton(label='Alphabetical DT', var=self.info_var,
@@ -192,6 +193,12 @@ class PLinkBase(LinkViewer):
             info_menu.add_checkbutton(label='Crossing labels', var=self.show_labels_var,
                                       command = self.update_info)
         self.menubar.add_cascade(label='Info', menu=info_menu)
+
+    def check_info_menu(self):
+        if self.is_singular or not self.Vertices:
+            self.menubar.entryconfig('Info', state='disabled')
+        else:
+            self.menubar.entryconfig('Info', state='normal')
 
     # Override if you want a tools menu
     def _add_tools_menu(self):
@@ -825,10 +832,13 @@ class LinkEditor(PLinkBase):
                 ##### How can this happen?  (It did)
                 try:
                     cut_vertex.in_arrows.remove(arrow)
-                except:
+                except ValueError:
                     print('The arrow has already been removed from the cut vertex.')
                 vertex = arrow.start
                 x1, y1 = cut_vertex.point()
+                print('freezing', arrow)
+                print(arrow in self.Arrows)
+                print(arrow.is_frozen)
                 arrow.freeze()
                 self.ActiveVertex = vertex
                 self.goto_drawing_state(x1,y1)
@@ -910,15 +920,12 @@ class LinkEditor(PLinkBase):
             next_vertex = Vertex(x, y, self.canvas, style='hidden')
             if next_vertex == self.ActiveVertex:
                 print('clicked the same vertex twice')
-                ## How can we get here?
                 next_vertex.erase()
-                dead_arrow = self.ActiveVertex.out_arrows[0]
-                if dead_arrow:
-                    self.destroy_arrow(dead_arrow)
+                for arrow in self.Arrows:
+                    if arrow.is_frozen:
+                        self.destroy_arrow(arrow)
                 self.goto_start_state()
                 return
-                print('ActiveVertex has %d out_arrows' % len(self.ActiveVertex.out_arrows))
-                print('state is %s' %self.state)
             this_color = self.ActiveVertex.color
             next_arrow = Arrow(self.ActiveVertex, next_vertex,
                                self.canvas, style='hidden',
@@ -940,6 +947,9 @@ class LinkEditor(PLinkBase):
                     self.palette.recycle(self.ActiveVertex.color)
                 self.update_crossings(next_arrow)
                 next_arrow.expose(self.Crossings)
+                for arrow in self.Arrows:
+                    if arrow.is_frozen:
+                        self.destroy_arrow(arrow)
                 self.goto_start_state()
                 return
             elif next_vertex in self.Vertices:
@@ -1000,6 +1010,7 @@ class LinkEditor(PLinkBase):
             return
         elif self.state == 'drawing_state':
             #print('double-click while drawing')
+            #### destroy frozen arrows
             try:
                 dead_arrow = self.ActiveVertex.out_arrows[0]
                 self.destroy_arrow(dead_arrow)
@@ -1012,7 +1023,7 @@ class LinkEditor(PLinkBase):
         if self.shift_down:
             if point in self.CrossPoints:
                 self.canvas.config(cursor='dot')
-            elif self.cursor_on_arrow(point):
+            elif self.cursor_on_arrow(point) or point in self.Vertices:
                 self.canvas.config(cursor='pencil')
             else:
                 self.canvas.config(cursor='')
@@ -1188,6 +1199,7 @@ class LinkEditor(PLinkBase):
         self.set_style()
         self.update_info()
         self.canvas.config(cursor='')
+        self.check_info_menu()
 
     def goto_drawing_state(self, x1,y1):
         self.ActiveVertex.expose()
@@ -1275,9 +1287,15 @@ class LinkEditor(PLinkBase):
     def destroy_arrow(self, arrow):
         self.Arrows.remove(arrow)
         if arrow.end:
-            arrow.end.in_arrows.remove(arrow)
+            try:
+                arrow.end.in_arrows.remove(arrow)
+            except ValueError:
+                pass
         if arrow.start:
-            arrow.start.out_arrows.remove(arrow)
+            try:
+                arrow.start.out_arrows.remove(arrow)
+            except ValueError:
+                pass
         arrow.erase()
         self.Crossings = [c for c in self.Crossings if arrow not in c]
 

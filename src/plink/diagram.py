@@ -21,7 +21,7 @@ point in the plane, as well as a list of Arrows, where an Arrow
 represents a directed line segment joining two Vertices.
 
 If P and Q are two points in the plane with coordinates (x1, y1) and
-(x2, y2) let L_1(P,Q) = max(|x1 - x2|, |y1 - y2|).  Not that L_1
+(x2, y2) let L_1(P,Q) = max(|x1 - x2|, |y1 - y2|).  Note that L_1
 is a metric on the plane.
 
 Two vertices are considered equal if the L_1 distance between their
@@ -124,6 +124,11 @@ class PLinkDiagram:
             self.update_crosspoints()
             return hot
 
+    @property
+    def is_singular(self):
+        """ Are there any non-smooth vertices? """
+        return not all(v.is_smooth for v in self.Vertices)
+
     def update_crosspoints(self):
         for arrow in self.Arrows:
             arrow.vectorize()
@@ -194,6 +199,7 @@ class PLinkDiagram:
         closed.sort(key=lambda x : (x[0].component, oldest_vertex(x)))
         nonclosed.sort(key=oldest_vertex)
         return (closed, nonclosed) if distinguish_closed else closed + nonclosed              
+
     def polylines(self, break_at_overcrossings=True):
         """
         Returns a list of lists of polylines, one per component, that make up
@@ -246,9 +252,9 @@ class PLinkDiagram:
 
     def crossing_components(self):
         """
-        Returns a list of lists of ECrossings, one per component,
+        Returns a list of lists of ECrossings, one per filament,
         where the corresponding crossings are ordered consecutively
-        through the component.  Requires that all components be closed.
+        through the filament.  Requires that all filaments be closed.
         """
         for vertex in self.Vertices:
             if vertex.is_endpoint:

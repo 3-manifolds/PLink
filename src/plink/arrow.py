@@ -109,7 +109,7 @@ class Arrow:
         self.style = 'frozen'
 
     @property
-    def frozen(self):
+    def is_frozen(self):
         return self.style == 'frozen'
 
     def make_faint(self):
@@ -176,7 +176,7 @@ class Arrow:
         return [r(a) + r(b) for a, b in segments]
 
     def draw(self, crossings=[], recurse=True, skip_frozen=True):
-        if self.hidden or (self.frozen and skip_frozen):
+        if self.hidden or (self.is_frozen and skip_frozen):
             return
         if self.style == 'frozen':
             color = 'gray'
