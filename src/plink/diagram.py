@@ -256,9 +256,8 @@ class PLinkDiagram:
         where the corresponding crossings are ordered consecutively
         through the filament.  Requires that all filaments be closed.
         """
-        for vertex in self.Vertices:
-            if vertex.is_endpoint:
-                raise ValueError('All components must be closed.')
+        if self.is_singular:
+            raise ValueError('All components must be closed.')
         result = []
         arrow_components = self.arrow_filaments()
         for component in arrow_components:
