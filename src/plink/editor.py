@@ -1056,9 +1056,9 @@ class LinkEditor(PLinkBase):
             if point in self.CrossPoints:
                 self.canvas.config(cursor='dot')
             elif self.cursor_on_arrow(point):
-                self.canvas.config(cursor='pencil')
+                self.canvas.config(cursor='dotbox')
             elif point in self.Vertices:
-                self.canvas.config(cursor='circle')
+                self.canvas.config(cursor='target')
             else:
                 self.canvas.config(cursor='')
         elif self.lock_var.get():
