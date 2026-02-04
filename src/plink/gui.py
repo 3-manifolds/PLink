@@ -107,9 +107,9 @@ else:
             parent=parent,
             mode='r',
             title='Open SnapPea Projection File',
-            defaultextension = ".lnk",
+            defaultextension = "",
             filetypes = [
-                ("Link and text files", "*.lnk *.txt", "TEXT"),
+                ("Link files", "*.lnk", "LINK"),
                 ("All text files", "", "TEXT"),
                 ("All files", "")],
             )

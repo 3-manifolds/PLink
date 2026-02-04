@@ -542,11 +542,10 @@ class PLinkBase(LinkViewer):
         savefile = asksaveasfile(
             parent=self.window,
             mode='w',
-            title='Save As Snappea Projection File',
-            defaultextension = '.lnk',
+            title='Save As PLink Projection File',
+            defaultextension = '',
             filetypes = [
-                ("Link and text files", "*.lnk *.txt", "TEXT"),
-                ("All text files", "", "TEXT"),
+                ("Link files", "*.lnk", "LINK"),
                 ("All files", "")],
             )
         if savefile:
