@@ -83,12 +83,15 @@ class PLinkDiagram:
         num_lines = len(lines)
         first_line = lines.pop(0)
         has_virtual_crossings = first_line.startswith(
-            '% Virtual Link Projection')
+            '% Virtual')
         if not (first_line.startswith('% Link Projection') or
-                first_line.startswith('% Virtual Link Projection')):
+                first_line.startswith('% Virtual Link Projection') or
+                first_line.startswith('% Graph Projection') or
+                first_line.startswith('% Virtual Graph Projection')
+                ):
             tkMessageBox.showwarning(
                 'Bad file',
-                'This is not a SnapPea link projection file')
+                'This is not a PLink projection file')
         else:
             try:
                 vertices, arrows, crossings = [], [], []
@@ -129,6 +132,10 @@ class PLinkDiagram:
         """ Are there any non-smooth vertices? """
         return not all(v.is_smooth for v in self.Vertices)
 
+    @property
+    def is_virtual(self):
+        return any(crossing.is_virtual for crossing in self.Crossings)
+            
     def update_crosspoints(self):
         for arrow in self.Arrows:
             arrow.vectorize()
@@ -608,10 +615,9 @@ class PLinkDiagram:
         Returns a string containing the contents of a SnapPea link
         projection file.
         """
-        has_virtual_crossings = any(crossing.is_virtual for crossing in self.Crossings)
-
-        result = ''
-        result += '% Virtual Link Projection\n' if has_virtual_crossings else '% Link Projection\n'
+        result = (f'% {"Virtual " if self.is_virtual else ""}' +
+                 f'{"Graph" if self.is_singular else "Link"} ' +
+                 'Projection\n')
         components = self.arrow_filaments()
         result += '%d\n'%len(components)
         for component in components:
@@ -631,7 +637,10 @@ class PLinkDiagram:
             under = self.Arrows.index(crossing.under)
             over = self.Arrows.index(crossing.over)
             is_virtual = 'v' if crossing.is_virtual else 'r'
-            result += '%4s %4.1d %4.1d\n'%(is_virtual, under, over) if has_virtual_crossings else '%4.1d %4.1d\n'%(under, over)
+            if crossing.is_virtual:
+                result += '%4s %4.1d %4.1d\n'%(is_virtual, under, over)
+            else:
+                result += '%4.1d %4.1d\n'%(under, over)
         if self.ActiveVertex:
             result += '%d\n'%self.Vertices.index(self.ActiveVertex)
         else:
