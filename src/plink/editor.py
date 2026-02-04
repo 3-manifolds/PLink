@@ -1021,7 +1021,7 @@ class LinkEditor(PLinkBase):
             try:
                 self.end_dragging_state()
             except ValueError:
-                print('Error ending dragging state')
+                #print('Error ending dragging state')
                 self.alert()
         
     def double_click(self, event):
