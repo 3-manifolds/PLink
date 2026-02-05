@@ -668,8 +668,13 @@ class LinkEditor(PLinkBase):
                 self.set_start_cursor(self.cursorx, self.cursory)
         if key in ('Delete','BackSpace'):
             if self.state == 'drawing_state':
-                # Delete will remove the last arrow until the active vertex is singular
-                if self.ActiveVertex.valence == 1:
+                for arrow in self.Arrows:
+                    if arrow.is_frozen:
+                        self.destroy_arrow(arrow)
+                if self.ActiveVertex.is_isolated:
+                    self.Vertices.remove(self.ActiveVertex)
+                    self.ActiveVertex.erase()
+                elif self.ActiveVertex.valence == 1:
                     last_arrow = self.ActiveVertex.in_arrows[0]
                     self.ActiveVertex = last_arrow.start
                     x0,y0,x1,y1 = self.canvas.coords(self.LiveArrows[0])
@@ -681,11 +686,19 @@ class LinkEditor(PLinkBase):
                     self.Vertices.remove(end)
                     for arrow in self.Arrows:
                         arrow.draw(self.Crossings)
-                elif self.ActiveVertex.is_isolated:
+                    # stay in drawing state
+                    return
+                elif self.ActiveVertex.valence == 2:
+                    if len(self.ActiveVertex.in_arrows) == 2:
+                        self.reverse_filament(self.ActiveVertex.in_arrows[0],
+                                              self.ActiveVertex)
+                    elif len(self.ActiveVertex.out_arrows) == 2:
+                        self.reverse_filament(self.ActiveVertex.out_arrows[0],
+                                              self.ActiveVertex)
+                self.goto_start_state()
+            elif self.state == 'dragging state':
+                if self.ActiveVertex.is_isolated:
                     self.Vertices.remove(self.ActiveVertex)
-                    self.ActiveVertex.erase()
-                    self.goto_start_state()
-                else:
                     self.goto_start_state()
         elif key in (plus_keycode, equal_keycode):
             self.zoom_in()
@@ -822,26 +835,44 @@ class LinkEditor(PLinkBase):
     #    print('lost focus')
     #    self.has_focus = False
 
-    def reverse_filament(self, arrow):
+    def reverse_filament(self, arrow, vertex):
         """
         Reverse the filament containing the arrow.  If the
-        filament is not closed, the arrow must be the first
-        arrow of the filament.
+        filament is not closed, the vertex must be an endpoint
+        of the filament and an end of the arrow.
         """
         #assert(self._validate())
-        arrow.start.out_arrows.remove(arrow)
-        arrow.start.in_arrows.append(arrow)
-        # Note: the diagram is now invalid!
-        while True:
-            arrow.reverse()
-            start = arrow.start
-            if not start.is_smooth:
-                arrow.start.in_arrows.remove(arrow)
-                arrow.start.out_arrows.append(arrow)
-                break
-            else:
-                arrow = arrow.start.out_arrows[0]
-                arrow.start.reverse()
+        if vertex == arrow.start:
+            vertex.out_arrows.remove(arrow)
+            vertex.in_arrows.append(arrow)
+            # Note: the diagram is now invalid!
+            while True:
+                arrow.reverse()
+                start = arrow.start
+                if not start.is_smooth:
+                    arrow.start.in_arrows.remove(arrow)
+                    arrow.start.out_arrows.append(arrow)
+                    break
+                else:
+                    arrow = arrow.start.out_arrows[0]
+                    arrow.start.reverse()
+        elif vertex == arrow.end:
+            vertex.in_arrows.remove(arrow)
+            vertex.out_arrows.append(arrow)
+            # Note: the diagram is now invalid!
+            while True:
+                arrow.reverse()
+                end = arrow.end
+                if not end.is_smooth:
+                    arrow.end.out_arrows.remove(arrow)
+                    arrow.end.in_arrows.append(arrow)
+                    break
+                else:
+                    arrow = arrow.end.in_arrows[0]
+                    arrow.end.reverse()
+        else:
+            raise ValueError(
+                'reverse_filament: the vertex is not an end of the arrow')
         #assert(self._validate())
 
     def shift_click(self, event):
@@ -876,7 +907,8 @@ class LinkEditor(PLinkBase):
                 # We need to reverse its outgoing filament to make
                 # orientations consistent at smooth vertices, since
                 # new arrows always end at the click point.
-                self.reverse_filament(self.ActiveVertex.out_arrows[0])
+                self.reverse_filament(self.ActiveVertex.out_arrows[0],
+                                      self.ActiveVertex)
             self.goto_drawing_state(*start_vertex.point())
         elif self.cursor_on_arrow(start_vertex):
             #print('Shift-click on an arrow.')
@@ -980,7 +1012,6 @@ class LinkEditor(PLinkBase):
             next_vertex.set_color(next_arrow.color)
             if next_vertex in self.Vertices:
                 #assert(self._validate())
-                #print('melding vertices')
                 if not self.generic_arrow(next_arrow):
                     #print('arrow is not generic')
                     self.alert()
@@ -998,8 +1029,6 @@ class LinkEditor(PLinkBase):
                     if arrow.is_frozen:
                         self.destroy_arrow(arrow)
                 self.goto_start_state()
-                return
-            elif next_vertex in self.Vertices:
                 return
             #print('just extending a path, as usual')
             if not (self.generic_vertex(next_vertex) and
@@ -1020,8 +1049,9 @@ class LinkEditor(PLinkBase):
             try:
                 self.end_dragging_state()
             except ValueError:
+                pass
                 #print('Error ending dragging state')
-                self.alert()
+                #self.alert()
         
     def double_click(self, event):
         """
@@ -1046,7 +1076,7 @@ class LinkEditor(PLinkBase):
             # Destroy all frozen arrows and go to start.
             for arrow in self.Arrows:
                 if arrow.is_frozen:
-                    arrow.delete()
+                    self.destroy(arrow)
             self.goto_start_state()
 
     def set_start_cursor(self, x, y):
@@ -1199,7 +1229,7 @@ class LinkEditor(PLinkBase):
         for arrow in self.Arrows:
             if arrow.too_close(vertex):
                 filament, closed = self.arrow_filament(arrow)
-                self.reverse_filament(filament[0])
+                self.reverse_filament(filament[0], filament[0].start)
                 self.update_info()
                 return True
         return False
@@ -1224,11 +1254,6 @@ class LinkEditor(PLinkBase):
         self.update_info()
         self.canvas.config(cursor='')
         self.check_info_menu()
-        for vertex in self.Vertices:
-            incoming = set(vertex.in_arrows)
-            outgoing  = set(vertex.out_arrows)
-#            if (outgoing.intersection(incoming)):
-#                print('Vertex %s is confused' % vertex)
 
     def goto_drawing_state(self, x1,y1):
         self.ActiveVertex.expose()
@@ -1251,26 +1276,40 @@ class LinkEditor(PLinkBase):
         return all(self.generic_arrow(arrow) for arrow in arrows)
 
     def end_dragging_state(self):
+        x, y = float(self.cursorx), float(self.cursory)
+        final_vertex = Vertex(x, y)
+        for vertex in self.Vertices:
+            if vertex == final_vertex and not vertex is self.ActiveVertex:
+                # meld this vertex with the active vertex.
+                for arrow in vertex.in_arrows:
+                    arrow.end = self.ActiveVertex
+                    self.ActiveVertex.in_arrows.append(arrow)
+                for arrow in vertex.out_arrows:
+                    arrow.start = self.ActiveVertex
+                    self.ActiveVertex.out_arrows.append(arrow)
+                self.Vertices.remove(vertex)
+                break
+        else:
+            pass
         if not self.verify_drag():
             raise ValueError
         if self.lock_var.get():
             self.detach_cursor()
             self.saved_crossing_data = None
         else:
-            x, y = float(self.cursorx), float(self.cursory)
             self.ActiveVertex.x, self.ActiveVertex.y = x, y
-        endpoint = None
-        if self.ActiveVertex.is_endpoint:
-            other_ends = [v for v in self.Vertices if
-                          v.is_endpoint and v is not self.ActiveVertex]
-            if self.ActiveVertex in other_ends:
-                endpoint = other_ends[other_ends.index(self.ActiveVertex)]
-                self.ActiveVertex.swallow(endpoint, self.palette)
-                self.Vertices = [v for v in self.Vertices if v is not endpoint]
-            for arrow in self.ActiveVertex.in_arrows + self.ActiveVertex.out_arrows:
-                self.update_crossings(arrow)
-        if endpoint is None and not self.generic_vertex(self.ActiveVertex):
-            raise ValueError
+        # endpoint = None
+        # if self.ActiveVertex.is_endpoint:
+        #     other_ends = [v for v in self.Vertices if
+        #                   v.is_endpoint and v is not self.ActiveVertex]
+        #     if self.ActiveVertex in other_ends:
+        #         endpoint = other_ends[other_ends.index(self.ActiveVertex)]
+        #         self.ActiveVertex.swallow(endpoint, self.palette)
+        #         self.Vertices = [v for v in self.Vertices if v is not endpoint]
+        #     for arrow in self.ActiveVertex.in_arrows + self.ActiveVertex.out_arrows:
+        #         self.update_crossings(arrow)
+        # if endpoint is None and not self.generic_vertex(self.ActiveVertex):
+        #     raise ValueError
         self.ActiveVertex.expose()
         if self.style_var.get() != 'smooth':
             for arrow in self.ActiveVertex.in_arrows + self.ActiveVertex.out_arrows:
@@ -1298,7 +1337,7 @@ class LinkEditor(PLinkBase):
                     self.canvas.create_oval(x-delta , y-delta, x+delta, y+delta,
                                             outline='gray', fill=None, width=3,
                                             tags='lock_error')
-                #print('arrow too close to vertex %s'%vertex)
+                print('arrow %s too close to vertex %s'%(arrow, vertex))
                 return False
         for crossing in self.Crossings:
             point = self.CrossPoints[self.Crossings.index(crossing)]

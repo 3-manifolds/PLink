@@ -121,55 +121,55 @@ class Vertex:
     def reverse(self):
         self.in_arrows, self.out_arrows = self.out_arrows, self.in_arrows
 
-    def swallow(self, other, palette):
-        """
-        Join two paths.  Self and other must be endpoints. Other is erased.
-        """
-        if not self.is_endpoint() or not other.is_endpoint():
-            raise ValueError
-        if self.in_arrows:
-            if other.in_arrows:
-                other.reverse_filament()
-            if self.color != other.color:
-                palette.recycle(self.color)
-                self.color = other.color
-                self.recolor_incoming(color=other.color)
-            self.out_arrows = other.out_arrows
-            for arrow in self.out_arrows:
-                arrow.set_start(self)
-        elif self.out_arrows:
-            if other.out_arrows:
-                other.reverse_filament()
-            if self.color != other.color:
-                palette.recycle(other.color)
-                other.recolor_incoming(color=self.color)
-            self.in_arrows = other.in_arrows
-            self.in_arrows[0].set_end(self)
-        other.erase()
+    # def swallow(self, other, palette):
+    #     """
+    #     Join two paths.  Self and other must be endpoints. Other is erased.
+    #     """
+    #     if not self.is_endpoint() or not other.is_endpoint():
+    #         raise ValueError
+    #     if self.in_arrows:
+    #         if other.in_arrows:
+    #             other.reverse_filament()
+    #         if self.color != other.color:
+    #             palette.recycle(self.color)
+    #             self.color = other.color
+    #             self.recolor_incoming(color=other.color)
+    #         self.out_arrows = other.out_arrows
+    #         for arrow in self.out_arrows:
+    #             arrow.set_start(self)
+    #     elif self.out_arrows:
+    #         if other.out_arrows:
+    #             other.reverse_filament()
+    #         if self.color != other.color:
+    #             palette.recycle(other.color)
+    #             other.recolor_incoming(color=self.color)
+    #         self.in_arrows = other.in_arrows
+    #         self.in_arrows[0].set_end(self)
+    #     other.erase()
             
-    def reverse_filaments(self, crossings=[]):
-        """
-        Reverse the arc filaments emanating from this vertex.
-        """
-        v = self
-        for e in v.out_arrows:
-            while True:
-                e.reverse(crossings)
-                v = e.end
-                if v == self:
-                    return
-                if v.valence > 2:
-                    break
-        self.reverse()
-        v = self
-        for e in v.out_arrows:
-            while True:
-                e.reverse(crossings)
-                v = e.start
-                if v == self:
-                    return
-                if v.valence > 2:
-                    break
+    # def reverse_filaments(self, crossings=[]):
+    #     """
+    #     Reverse the arc filaments emanating from this vertex.
+    #     """
+    #     v = self
+    #     for e in v.out_arrows:
+    #         while True:
+    #             e.reverse(crossings)
+    #             v = e.end
+    #             if v == self:
+    #                 return
+    #             if v.valence > 2:
+    #                 break
+    #     self.reverse()
+    #     v = self
+    #     for e in v.out_arrows:
+    #         while True:
+    #             e.reverse(crossings)
+    #             v = e.start
+    #             if v == self:
+    #                 return
+    #             if v.valence > 2:
+    #                 break
 
     def recolor_incoming(self, palette=None, color=None):
         """

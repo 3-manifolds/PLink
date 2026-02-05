@@ -8,67 +8,73 @@
 How to use PLink
 =================================
 
-PLink draws piecewise linear link projections.  Components may be
-points, PL arcs, or PL circles.  Line segments are oriented consistently in
-each component.  Different components are different colors.
+PLink draws planar projections of graphs in 3-dimensional space
+with piecewise linear edges.  These include projections of PL knots
+or links, of course, but also include graphs which may arise as
+the singular set of a 3-dimensional orbifold.
+
+If we define a *filament* to be a maximal subset of the graph which
+is homeomorphic to a 1-manifold, then the graph decomposes as a union
+of filaments, where two filaments can meet only in one or two vertices
+which are boundary points of the filaments, and isolated vertices.
+The 1-dimensional filaments are oriented, so they have a specified
+meridan, and arecdrawn with an arrow head showing he orientation.
+Distinct filaments are shown in different colors.
 
 ..  image:: plink-action.png
 
 Drawing Basics
 ------------------------------
 
-* When using the mouse to draw a link with PLink, you should always
-  *click-and-release*.  Do not hold the mouse button down while drawing.
-  PLink requires only the left mouse button.
+* When using the mouse to draw a projection with PLink, all operations
+  are prefomed with *click-and-release*.  There is no need hold the
+  mouse button down while drawing.  Only the left mouse button is needed,
+  although shift-clicks may have different actions.
  
 * The default state of the editor is indicated by the arrow cursor.
   In this state, click-and-release the left mouse button on the
   background to place a starting vertex and begin drawing.  The vertex
   will be connected to the pencil cursor by a thin red line.
   Click-and-release to place a second vertex.  The two vertices will
-  then be joined by an edge. Continue to draw other vertices and edges
-  to your heart's content.
+  then be joined by an edge. Continue to draw other vertices and edges.
 
-* To stop drawing, either click twice on the same vertex to create an
-  arc, or click on an endpoint vertex.  The latter operation will
-  either create a circle component or join together two arc
-  components.
+* To stop drawing, either double-click to create an endpoint
+  or click on a vertex.  The latter operation will attack the
+  edge which has just been drawn to the vertex.
 
-* When the cursor hovers over a vertex it changes to the open hand.
-  From this state you can drag a vertex to a new location with a
-  click-and-release on the vertex. The vertex will become enclosed in
-  a circular cursor.  Move it to where you want it to go and click the
-  left (or middle) button to place it.  If you drag one endpoint on
-  top of another, they will meld.
-
-* Shift-clicking on a vertex will transform the crossing to a virtual
-  crossing, indicated by a black dot.  Virtual link diagrams can be
-  used as input to Twister.
+* When the cursor hovers over a vertex it changes to the open hand if
+  the shift key is not pressed.  From this state you can drag a vertex
+  to a new location with a click-and-release on the vertex.  Dragging
+  the vertex on top of another vertex will cause the vertices to meld.
+  If the shift key is pressed then the cursor changes to a target;
+  shift-clicking will start drawing a new edge emitting from the
+  vertex.
 
 * When the cursor hovers over an edge, not too close to a vertex or
-  crossing, it changes to the push-me-pull-you cursor.  Clicking in
-  this state will change the orientation of the component containing
-  the edge.
+  crossing, it changes to the push-me-pull-you cursor if the shift key
+  is not pressed. Clicking changes the orientation of the filament
+  containing the edge.  If the shift key is pressed, the cursor will
+  be a square containing a central dot; shift-clicking will remove the
+  edge and start drawing a new edge from its start vertex.
 
 * When the cursor hovers over a crossing it changes to the yin-yang
-  recycling cursor.  Clicking while in this state changes the the
-  handedness of the crossing.
+  recycling cursor if the shift key is not pressed.  Clicking changes
+  the handedness of the crossing. If the shift key is pressed the
+  cursor will be a dot; shift-clicking turns the crossing into a
+  virtual crossing.
 
-* Double-clicking on an endpoint vertex will restart drawing from
-  that vertex.  Double-clicking on a non-endpoint vertex will break
-  the link at that point and begin drawing with the old incoming edge.
-
-* While in drawing state, hitting the Delete key removes the last
-  vertex before the cursor.  If no vertices remain, the drawing state
-  ends and the active component is removed.  This can be used to
-  remove a segment from the diagram.  Double-click a vertex; hit
-  Delete to remove the incoming segment at that vertex; then click the
-  vertex again to reconnect.
+* While in the drawing state, pressing the Delete key removes the last
+  vertex before the cursor.  If the last vertex is not valence 2, the
+  drawing state ends and the diagram is returned to its state before
+  initiating the drawing operation.  This can be used to remove a
+  segment from the diagram.  Shift-click on the segment; hit Delete to
+  remove the incoming segment at that vertex; then click the end
+  vertex of the segment again to reconnect.
 
 * You will not be allowed to create edges that pass too close to a
   vertex or a crossing, or to place vertices too close to edges or to
   crossings or to other vertices.  If you attempt to do any of these
-  things, *PLink will beep at you*.
+  things, the drawing canvas will flash.
 
 Miscellaneous Features
 ---------------------------------
