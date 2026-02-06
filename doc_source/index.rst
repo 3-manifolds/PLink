@@ -13,13 +13,14 @@ with piecewise linear edges.  These include projections of PL knots
 or links, of course, but also include graphs which may arise as
 the singular set of a 3-dimensional orbifold.
 
-If we define a *filament* to be a maximal subset of the graph which
-is homeomorphic to a 1-manifold, then the graph decomposes as a union
-of filaments, where two filaments can meet only in one or two vertices
-which are boundary points of the filaments, and isolated vertices.
-The 1-dimensional filaments are oriented, so they have a specified
-meridan, and arecdrawn with an arrow head showing he orientation.
-Distinct filaments are shown in different colors.
+If we define a *filament* to be a maximal subset of the graph which is
+homeomorphic to a 1-manifold, then the graph decomposes as a union of
+filaments, where two filaments can meet only in one or two vertices
+which are boundary points of both filaments.  The filaments are
+oriented, so they have a specified meridian; the linear segments in
+the diagram (which are called *arrows*) are drawn with an arrowhead
+which shows the orientation.  Distinct filaments are drawn in
+different colors.
 
 ..  image:: plink-action.png
 
@@ -105,22 +106,25 @@ well, in which case the "hot vertex" is remembered in the file!).  The
 "File->Open File" command will read a SnapPea link projection file,
 and restart drawing if the projection was saved while drawing.
 
-The "Info" menu selects information about the link projection to be
-displayed in the info line at the bottom.  Various encoding schemes
-for link projections are supported, as well as the blackboard framing
-curves, expressed in meridian-longitude coordinates.  Cutting and
-pasting from the info line is supported.  The numerical and
-alphabetical Dowker-Thistlethwaite codes are displayed in an extended
-form which includes a full description of the planar embedding.  The
-string printed in the info line is also accepted as input to SnapPy's
-Manifold constructor.  Paste the DT code between the apostrophes in
-Manifold('').  The "DT labels" option displays the indexing used in
-computing the Dowker-Thistlethwaite codes.
+When the diagram is a link projection the "Info" menu selects
+information to be displayed in the info line at the bottom.  Various
+encoding schemes for link projections are supported, as well as the
+blackboard framing curves, expressed in meridian-longitude
+coordinates.  Cutting and pasting from the info line is supported.
+The numerical and alphabetical Dowker-Thistlethwaite codes are
+displayed in an extended form which includes a full description of the
+planar embedding.  The string printed in the info line is also
+accepted as input to SnapPy's Manifold constructor.  Paste the DT code
+between the apostrophes in Manifold('').  The "DT labels" option
+displays the indexing used in computing the Dowker-Thistlethwaite
+codes.
 
 Credits
 =============
 
-Written by `Marc Culler <http://math.uic.edu/~culler>`_ and `Nathan Dunfield <http://dunfield.info>`_.  
+Written by `Marc Culler <https://marc-culler.info>`_,
+`Nathan Dunfield <https://dunfield.info>`_ and
+`Matthias Gorner <https://unhyperbolic.org>`_
 
 Contents
 ============
