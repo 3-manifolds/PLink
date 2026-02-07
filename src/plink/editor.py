@@ -1076,7 +1076,7 @@ class PLinkEditor(PLinkBase):
             # Destroy all frozen arrows and go to start.
             for arrow in self.Arrows:
                 if arrow.is_frozen:
-                    self.destroy(arrow)
+                    self.destroy_arrow(arrow)
             self.goto_start_state()
 
     def set_start_cursor(self, x, y):
