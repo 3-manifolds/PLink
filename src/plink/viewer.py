@@ -14,7 +14,7 @@
 #   DMS0504975 and DMS0204142.
 
 """
-This module exports the class LinkViewer.  A LinkViewer object
+This module exports the class PLinkViewer.  A PLinkViewer object
 creates a Tk window for viewing (not editing) a PL or smooth
 link diagram.
 """
@@ -25,7 +25,7 @@ from . import smooth
 from .colors import Palette
 from .diagram import PLinkDiagram
 
-class LinkViewer(PLinkDiagram):
+class PLinkViewer(PLinkDiagram):
     """
     Simply draws a smooth link diagram on a canvas.  Instantiate with
     a canvas and a pickled link diagram as returned by

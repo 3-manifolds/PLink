@@ -14,7 +14,7 @@
 #   the National Science Foundation under grants DMS0608567,
 #   DMS0504975 and DMS0204142.
 """
-This module exports the class LinkEditor which is a full-featured
+This module exports the class PLinkEditor which is a full-featured
 editing tool for link diagrams and planar projections of graphs..
 """
 import os, time, webbrowser, sys
@@ -27,7 +27,7 @@ from .crossings import Crossing, ECrossing
 from .colors import Palette
 from .dialog import InfoDialog
 from .diagram import PLinkDiagram
-from .viewer import LinkViewer
+from .viewer import PLinkViewer
 from .version import version
 from .ipython_tools import IPythonTkRoot
 from .scaling import set_scale_factor
@@ -51,9 +51,9 @@ PLink was inspired by SnapPea (written by Jeff Weeks) and
 LinkSmith (written by Jim Hoste and Morwen Thistlethwaite).
 """ % version
 
-class PLinkBase(LinkViewer):
+class PLinkBase(PLinkViewer):
     """
-    Base class for windows displaying a LinkViewer and an Info Window.
+    Base class for windows displaying a PLinkViewer and an Info Window.
     """
     def __init__(self, root=None, manifold=None, file_name=None, title='',
                  show_crossing_labels=False):
@@ -555,7 +555,7 @@ class PLinkBase(LinkViewer):
     def save_image(self, file_type='eps', colormode='color'):
         mode = self.style_var.get()
         target = self.smoother if mode == 'smooth' else self
-        LinkViewer.save_image(self, file_type, colormode, target)
+        PLinkViewer.save_image(self, file_type, colormode, target)
 
     def about(self):
         InfoDialog(self.window, 'About PLink', self.style, About)
@@ -569,7 +569,7 @@ class PLinkBase(LinkViewer):
         except:
             tkMessageBox.showwarning('Not found!', 'Could not open URL\n(%s)'%url)
 
-class LinkDisplay(PLinkBase):
+class PLinkDisplay(PLinkBase):
     """
     Displays an immutable link diagram.
     """
@@ -579,7 +579,7 @@ class LinkDisplay(PLinkBase):
         PLinkBase.__init__(self, *args, **kwargs)
         self.style_var.set('smooth')
 
-class LinkEditor(PLinkBase):
+class PLinkEditor(PLinkBase):
     """
     A complete graphical link drawing tool based on the one embedded
     in Jeff Weeks' original SnapPea program.

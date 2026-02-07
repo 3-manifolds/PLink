@@ -17,11 +17,17 @@
 from .version import version as __version__
 from . import gui
 from .diagram import PLinkDiagram
-from .viewer import LinkViewer
-from .editor import LinkDisplay, LinkEditor
+from .viewer import PLinkViewer
+from .editor import PLinkDisplay, PLinkEditor
     
-__all__ = ['PLinkDiagram', 'LinkViewer', 'LinkDisplay', 'LinkEditor']
+__all__ = ['PLinkDiagram', 'PLinkViewer', 'PLinkDisplay', 'PLinkEditor']
+
+# Backwards compatibility
+LinkManager = PLinkDiagram
+LinkViewer = PLinkViewer
+LinkDisplay = PLinkDisplay
+LinkEditor = PLinkEditor
 
 if __name__ == '__main__':
-    LE = LinkEditor()
-    LE.window.mainloop()
+    editor = PLinkEditor()
+    editor.window.mainloop()

@@ -15,19 +15,19 @@
 """
 This module exports the class App which is the container for an
 application, suitable for bundling by py2app or py2exe,
-based on the LinkEditor.
+based on the PLinkEditor.
 """
-from . import LinkEditor
+from . import PLinkEditor
 import sys
 
 def main():
     if len(sys.argv) > 1:
         for file_name in sys.argv[1:]:
-            LE = LinkEditor(file_name=file_name)
+            editor = PLinkEditor(file_name=file_name)
     else:
-        LE = LinkEditor()
-    LE.window.after(50, LE.window.focus_force)
-    LE.window.mainloop()
+        editor = PLinkEditor()
+    editor.window.after(50, editor.window.focus_force)
+    editor.window.mainloop()
 
 if __name__ == "__main__":
     main()
