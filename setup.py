@@ -1,15 +1,15 @@
 #######################################################################
 #
-#  See setup.cfg for most of the settings, this is just some custom
-#  commands related to the Sphinx docs and previous versions of our
-#  build system.
+#  See pyproject.toml for most of the settings, this is just some
+#  custom commands related to the Sphinx docs and previous versions of
+#  our build system.
 #
 #######################################################################
 
 
 from setuptools import setup, Command
+from setuptools.command.bdist_wheel import bdist_wheel
 from importlib.metadata import entry_points
-from wheel.bdist_wheel import bdist_wheel
 import os, re, shutil, subprocess, sys, glob
 
 doc_path = 'src/plink/doc'
@@ -66,28 +66,6 @@ class PlinkBuildWheel(bdist_wheel):
         check_call([python, 'setup.py', 'build_docs'])
         check_call([python, 'setup.py', 'build'])
         bdist_wheel.run(self)
-
-class PLinkRelease(Command):
-    user_options = [('install', 'i', 'install the release into each Python')]
-    def initialize_options(self):
-        self.install = False
-    def finalize_options(self):
-        pass
-    def run(self):
-        if os.path.exists('build'):
-            shutil.rmtree('build')
-        if os.path.exists('dist'):
-            shutil.rmtree('dist')
-
-        pythons = os.environ.get('RELEASE_PYTHONS', sys.executable).split(',')
-        for python in pythons:
-            check_call([python, 'setup.py', 'build_all'])
-            if self.install:
-                check_call([python, 'setup.py', 'pip_install'])
-
-        # Build sdist/universal wheels using the *first* specified Python
-        check_call([pythons[0], 'setup.py', 'sdist'])
-        check_call([pythons[0], 'setup.py', 'bdist_wheel'])
 
 class PLinkPipInstall(Command):
     user_options = []

@@ -1,3 +1,38 @@
 [build-system]
-requires = ["setuptools", "wheel", "sphinx"]
+requires = ["setuptools>=78", "wheel", "sphinx"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "plink"
+dynamic = ["version"]
+requires-python = ">=3.8"
+description="A full featured Tk-based knot and link editor"
+authors = [
+  {name = "Marc Culler"},
+  {name = "Nathan M. Dunfield"},
+  {name = "Matthias Goerner"},
+  {email = "snappy-help@computop.org"},
+]
+keywords = ["knot", "link", "editor", "SnapPy"]
+license = "GPL-3.0-or-later"
+readme = "README.rst"
+classifiers = [
+  "Topic :: Scientific/Engineering :: Mathematics",
+  "Intended Audience :: Science/Research",
+  "Development Status :: 5 - Production/Stable",
+  "Programming Language :: Python",
+  "Operating System :: OS Independent",
+]
+
+[project.urls]
+homepage = "https://github.com/3-manifolds/PLink"
+issues = "https://github.com/3-manifolds/PLink/issues"
+
+[project.scripts]
+plink = "plink.app:main"
+
+[tool.setuptools.dynamic]
+version = {attr = "plink.__version__"}
+
+[tool.setuptools.package-data]
+plink = ["doc/*", "doc/_static/*", "doc/_sources/*", "doc/_images/*"]
