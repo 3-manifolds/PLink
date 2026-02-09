@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=78", "wheel", "sphinx"]
+requires = ["setuptools>=75", "wheel", "sphinx"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -14,12 +14,12 @@ authors = [
   {email = "snappy-help@computop.org"},
 ]
 keywords = ["knot", "link", "editor", "SnapPy"]
-license = "GPL-2.0-or-later"
 readme = "README.rst"
 classifiers = [
   "Topic :: Scientific/Engineering :: Mathematics",
   "Intended Audience :: Science/Research",
   "Development Status :: 5 - Production/Stable",
+  "License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)",
   "Programming Language :: Python",
   "Operating System :: OS Independent",
 ]
