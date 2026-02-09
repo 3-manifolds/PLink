@@ -8,4 +8,4 @@ doc_source/_build
 plink_app/dmg-maker/PLink.dmg
 plink_app/*.egg/
 plink.egg-info/*
-src/doc/
+src/plink/doc/

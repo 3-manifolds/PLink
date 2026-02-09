@@ -124,7 +124,7 @@ Credits
 
 Written by `Marc Culler <https://marc-culler.info>`_,
 `Nathan Dunfield <https://dunfield.info>`_ and
-`Matthias Gorner <https://unhyperbolic.org>`_
+`Matthias Görner <https://unhyperbolic.org>`_
 
 Contents
 ============
