@@ -15,6 +15,7 @@ authors = [
 ]
 keywords = ["knot", "link", "editor", "SnapPy"]
 readme = "README.rst"
+license = {text = "GPLv2+"}
 classifiers = [
   "Topic :: Scientific/Engineering :: Mathematics",
   "Intended Audience :: Science/Research",
