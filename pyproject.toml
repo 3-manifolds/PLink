@@ -14,7 +14,7 @@ authors = [
   {email = "snappy-help@computop.org"},
 ]
 keywords = ["knot", "link", "editor", "SnapPy"]
-license = "GPL-3.0-or-later"
+license = "GPL-2.0-or-later"
 readme = "README.rst"
 classifiers = [
   "Topic :: Scientific/Engineering :: Mathematics",
