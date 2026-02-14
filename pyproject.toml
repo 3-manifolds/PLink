@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "plink"
-dynamic = ["version"]
+dynamic = ["version", "license"]
 requires-python = ">=3.8"
 description="A full featured Tk-based knot and link editor"
 authors = [
@@ -14,7 +14,6 @@ authors = [
   {email = "snappy-help@computop.org"},
 ]
 keywords = ["knot", "link", "editor", "SnapPy"]
-license = "GPL-2.0-or-later"
 readme = "README.rst"
 classifiers = [
   "Topic :: Scientific/Engineering :: Mathematics",

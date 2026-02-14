@@ -6,11 +6,13 @@
 #
 #######################################################################
 
+import os, re, shutil, subprocess, sys, glob
+if sys.version_info.major < 3:
+    raise RuntimeError('PLink requires Python3')
 
 from setuptools import setup, Command
 from setuptools.command.bdist_wheel import bdist_wheel
 from importlib.metadata import entry_points
-import os, re, shutil, subprocess, sys, glob
 
 doc_path = 'src/plink/doc'
 
@@ -84,7 +86,11 @@ class PLinkPipInstall(Command):
                     new_wheel])
 
 
-setup(cmdclass={'clean': PLinkClean,
-                'build_docs': PLinkBuildDocs,
-                'bdist_wheel': PlinkBuildWheel,
-                'pip_install':PLinkPipInstall})
+setup(
+    cmdclass={'clean': PLinkClean,
+              'build_docs': PLinkBuildDocs,
+              'bdist_wheel': PlinkBuildWheel,
+              'pip_install': PLinkPipInstall
+              },
+    license = 'GPL-2.0-or-later' if sys.version_info.minor > 8 else 'GPLv2+'
+)
