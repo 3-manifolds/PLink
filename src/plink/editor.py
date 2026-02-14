@@ -131,7 +131,7 @@ class PLinkBase(LinkViewer):
         """
         Handler for keyrelease events.
         """
-        raise RuntimeError('Subclasses must override _key_press')
+        raise RuntimeError('Subclasses must override _key_release')
 
     def _key_press(self, event):
         """
@@ -558,6 +558,12 @@ class LinkDisplay(PLinkBase):
             kwargs['title'] = 'PLink Viewer'
         PLinkBase.__init__(self, *args, **kwargs)
         self.style_var.set('smooth')
+
+    def _key_press(self, event):
+        pass
+
+    def _key_release(self, event):
+        pass
 
 class LinkEditor(PLinkBase):
     """
